@@ -14,7 +14,7 @@ model.add(Dense(4))
 model.add(Dense(1))
 
 #3. 컴파일, 훈련
-model.compile(loss='mse', optimizer='adam')
+model.compile(loss='mse', optimizer='adam') #로스와 옵티마이저는 일단 이걸 디폴트로
 model.fit(x, y, epochs = 10000)
 
 #4. 평가 예측
