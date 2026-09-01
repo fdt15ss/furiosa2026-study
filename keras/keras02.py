@@ -11,6 +11,7 @@ model = Sequential()
 model.add(Dense(1, input_dim = 1))
 
 #3. 컴파일, 훈련
+# 최소의 로스로 최적의 웨이트를 구한다.
 model.compile(loss='mse', optimizer='adam')
 model.fit(x, y, epochs= 3000)
 
