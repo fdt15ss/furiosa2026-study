@@ -1,4 +1,16 @@
 {
     "python-envs.defaultEnvManager": "ms-python.python:conda",
-    "python-envs.defaultPackageManager": "ms-python.python:conda"
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": [
+        {
+            "path": "keras/keras01.py",
+            "envManager": "ms-python.python:conda",
+            "packageManager": "ms-python.python:conda"
+        },
+        {
+            "path": "keras/keras11_2_diabetes.py",
+            "envManager": "ms-python.python:conda",
+            "packageManager": "ms-python.python:conda"
+        }
+    ]
 }
