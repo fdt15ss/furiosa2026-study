@@ -64,10 +64,11 @@ model.fit(x_train, y_train, epochs=1500)
 
 #4. 평가, 예측
 loss = model.evaluate(x_test, y_test)
-print('loss : ', loss)
+print('loss :', loss)
 y_predict = model.predict(x_test)
 rmse = root_mean_squared_error(y_test, y_predict)
-print('RMSE :', rmse)
+print('rmse :', rmse)
+
 # RMSE(64-32-16-8-1,1500) : 53.648554590988006
 # RMSE(64-32-16-8-1) : 53.7669620365543
 # RMSE(36-18-10-4-1,1500) : 54.10407482536924
