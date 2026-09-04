@@ -9,7 +9,12 @@ import pandas as pd
 
 
 #1. 데이터
-path = "./_data/ddarung/"
+# path = "./_data/ddarung/"             # 상대경로
+# path = "c:/study/_data/ddarung/"    # 절대경로
+# path = 'c:\study\_data\ddarung/'    # \s를 인식해서 에러
+# path = "c:\study\_data\ddarung/"    # 슬래시 역슬래시 상관없어
+# path = "c:\\study\\_data\\ddarung\\"  # 됨
+path = "'c:\\study\_data\\ddarung/"   # 섞어쓰기 되지만 가급적 비권장.
 
 train_csv = pd.read_csv(path + 'train.csv', index_col=0) # 행 = row
 print(train_csv)    
@@ -60,7 +65,8 @@ model.add(Dense(1))
 
 #3. 컴파일, 훈련
 model.compile(loss = 'mse', optimizer = 'adam')
-model.fit(x_train, y_train, epochs=1500)
+# mae (평균 절대 오차)
+model.fit(x_train, y_train, epochs=150)
 
 #4. 평가, 예측
 loss = model.evaluate(x_test, y_test)
@@ -76,3 +82,5 @@ print('rmse :', rmse)
 # RMSE(24-12-6-1) : 54.608454139862566
 # RMSE(32-16-1) : 54.645440724589285
 # RMSE(128-64-32-16-1) : 55.46981142379098
+
+# 열 = 컬럼 = 속성 = 특성 = feature = attribute
