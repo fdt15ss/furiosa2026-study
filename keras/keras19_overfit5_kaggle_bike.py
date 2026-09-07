@@ -36,7 +36,7 @@ y = train_csv['count']
 print(y)
 print(y.shape) # (10886,)
 
-x_train, x_test, y_train, y_test = train_test_split(x,y, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x,y, train_size=0.8, random_state=42)
 
 #2. 모델구성
 
@@ -52,7 +52,7 @@ model.add(Dense(1))
 EPOCHS = 500
 BATCH_SIZE = 32
 model.compile(loss = 'mse', optimizer = 'adam')
-model.fit(x_train, y_train, epochs = EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit(x_train, y_train, epochs = EPOCHS, batch_size=BATCH_SIZE, validation_split=0.125)
 
 #4. 평가, 예측
 loss = model.evaluate(x_test, y_test)
@@ -65,3 +65,27 @@ submission['count'] = y_submit
 print(submission)
 from datetime import datetime
 submission.to_csv(path + f'submit/submission_{datetime.now().strftime("%Y%m%d%H%M%S")}_e{EPOCHS}_b{BATCH_SIZE}.csv')
+
+
+print("========================== hist =========================")
+print(hist)
+print("========================== hist.history =========================")
+print(hist.history)
+print("========================== loss =========================")
+print(hist.history['loss'])
+print("========================== val_loss =========================")
+print(hist.history['val_loss'])
+print("=============================================================")
+
+import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+plt.figure(figsize=(9,6))
+plt.title('캐글 바이크 loss')
+plt.plot(hist.history['loss'], c = 'red', label = 'loss')
+plt.plot(hist.history['val_loss'], c = 'blue', label = 'val_loss')
+plt.xlabel('epochs')
+plt.ylabel('loss')
+plt.legend(loc = 'upper right')
+plt.grid()
+plt.show()
