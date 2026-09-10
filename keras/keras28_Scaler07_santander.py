@@ -96,7 +96,7 @@ acc_score = accuracy_score(y_test, y_pred_example)
 print('acc_score :', acc_score)
 
 y_pred = model.predict(test_csv)
-y_pred = np.round(y_pred)
+# y_pred = np.round(y_pred)
 
 submission_csv['target'] = y_pred
 
@@ -111,3 +111,4 @@ submission_csv.to_csv(path + f'submit/submission_{date}_p{PATIENCE}_b{BATCH_SIZE
 # acc_score(MinMaxScaler) : 0.8995
 # acc_score : 0.914475
 # acc_score : 0.91405
+# acc_score(반올림 안함, restore_best_weights=False) : 0.913
