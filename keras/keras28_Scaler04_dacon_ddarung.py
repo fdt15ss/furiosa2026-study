@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Dense
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, root_mean_squared_error
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 
 #1. 데이터
@@ -56,7 +56,10 @@ print(y.shape) # (1328,)
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, random_state=42)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
@@ -107,24 +110,15 @@ y_predict = model.predict(x_test)
 rmse = root_mean_squared_error(y_test, y_predict)
 print('rmse :', rmse)
 
-# loss : (3004.7978515625,)
-# rmse : 54.8160362131375
-# loss(스케일러 적용) : (2898.233154296875,)
-# rmse(스케일러 적용) : 53.83523852358721
-# loss(64*2 32*2 16*2 8*2 1, patience 20) : (2887.827392578125,)
-# rmse(64*2 32*2 16*2 8*2 1, patience 20) : 53.73850966822307
-# loss(test_csv 스케일러 적용) : (2887.907958984375,)
-# rmse(test_csv 스케일러 적용) : 53.739257794073765
-
 
 ###################### submission.csv 만들기 // count 컬럼에 값 넣어준다. ############################
-print(submission)
+# print(submission)
 y_submit = model.predict(test_csv)
 submission['count'] = y_submit
-print(submission)
-print(submission.shape)
+# print(submission)
+# print(submission.shape)
 
-submission.to_csv(path+ 'submit/' + 'submit_20260910_05.csv')
+submission.to_csv(path+ 'submit/' + 'submit_20260911_04.csv')
 # print("========================== hist =========================")
 # print(hist)
 # print("========================== hist.history =========================")
@@ -147,3 +141,23 @@ plt.ylabel('loss')
 plt.legend(loc='upper right')
 plt.grid()
 plt.show()
+
+
+# loss : (3004.7978515625,)
+# rmse : 54.8160362131375
+# loss(스케일러 적용) : (2898.233154296875,)
+# rmse(스케일러 적용) : 53.83523852358721
+# loss(64*2 32*2 16*2 8*2 1, patience 20) : (2887.827392578125,)
+# rmse(64*2 32*2 16*2 8*2 1, patience 20) : 53.73850966822307
+# loss(test_csv 스케일러 적용) : (2887.907958984375,)
+# rmse(test_csv 스케일러 적용) : 53.739257794073765
+# loss(StandardScaler 적용) : (2921.519287109375,)
+# rmse(StandardScaler 적용) : 54.05107885156537
+# loss : (2881.201416015625,)
+# rmse : 53.67682304364228
+
+# loss(MaxAbsScaler 적용) : (2959.37158203125,)
+# rmse(MaxAbsScaler 적용) : 54.40010486013108
+
+# loss(RobustScaler 적용) : (2948.711669921875,)
+# rmse(RobustScaler 적용) : 54.30203983423225

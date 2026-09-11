@@ -9,7 +9,7 @@ from keras.callbacks import EarlyStopping
 from keras.metrics import categorical_accuracy
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
 
 #1. 데이터
 datasets = fetch_covtype()
@@ -26,7 +26,9 @@ x_train, x_test, y_train, y_test = train_test_split(x, y,
                                                     stratify=y,
                                                     random_state = 333)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+scaler = MaxAbsScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
@@ -67,7 +69,7 @@ hist = model.fit(x_train, y_train,
           epochs = 2000,
           callbacks=[es],
           validation_split=0.2,
-          batch_size=4096
+          batch_size=1024
           )
 
 #4. 평가, 예측
@@ -84,5 +86,10 @@ print('acc :', acc)
 
 # loss : 0.1365, acc: 0.9502
 # acc : 0.95019925
-# loss(MinMaxScaler 적용) : 0.167, acc: 0.9354
-# acc(MinMaxScaler 적용) : 0.9353631
+# loss(MinMaxScaler 적용, 배치 4096) : 0.167, acc: 0.9354
+# acc(MinMaxScaler 적용, 배치 4096) : 0.9353631
+# loss(StandardScaler 적용, 배치 1024) : 0.1254, acc: 0.9559
+# acc(StandardScaler 적용, 배치 1024) : 0.9559306
+
+# loss(MaxAbsScaler 적용) : 0.1444, acc: 0.9449
+# acc(MaxAbsScaler 적용) : 0.9448723

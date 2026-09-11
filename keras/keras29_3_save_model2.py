@@ -1,12 +1,14 @@
+# 28-1 카피
 # R2 기준 0.55
 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 import numpy as np
 from sklearn.datasets import fetch_california_housing
 from keras.callbacks import EarlyStopping
+import time
 
 
 #1. 데이터
@@ -51,7 +53,7 @@ print(np.min(x_test),np.max(x_test))    # -0.0010638297872338498 1.0
 # exit()
 
 #2. 모델 구성
-print(x_train.shape)
+# print(x_train.shape)
 
 model = Sequential()
 model.add(Dense(16, input_dim=8))
@@ -59,13 +61,28 @@ model.add(Dense(12))
 model.add(Dense(8))
 model.add(Dense(1))
 
+# model.summary()
+
+path = './_save/keras29/'
+# model.save(path + 'keras29_1_save_model.keras')
+# model = load_model(path + 'keras29_1_save_model.keras') # 초기 가중치 상태
+# model.summary()
+
+# exit()
+
 #3. 컴파일, 훈련
 model.compile(loss = 'mse', optimizer ='adam')
 es = EarlyStopping(monitor='val_loss', patience=10, mode='min', verbose=1, restore_best_weights=True)
 
+start_time = time.time()
 hist = model.fit(x_train, y_train, epochs=100, validation_data=(x_val, y_val), validation_split =0.2, callbacks=[es])
+end_time = time.time()
+
+model.save(path + 'keras29_3_save_model.keras')
+
 
 #4. 평가, 예측
+print('총 시간 :',round(end_time - start_time, 3), '초')
 loss = model.evaluate(x_test, y_test)
 print('loss :', loss)
 y_predict = model.predict(x_test)

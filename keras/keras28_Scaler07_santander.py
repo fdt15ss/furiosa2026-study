@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import time
 from keras.callbacks import EarlyStopping
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 # path = 'C:/study/_data/kaggle_santander'
 path = './_data/kaggle_santander/'
@@ -35,7 +35,10 @@ print(np.unique(y, return_counts=True))
 x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=337,
                                                     stratify=y)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 test_csv = scaler.transform(test_csv)
@@ -65,12 +68,12 @@ model.compile(loss = 'binary_crossentropy',
 
 
 PATIENCE = 20
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 es = EarlyStopping(
     monitor='val_loss',
     mode = 'auto',
     patience=PATIENCE,
-    restore_best_weights=False,
+    restore_best_weights=True,
 )
 
 start_time = time.time()
@@ -108,7 +111,13 @@ submission_csv.to_csv(path + f'submit/submission_{date}_p{PATIENCE}_b{BATCH_SIZE
 
 # acc_score(softmax2) : 0.909425
 # acc_score(sigmoid) : 0.911525
-# acc_score(MinMaxScaler) : 0.8995
+# acc_score(MinMaxScaler,  acc: 0.8992 - loss: 0.3268 - val_acc: 0.9007 - val_loss: 0.3236 문제 발생) : 0.8995
 # acc_score : 0.914475
 # acc_score : 0.91405
 # acc_score(반올림 안함, restore_best_weights=False) : 0.913
+# acc_score(StandardScaler 적용) : 0.911625
+# acc_score(restore_best_weights=False) : 0.881575
+# acc_score(MaxAbsScaler 적용) : 0.907775
+# acc_score : 0.913525
+# acc_score(RobustScaler 적용) : 0.911875
+########################### Robust 여기까지함

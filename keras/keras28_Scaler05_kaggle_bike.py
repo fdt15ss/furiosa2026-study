@@ -6,7 +6,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 #1. 데이터
 path = './_data/kaggle_bike/'
@@ -39,7 +39,10 @@ print(y.shape) # (10886,)
 
 x_train, x_test, y_train, y_test = train_test_split(x,y, train_size=0.8, random_state=42)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 # print(test_csv[:10])
@@ -77,10 +80,10 @@ loss = model.evaluate(x_test, y_test)
 print('loss : ', loss)
 
 y_submit = model.predict(test_csv)
-print(y_submit)
+# print(y_submit)
 submission['count'] = y_submit
 
-print(submission)
+# print(submission)
 from datetime import datetime
 submission.to_csv(path + f'submit/submission_{datetime.now().strftime("%Y%m%d%H%M%S")}_e{EPOCHS}_b{BATCH_SIZE}.csv')
 
@@ -110,3 +113,8 @@ plt.show()
 
 # loss(얼리스타핑) :  22206.787109375
 # loss(MinMaxScaler 적용) :  21159.58984375
+# loss(StandardScaler 적용) :  21192.591796875
+# loss :  21744.703125
+# loss(MaxAbsScaler 적용 - 초기값이 많이 튀었던 모양) :  33055.34375
+# loss :  20985.083984375
+# loss(RobustScaler 적용) :  21496.267578125

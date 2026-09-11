@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
 
 
 #1. 데이터
@@ -26,9 +26,11 @@ print(y.shape)
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, shuffle=True, random_state=333, stratify=y)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+scaler = MaxAbsScaler()
 x_train = scaler.fit_transform(x_train)
-x_test = scaler.fit_transform(x_test)
+x_test = scaler.transform(x_test)
 
 #2. 모델구성
 model = Sequential()
@@ -81,3 +83,19 @@ print('acc :', acc)
 # loss(MinMaxScaler 적용) : 0.05554190278053284
 # acc(MinMaxScaler 적용) : 0.9722222089767456
 # acc(MinMaxScaler 적용) : 0.9722222222222222
+
+# loss(MinMaxScaler transform 문제없이 적용) : 0.31127727031707764
+# acc(MinMaxScaler transform 문제없이 적용) : 0.9166666865348816
+# acc(MinMaxScaler transform 문제없이 적용) : 0.9166666666666666
+
+# loss(StandardScaler 적용) : 0.17746201157569885
+# acc(StandardScaler 적용) : 0.9722222089767456
+# acc(StandardScaler 적용) : 0.9722222222222222
+
+# loss(restore_best_weights=False) : 0.06486202031373978
+# acc(restore_best_weights=False) : 0.9722222089767456
+# acc(restore_best_weights=False) : 0.9722222222222222
+
+# loss(MaxAbsScaler 적용) : 0.04019903391599655
+# acc(MaxAbsScaler 적용) : 0.9722222089767456
+# acc(MaxAbsScaler 적용) : 0.9722222222222222

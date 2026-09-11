@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 import time
 from keras.callbacks import EarlyStopping
 from sklearn.datasets import load_breast_cancer # 유방암 관련 데이터셋 불러오기
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 #1. 데이터
 datasets = load_breast_cancer()
@@ -38,7 +38,10 @@ x_train, x_test, y_train, y_test = train_test_split(
     stratify=y, # 분류 모델의 경우 넣어준다. 성능은 더 좋아질 수도 있다는 정도
 )
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
@@ -73,7 +76,7 @@ model.compile(loss = 'binary_crossentropy', optimizer= 'adam',
 es = EarlyStopping(
     monitor='val_loss',
     mode = 'min',
-    patience= 10,
+    patience= 20,
     restore_best_weights=True,
 
 )
@@ -93,13 +96,13 @@ print('loss :', loss)
 
 
 y_pred = model.predict(x_test)
-print(y_pred[:10])
+# print(y_pred[:10])
 # 예측 결과에 따라 0과 1로 나눔
 # y_pred = np.where(y_pred > 0.5, 1, 0) # prediction 결과를 0.5 기준으로 0 또는 1로 변환
 # print(y_pred[:10])
 
 y_pred = np.round(y_pred) # prediction 결과를 반올림하여 0 또는 1로 변환
-print(y_pred[:10])
+# print(y_pred[:10])
 
 
 from sklearn.metrics import accuracy_score
@@ -108,3 +111,7 @@ print('acc_score :', acc_score)
 
 # acc_score : 0.9415204678362573
 # acc_score(MinMaxScaler 적용) : 0.9532163742690059
+# acc_score(StandardScaler 적용) : 0.9590643274853801
+# acc_score(restore_best_weights=False) : 0.9532163742690059
+# acc_score(MaxAbsScaler 적용) : 0.9473684210526315
+# acc_score(RobustScaler 적용) : 0.9473684210526315

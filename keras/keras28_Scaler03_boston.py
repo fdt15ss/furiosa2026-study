@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.datasets import boston_housing
 from sklearn.model_selection import train_test_split
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 #1. 데이터
 (x_train, y_train),(x_val_test, y_val_test) = boston_housing.load_data()
@@ -14,7 +14,10 @@ x_val, x_test, y_val, y_test = train_test_split(x_val_test, y_val_test, train_si
 print(x_train.shape, x_test.shape) # (404, 13) (102, 13)
 print(y_train.shape, y_test.shape) # (404,) (102,)
 
-scaler = MinMaxScaler()
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_val = scaler.transform(x_val)
 x_test = scaler.transform(x_test)
@@ -54,10 +57,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 r2 = r2_score(y_test, y_predict)
 print('r2 :', r2)
 
-# loss(mse) :  23.67670440673828
-# r2 : 0.7155741314792282
-# loss(mse)(스케일러 적용) :  26.679344177246094
-# r2(스케일러 적용) : 0.582173716878061
+
 
 
 mse = mean_squared_error(y_test, y_predict)
@@ -70,15 +70,15 @@ def RMSE(y_test, y_predict):    # RMSE함수 정의
 rmse = RMSE(y_test, y_predict)
 print("RMSE : ", rmse)
 
-print("========================== hist =========================")
-print(hist)
-print("========================== hist.history =========================")
-print(hist.history)
-print("========================== loss =========================")
-print(hist.history['loss'])
-print("========================== val_loss =========================")
-print(hist.history['val_loss'])
-print("=============================================================")
+# print("========================== hist =========================")
+# print(hist)
+# print("========================== hist.history =========================")
+# print(hist.history)
+# print("========================== loss =========================")
+# print(hist.history['loss'])
+# print("========================== val_loss =========================")
+# print(hist.history['val_loss'])
+# print("=============================================================")
 
 import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = "Malgun Gothic"
@@ -92,3 +92,13 @@ plt.ylabel('loss')
 plt.legend(loc='upper right')
 plt.grid()
 plt.show()
+
+
+# loss(mse) :  23.67670440673828
+# r2 : 0.7155741314792282
+# loss(mse)(MinMax스케일러 적용) :  26.679344177246094
+# r2(MinMax스케일러 적용) : 0.582173716878061
+# loss(mse)(StandardScaler 적용) :  23.56396484375
+# r2(StandardScaler 적용) : 0.6309638217009929
+# r2(MaxAbsScaler 적용) : 0.6219666381903695
+# r2(RobustScaler 적용) : 0.6037485074780262

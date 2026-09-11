@@ -1,3 +1,4 @@
+# 28-1 카피
 # R2 기준 0.55
 
 from keras.models import Sequential
@@ -51,13 +52,20 @@ print(np.min(x_test),np.max(x_test))    # -0.0010638297872338498 1.0
 # exit()
 
 #2. 모델 구성
-print(x_train.shape)
+# print(x_train.shape)
 
 model = Sequential()
 model.add(Dense(16, input_dim=8))
 model.add(Dense(12))
 model.add(Dense(8))
 model.add(Dense(1))
+
+model.summary()
+
+path = './_save/keras29/'
+model.save(path + 'keras29_1_save_model.keras')
+
+exit()
 
 #3. 컴파일, 훈련
 model.compile(loss = 'mse', optimizer ='adam')
