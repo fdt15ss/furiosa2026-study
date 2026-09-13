@@ -24,11 +24,11 @@ print(y)
 print(np.unique(y)) # [0 1] -> 이진분류
 print(np.unique(y, return_counts=True)) # (array([0, 1]), array([212, 357]))
 # 0과 1의 개수가 몇개인지 찾아보기. - pandas
-print(pd.DataFrame(y).value_counts)
+print(pd.DataFrame(y).value_counts()) # pd.DataFrame(y).value_counts도 되긴 함 근데 나오는 게 좀 다름
 # 1 357
 # 2 212
 print("=============================================")
-print(pd.Series(y).value_counts)
+print(pd.Series(y).value_counts()) # .value_counts도 되긴 함 근데 나오는 게 좀 다름
 # 1 357
 # 2 212
 
