@@ -118,15 +118,17 @@ mcp = ModelCheckpoint(
 )
 
 start_time = time.time()
-model.fit(x_train, y_train, epochs= 1000, batch_size=32,
+model.fit(x_train, y_train, epochs= 100, batch_size=32,
           verbose=1,
         #   callbacks=[es, mcp],
-          callbacks=[es, ],
+        #   callbacks=[es, ],
           validation_split=0.3,
           )
 end_time = time.time()
 
 #4. 평가, 예측
+print('총 시간 :',round(end_time - start_time, 3), '초')
+
 loss = model.evaluate(x_test, y_test)
 print('loss :', loss)
 
@@ -155,3 +157,5 @@ print('acc_score :', acc_score)
 # acc_score(save) : 0.9473684210526315
 # acc_score(Dropout) : 0.935672514619883
 # acc_score(함수형) : 0.9532163742690059
+# 총 시간(gpu) : 6.922 초
+# 총 시간(cpu) : 9.218 초

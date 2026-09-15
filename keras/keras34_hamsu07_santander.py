@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Input
 from sklearn.model_selection import train_test_split
 import time
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -44,26 +44,49 @@ x_test = scaler.transform(x_test)
 test_csv = scaler.transform(test_csv)
 
 #2. 모델구성
-model = Sequential()
-model.add(Dense(512, input_dim=200, activation='relu'))
-model.add(Dense(512, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(128, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dropout(0.3))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+# model = Sequential()
+# model.add(Dense(512, input_dim=200, activation='relu'))
+# model.add(Dense(512, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dropout(0.3))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(8, activation='relu'))
+# model.add(Dense(8, activation='relu'))
+# model.add(Dense(1, activation='sigmoid'))
+
+input1 = Input(shape=(200,))
+dense2 = Dense(512, activation='relu')(input1)
+dense3 = Dense(512, activation='relu')(dense2)
+dense4 = Dense(256, activation='relu')(dense3)
+dense5 = Dense(256, activation='relu')(dense4)
+drop1 = Dropout(0.2)(dense5)
+dense6 = Dense(128, activation='relu')(drop1)
+dense7 = Dense(128, activation='relu')(dense6)
+drop2 = Dropout(0.2)(dense7)
+dense8 = Dense(64, activation='relu')(drop2)
+dense9 = Dense(64, activation='relu')(dense8)
+drop3 = Dropout(0.2)(dense9)
+dense10 = Dense(32, activation='relu')(drop3)
+dense11 = Dense(32, activation='relu')(dense10)
+drop4 = Dropout(0.3)(dense11)
+dense12 = Dense(16, activation='relu')(drop4)
+dense13 = Dense(16, activation='relu')(dense12)
+dense14 = Dense(8, activation='relu')(dense13)
+dense15 = Dense(8, activation='relu')(dense14)
+output1 = Dense(1, activation='relu')(dense15)
+model = Model(inputs = input1, outputs= output1)
+model.summary()
 
 #3. 컴파일, 훈련
 model.compile(loss = 'binary_crossentropy',
@@ -145,3 +168,4 @@ date = date.strftime("%Y%m%d_%H%M")
 ########################### Robust 여기까지함
 # acc_score(save) : 0.91165
 # acc_score(Dropout) : 0.907775
+# acc_score(함수형) : 0.90825

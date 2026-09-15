@@ -75,7 +75,7 @@ model.summary()
 
 
 #3. 컴파일, 훈련
-EPOCHS = 1500
+EPOCHS = 100
 BATCH_SIZE = 32
 model.compile(loss = 'mse', optimizer = 'adam')
 
@@ -104,14 +104,22 @@ mcp = ModelCheckpoint(
 
 )
 
+import time
+start_time = time.time()
+
 hist = model.fit(x_train, y_train,
                  epochs = EPOCHS,
                  batch_size=BATCH_SIZE,
                  validation_split=0.125,
                 #  callbacks=[es, mcp])
-                 callbacks=[es, ])
+                #  callbacks=[es, ]
+                 )
+end_time = time.time()
+
 
 #4. 평가, 예측
+print('총 시간 :',round(end_time - start_time, 3), '초')
+
 loss = model.evaluate(x_test, y_test)
 print('loss : ', loss)
 
@@ -157,3 +165,5 @@ plt.show()
 # loss(save) :  21264.408203125
 # loss(Dropout) :  22240.35546875
 # loss(함수형) :  21929.953125
+# 총 시간(gpu) : 57.99 초
+# 총 시간(cpu) : 31.184 초

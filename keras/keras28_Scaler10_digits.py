@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.callbacks import EarlyStopping
 from keras.metrics import categorical_accuracy
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 #1. 데이터
 datasets = load_digits()
@@ -27,7 +27,8 @@ x_train, x_test, y_train, y_test = train_test_split(
 
 # scaler = MinMaxScaler()
 # scaler = StandardScaler()
-scaler = MaxAbsScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
@@ -91,3 +92,7 @@ print('acc_categorical :', acc_categorical)
 # loss(MaxAbsScaler 적용, restore_best_weights=True) :  0.1736135333776474
 # acc(MaxAbsScaler 적용, restore_best_weights=True) :  0.9611111283302307
 # acc_categorical(MaxAbsScaler 적용, restore_best_weights=True) : 0.9611111
+
+# loss(RobustScaler 적용) :  0.40044844150543213
+# acc(RobustScaler 적용) :  0.9361110925674438
+# acc_categorical(RobustScaler 적용) : 0.9361111

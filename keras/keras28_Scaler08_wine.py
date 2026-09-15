@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
 
 #1. 데이터
@@ -28,7 +28,8 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, shuffl
 
 # scaler = MinMaxScaler()
 # scaler = StandardScaler()
-scaler = MaxAbsScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
@@ -99,3 +100,7 @@ print('acc :', acc)
 # loss(MaxAbsScaler 적용) : 0.04019903391599655
 # acc(MaxAbsScaler 적용) : 0.9722222089767456
 # acc(MaxAbsScaler 적용) : 0.9722222222222222
+
+# loss(RobustScaler 적용) : 0.18315111100673676
+# acc(RobustScaler 적용) : 0.9166666865348816
+# acc(RobustScaler 적용) : 0.9166666666666666

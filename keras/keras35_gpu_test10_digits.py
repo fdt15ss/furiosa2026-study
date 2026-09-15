@@ -108,10 +108,11 @@ mcp = ModelCheckpoint(
 start_time = time.time()
 
 hist = model.fit(x_train, y_train,
-                 epochs=1000, batch_size=128,
+                 epochs=100, batch_size=128,
                  validation_split=0.2,
                 #  callbacks=[es, mcp])
-                 callbacks=[es, ])
+                #  callbacks=[es, ]
+                 )
 end_time = time.time()
 
 
@@ -149,3 +150,5 @@ print('acc_categorical :', acc_categorical)
 # acc_categorical(save) : 0.9611111
 
 # acc_categorical(Dropout) : 0.98055553
+# 총 시간(gpu) : 7.04 초
+# 총 시간(cpu) : 11.916 초

@@ -2,11 +2,11 @@
 
 import numpy as np
 import pandas as pd
-from keras.models import Sequential
-from keras.layers import Dense
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Input
 from sklearn.model_selection import train_test_split
 import time
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
 
@@ -44,22 +44,49 @@ x_test = scaler.transform(x_test)
 test_csv = scaler.transform(test_csv)
 
 #2. 모델구성
-model = Sequential()
-model.add(Dense(512, input_dim=200, activation='relu'))
-model.add(Dense(512, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+# model = Sequential()
+# model.add(Dense(512, input_dim=200, activation='relu'))
+# model.add(Dense(512, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dropout(0.3))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(8, activation='relu'))
+# model.add(Dense(8, activation='relu'))
+# model.add(Dense(1, activation='sigmoid'))
+
+input1 = Input(shape=(200,))
+dense2 = Dense(512, activation='relu')(input1)
+dense3 = Dense(512, activation='relu')(dense2)
+dense4 = Dense(256, activation='relu')(dense3)
+dense5 = Dense(256, activation='relu')(dense4)
+drop1 = Dropout(0.2)(dense5)
+dense6 = Dense(128, activation='relu')(drop1)
+dense7 = Dense(128, activation='relu')(dense6)
+drop2 = Dropout(0.2)(dense7)
+dense8 = Dense(64, activation='relu')(drop2)
+dense9 = Dense(64, activation='relu')(dense8)
+drop3 = Dropout(0.2)(dense9)
+dense10 = Dense(32, activation='relu')(drop3)
+dense11 = Dense(32, activation='relu')(dense10)
+drop4 = Dropout(0.3)(dense11)
+dense12 = Dense(16, activation='relu')(drop4)
+dense13 = Dense(16, activation='relu')(dense12)
+dense14 = Dense(8, activation='relu')(dense13)
+dense15 = Dense(8, activation='relu')(dense14)
+output1 = Dense(1, activation='relu')(dense15)
+model = Model(inputs = input1, outputs= output1)
+model.summary()
 
 #3. 컴파일, 훈련
 model.compile(loss = 'binary_crossentropy',
@@ -68,7 +95,7 @@ model.compile(loss = 'binary_crossentropy',
 
 
 PATIENCE = 20
-BATCH_SIZE = 512
+BATCH_SIZE = 1024
 es = EarlyStopping(
     monitor='val_loss',
     mode = 'auto',
@@ -76,16 +103,36 @@ es = EarlyStopping(
     restore_best_weights=True,
 )
 
+import datetime
+date = datetime.datetime.now()
+date = date.strftime("%y%m%d_%H%M")
+
+save_path = "./_save/keras31/santander/"
+filename = '{epoch:04d}-{val_loss:.4f}.keras'
+filepath = "".join([save_path, 'k31_', date, "-", filename])
+
+
+mcp = ModelCheckpoint(
+    monitor = 'val_loss',
+    mode = 'auto',
+    save_best_only=True,
+    filepath = filepath,
+
+)
+
 start_time = time.time()
 model.fit(x_train, y_train,
-          epochs=1000,
+          epochs=50,
           batch_size=BATCH_SIZE,
           verbose=1,
-          callbacks=[es],
+        #   callbacks=[es, mcp],
+        #   callbacks=[es],
           validation_split=0.2)
-end_time = time.time() - start_time
+end_time = time.time()
 
 #4. 평가, 예측
+print('총 시간 :',round(end_time - start_time, 3), '초')
+
 loss, acc = model.evaluate(x_test, y_test)
 print('loss :', loss, 'acc :', acc)
 
@@ -107,7 +154,7 @@ from datetime import datetime
 date = datetime.now()
 date = date.strftime("%Y%m%d_%H%M")
 
-submission_csv.to_csv(path + f'submit/submission_{date}_p{PATIENCE}_b{BATCH_SIZE}_acc{acc_score:.4f}.csv')
+# submission_csv.to_csv(path + f'submit/submission_{date}_p{PATIENCE}_b{BATCH_SIZE}_acc{acc_score:.4f}.csv')
 
 # acc_score(softmax2) : 0.909425
 # acc_score(sigmoid) : 0.911525
@@ -120,3 +167,9 @@ submission_csv.to_csv(path + f'submit/submission_{date}_p{PATIENCE}_b{BATCH_SIZE
 # acc_score(MaxAbsScaler 적용) : 0.907775
 # acc_score : 0.913525
 # acc_score(RobustScaler 적용) : 0.911875
+########################### Robust 여기까지함
+# acc_score(save) : 0.91165
+# acc_score(Dropout) : 0.907775
+# acc_score(함수형) : 0.90825
+# 총 시간(gpu) : 31.132 초
+# 총 시간(cpu) : 85.482 초

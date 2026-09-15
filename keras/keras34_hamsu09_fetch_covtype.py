@@ -3,8 +3,8 @@ from sklearn.datasets import fetch_covtype
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Input
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.metrics import categorical_accuracy
 from sklearn.metrics import accuracy_score
@@ -41,23 +41,42 @@ print(y_cat[:10])
 print(y_test[:10])
 # exit()
 #2. 모델구성
-model = Sequential()
-model.add(Dense(256, input_dim=54, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(128, activation='relu'))
-model.add(Dense(128, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dropout(0.3))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(16, activation='relu'))
-model.add(Dense(7, activation='softmax'))
+# model = Sequential()
+# model.add(Dense(256, input_dim=54, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dense(256, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dense(128, activation='relu'))
+# model.add(Dropout(0.2))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dense(64, activation='relu'))
+# model.add(Dropout(0.3))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(7, activation='softmax'))
+
+input1 = Input(shape=(54,))
+dense1 = Dense(256, activation='relu')(input1)
+dense2 = Dense(256, activation='relu')(dense1)
+dense3 = Dense(256, activation='relu')(dense2)
+drop1 = Dropout(0.2)(dense3)
+dense4 = Dense(128, activation='relu')(drop1)
+dense5 = Dense(128, activation='relu')(dense4)
+dense6 = Dense(128, activation='relu')(dense5)
+drop2 = Dropout(0.2)(dense6)
+dense7 = Dense(64, activation='relu')(drop2)
+dense8 = Dense(64, activation='relu')(dense7)
+drop3 = Dropout(0.2)(dense8)
+dense9 = Dense(32, activation='relu')(drop3)
+dense10 = Dense(32, activation='relu')(dense9)
+dense11 = Dense(16, activation='relu')(dense10)
+dense12 = Dense(16, activation='relu')(dense11)
+output1 = Dense(7, activation='softmax')(dense12)
+model = Model(inputs = input1, outputs = output1)
 
 #3. 컴파일, 훈련
 model.compile(loss = 'categorical_crossentropy', optimizer='adam', metrics=['acc'])
