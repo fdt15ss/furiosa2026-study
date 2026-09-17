@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input
+from keras.layers import Dense, Dropout, Input, Conv2D, Flatten, MaxPooling2D, GlobalAveragePooling2D
 from sklearn.model_selection import train_test_split
 import time
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -45,6 +45,9 @@ scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
+x_train = x_train.reshape(-1, 10, 3, 1)
+x_test = x_test.reshape(-1, 10, 3, 1)
+
 
 print(np.unique(y_train, return_counts=True))
 # (array([0, 1]), array([159, 239]))
@@ -57,7 +60,23 @@ print(x_train.shape, x_test.shape)  # (398, 30) (171, 30)
 print(y_train.shape, y_test.shape)  # (398,) (171,)
 
 #2. 모델구성
-# model = Sequential()
+model = Sequential()
+model.add(Conv2D(16,(2,2), input_shape = x_train[0].shape, activation='relu', padding='same'))
+model.add(Conv2D(32,(2,2), activation='relu', padding='same'))
+model.add(MaxPooling2D((2,2)))
+model.add(Dropout(0.2))
+
+model.add(GlobalAveragePooling2D())
+model.add(Dense(40, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(40, activation='relu'))
+model.add(Dropout(0.3))
+model.add(Dense(40, activation='relu'))
+model.add(Dense(40, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(40, activation='relu'))
+model.add(Dense(40, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 # model.add(Dense(30, input_dim=30, activation='relu'))
 # model.add(Dense(40, activation='relu'))
 # model.add(Dropout(0.2))
@@ -71,19 +90,19 @@ print(y_train.shape, y_test.shape)  # (398,) (171,)
 # model.add(Dense(1, activation='sigmoid'))
 
 #2-2. 함수형 모델
-input1 = Input(shape= (30,))
-dense1 = Dense(30, activation='relu')(input1)
-dense2 = Dense(40, activation='relu')(dense1)
-drop1 = Dropout(0.2)(dense2)
-dense3 = Dense(40, activation='relu')(drop1)
-drop2 = Dropout(0.3)(dense3)
-dense4 = Dense(40, activation='relu')(drop2)
-dense5 = Dense(40, activation='relu')(dense4)
-drop3 = Dropout(0.5)(dense5)
-dense6 = Dense(40, activation='relu')(drop3)
-dense7 = Dense(40, activation='relu')(dense6)
-output1 = Dense(1, activation='sigmoid')(dense7)
-model = Model(inputs = input1, outputs = output1)
+# input1 = Input(shape= (30,))
+# dense1 = Dense(30, activation='relu')(input1)
+# dense2 = Dense(40, activation='relu')(dense1)
+# drop1 = Dropout(0.2)(dense2)
+# dense3 = Dense(40, activation='relu')(drop1)
+# drop2 = Dropout(0.3)(dense3)
+# dense4 = Dense(40, activation='relu')(drop2)
+# dense5 = Dense(40, activation='relu')(dense4)
+# drop3 = Dropout(0.5)(dense5)
+# dense6 = Dense(40, activation='relu')(drop3)
+# dense7 = Dense(40, activation='relu')(dense6)
+# output1 = Dense(1, activation='sigmoid')(dense7)
+# model = Model(inputs = input1, outputs = output1)
 
 #3. 컴파일, 훈련
 model.compile(loss = 'binary_crossentropy', optimizer= 'adam',
@@ -121,8 +140,8 @@ start_time = time.time()
 model.fit(x_train, y_train, epochs= 100, batch_size=32,
           verbose=1,
         #   callbacks=[es, mcp],
-        #   callbacks=[es, ],
-          validation_split=0.3,
+          callbacks=[es, ],
+          validation_split=0.2,
           )
 end_time = time.time()
 
@@ -159,3 +178,6 @@ print('acc_score :', acc_score)
 # acc_score(함수형) : 0.9532163742690059
 # 총 시간(gpu) : 6.922 초
 # 총 시간(cpu) : 9.218 초
+
+#총 시간(CNN-3060) : 6.995 초
+# acc_score(CNN-3060) : 0.9415204678362573

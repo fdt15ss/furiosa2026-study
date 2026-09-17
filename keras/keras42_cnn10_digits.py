@@ -4,7 +4,7 @@ from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input
+from keras.layers import Dense, Dropout, Input, Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.metrics import categorical_accuracy
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
@@ -32,8 +32,38 @@ scaler = MaxAbsScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
+x_train = x_train.reshape(-1, 8, 4, 2)
+x_test = x_test.reshape(-1, 8, 4, 2)
+
 #2. 모델구성
-# model = Sequential()
+model = Sequential()
+model.add(Conv2D(64, (2,2), input_shape=(8,4,2), activation='relu', padding='same'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.2))
+model.add(Conv2D(128, (2,2), activation='relu', padding='same'))
+model.add(GlobalAveragePooling2D())
+
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(128, activation='relu'))
+model.add(Dense(128, activation='relu'))
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(64, activation='relu'))
+model.add(Dense(64, activation='relu'))
+model.add(Dropout(0.3))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(10, activation='softmax'))
+model.summary()
+
 # model.add(Dense(256, input_dim=64, activation='relu'))
 # model.add(Dense(256, activation='relu'))
 # model.add(Dense(256, activation='relu'))
@@ -54,27 +84,27 @@ x_test = scaler.transform(x_test)
 # model.add(Dense(16, activation='relu'))
 # model.add(Dense(10, activation='softmax'))
 
-input1 = Input(shape=(64,))
-dense1 = Dense(256, activation='relu')(input1)
-dense2 = Dense(256, activation='relu')(dense1)
-dense3 = Dense(256, activation='relu')(dense2)
-drop1 = Dropout(0.2)(dense3)
-dense4 = Dense(128, activation='relu')(drop1)
-dense5 = Dense(128, activation='relu')(dense4)
-dense6 = Dense(128, activation='relu')(dense5)
-drop2 = Dropout(0.2)(dense6)
-dense7 = Dense(64, activation='relu')(drop2)
-dense8 = Dense(64, activation='relu')(dense7)
-drop3 = Dropout(0.3)(dense8)
-dense9 = Dense(32, activation='relu')(drop3)
-dense10 = Dense(32, activation='relu')(dense9)
-dense11 = Dense(32, activation='relu')(dense10)
-dense12 = Dense(32, activation='relu')(dense11)
-drop4 = Dropout(0.5)(dense12)
-dense13 = Dense(16, activation='relu')(drop4)
-dense14 = Dense(16, activation='relu')(dense13)
-output1 = Dense(10, activation='softmax')(dense14)
-model = Model(inputs = input1, outputs= output1)
+# input1 = Input(shape=(64,))
+# dense1 = Dense(256, activation='relu')(input1)
+# dense2 = Dense(256, activation='relu')(dense1)
+# dense3 = Dense(256, activation='relu')(dense2)
+# drop1 = Dropout(0.2)(dense3)
+# dense4 = Dense(128, activation='relu')(drop1)
+# dense5 = Dense(128, activation='relu')(dense4)
+# dense6 = Dense(128, activation='relu')(dense5)
+# drop2 = Dropout(0.2)(dense6)
+# dense7 = Dense(64, activation='relu')(drop2)
+# dense8 = Dense(64, activation='relu')(dense7)
+# drop3 = Dropout(0.3)(dense8)
+# dense9 = Dense(32, activation='relu')(drop3)
+# dense10 = Dense(32, activation='relu')(dense9)
+# dense11 = Dense(32, activation='relu')(dense10)
+# dense12 = Dense(32, activation='relu')(dense11)
+# drop4 = Dropout(0.5)(dense12)
+# dense13 = Dense(16, activation='relu')(drop4)
+# dense14 = Dense(16, activation='relu')(dense13)
+# output1 = Dense(10, activation='softmax')(dense14)
+# model = Model(inputs = input1, outputs= output1)
 
 #3. 컴파일, 훈련
 model.compile(loss = 'categorical_crossentropy',
@@ -108,10 +138,10 @@ mcp = ModelCheckpoint(
 start_time = time.time()
 
 hist = model.fit(x_train, y_train,
-                 epochs=100, batch_size=128,
+                 epochs=1000, batch_size=128,
                  validation_split=0.2,
                 #  callbacks=[es, mcp])
-                #  callbacks=[es, ]
+                 callbacks=[es, ]
                  )
 end_time = time.time()
 
@@ -152,3 +182,8 @@ print('acc_categorical :', acc_categorical)
 # acc_categorical(Dropout) : 0.98055553
 # 총 시간(gpu) : 7.04 초
 # 총 시간(cpu) : 11.916 초
+
+# 총 시간(CNN-3060) : 11.464 초
+# loss(CNN-3060) :  1.0304656028747559
+# acc(CNN-3060) :  0.7138888835906982
+# acc_categorical(CNN-3060) : 0.7138889

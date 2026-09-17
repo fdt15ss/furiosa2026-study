@@ -4,7 +4,7 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 from keras.utils import to_categorical
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input
+from keras.layers import Dense, Dropout, Input, Conv2D, Flatten, MaxPooling2D, GlobalAveragePooling2D
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler
@@ -17,7 +17,7 @@ print(datasets)
 x = datasets.data
 y = datasets.target
 
-print('x.shape :', x.shape)
+print('x.shape :', x.shape) # x.shape : (178, 13)
 print(np.unique(y, return_counts=True))
 
 y = to_categorical(y)
@@ -31,9 +31,27 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, shuffl
 scaler = MaxAbsScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
+x_train = x_train.reshape(-1, 13, 1, 1)
+x_test = x_test.reshape(-1, 13, 1, 1)
 
+# exit()
 #2. 모델구성
-# model = Sequential()
+model = Sequential()
+model.add(Conv2D(8, (2,1), input_shape=(13,1,1), activation='relu', padding='same'))
+model.add(Conv2D(16, (2, 1), activation='relu', padding='same'))
+model.add(GlobalAveragePooling2D())
+
+model.add(Dense(64, activation='relu'))
+model.add(Dense(64, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.3))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(3, activation='softmax'))
+
 # model.add(Dense(128, input_dim=13, activation='relu'))
 # model.add(Dense(128, activation='relu'))
 # model.add(Dense(128, activation='relu'))
@@ -49,22 +67,22 @@ x_test = scaler.transform(x_test)
 # model.add(Dense(8, activation='relu'))
 # model.add(Dense(3, activation='softmax'))
 
-input1 = Input(shape=(13,))
-dense1 = Dense(128, activation='relu')(input1)
-dense2 = Dense(128, activation='relu')(dense1)
-dense3 = Dense(128, activation='relu')(dense2)
-drop1 = Dropout(0.2)(dense3)
-dense4 = Dense(64, activation='relu')(drop1)
-dense5 = Dense(64, activation='relu')(dense4)
-drop2 = Dropout(0.2)(dense5)
-dense6 = Dense(32, activation='relu')(drop2)
-dense7 = Dense(32, activation='relu')(dense6)
-drop2 = Dropout(0.3)(dense7)
-dense8 = Dense(16, activation='relu')(drop2)
-dense9 = Dense(16, activation='relu')(dense8)
-dense10 = Dense(8, activation='relu')(dense9)
-output1 = Dense(3, activation='softmax')(dense10)
-model = Model(inputs= input1, outputs = output1)
+# input1 = Input(shape=(13,))
+# dense1 = Dense(128, activation='relu')(input1)
+# dense2 = Dense(128, activation='relu')(dense1)
+# dense3 = Dense(128, activation='relu')(dense2)
+# drop1 = Dropout(0.2)(dense3)
+# dense4 = Dense(64, activation='relu')(drop1)
+# dense5 = Dense(64, activation='relu')(dense4)
+# drop2 = Dropout(0.2)(dense5)
+# dense6 = Dense(32, activation='relu')(drop2)
+# dense7 = Dense(32, activation='relu')(dense6)
+# drop2 = Dropout(0.3)(dense7)
+# dense8 = Dense(16, activation='relu')(drop2)
+# dense9 = Dense(16, activation='relu')(dense8)
+# dense10 = Dense(8, activation='relu')(dense9)
+# output1 = Dense(3, activation='softmax')(dense10)
+# model = Model(inputs= input1, outputs = output1)
 
 #3. 컴파일, 훈련
 model.compile(loss = 'categorical_crossentropy', optimizer='adam', metrics=['acc'])
@@ -96,10 +114,10 @@ mcp = ModelCheckpoint(
 import time
 start_time = time.time()
 
-hist = model.fit(x_train, y_train, epochs=100, validation_split=0.2,
+hist = model.fit(x_train, y_train, epochs=1000, validation_split=0.2,
                  batch_size=8,
                 #  callbacks=[es, mcp],
-                #  callbacks=[es],
+                 callbacks=[es],
                  )
 end_time = time.time()
 
@@ -154,3 +172,8 @@ print('acc :', acc)
 # acc : 0.9444444444444444
 # 총 시간(gpu) : 7.053 초
 # 총 시간(cpu) : 9.161 초
+
+# 총 시간 : 10.71 초
+# loss(CNN-3060) : 0.36754310131073
+# acc(CNN-3060) : 0.8611111044883728
+# acc(CNN-3060) : 0.8611111111111112
