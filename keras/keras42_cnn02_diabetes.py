@@ -1,0 +1,154 @@
+"""
+03 boston
+04 dacom_ddarung
+05 kaggle bike
+06 cancer
+07 santander
+08 wine
+09 fetch_covtype
+10 digits
+"""
+
+# R2 기준 0.62 이상
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Input, Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from sklearn.datasets import load_diabetes
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
+import time
+
+#1. 데이터
+datasets = load_diabetes()
+x = datasets.data
+y = datasets.target
+x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, random_state=42)
+# scaler = MinMaxScaler()
+# scaler = StandardScaler()
+# scaler = MaxAbsScaler()
+scaler = RobustScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+x_train = x_train.reshape(-1,5,2,1)
+x_test = x_test.reshape(-1,5,2,1)
+
+#2. 모델구성
+print(x_train.shape) # (331, 10)
+print(y_test.shape)
+model = Sequential()
+model.add(Conv2D(8, (2,2), input_shape=x_train[0].shape, activation = "relu", padding="same"))
+model.add(Conv2D(16, (2,1), activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.2))
+model.add(GlobalAveragePooling2D())
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dropout(0.3))
+model.add(Dense(10, activation='relu'))
+model.add(Dense(1))
+# model.add(Dense(20, input_dim=10))
+# model.add(Dropout(0.2))
+# model.add(Dense(16))
+# model.add(Dropout(0.3))
+# model.add(Dense(10))
+# model.add(Dense(1))
+
+#2-2. 모델구성
+# input1 = Input(shape=(10,))
+# dense1 = Dense(20)(input1)
+# drop1 = Dropout(0.2)(dense1)
+# dense2 = Dense(16)(drop1)
+# drop2 = Dropout(0.3)(dense2)
+# dense3 = Dense(10)(drop2)
+# output1 = Dense(1)(dense3)
+# model = Model(inputs=input1, outputs=output1)
+# model.summary()
+
+
+#3. 컴파일, 훈련
+model.compile(loss = 'mse', optimizer = 'adam')
+
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+es = EarlyStopping(
+    monitor='val_loss',
+    mode='auto',
+    patience=20,
+    restore_best_weights=True,
+)
+
+import datetime
+date = datetime.datetime.now()
+date = date.strftime("%y%m%d_%H%M")
+
+path = "./_save/keras33/diabetes/"
+filename = '{epoch:04d}-{val_loss:.4f}.keras'
+filepath = "".join([path, 'k33_', date, "-", filename])
+
+
+mcp = ModelCheckpoint(
+    monitor = 'val_loss',
+    mode = 'auto',
+    save_best_only=True,
+    filepath = filepath,
+
+)
+start_time = time.time()
+hist = model.fit(x_train, y_train, epochs = 1000, validation_split=0.125,
+                 callbacks=[es]
+                )
+end_time = time.time()
+
+
+#4 평가, 예측
+print('총 시간 :',round(end_time - start_time, 3), '초')
+loss = model.evaluate(x_test, y_test)
+print('loss :', loss)
+y_predict = model.predict(x_test)
+r2 = r2_score(y_test, y_predict)
+print('r2 :', r2)
+
+# print("========================= hist =========================")
+# print(hist)
+# print("========================= hist.history =======================")
+# print(hist.history)
+# print("========================= hist.history['loss'] =======================")
+# print(hist.history['loss'])
+# print("========================= hist.history['val_loss'] =======================")
+# print(hist.history['val_loss'])
+
+import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'Malgun Gothic'
+plt.rcParams['axes.unicode_minus'] = False
+plt.figure(figsize=(9, 6))
+plt.plot(hist.history['loss'], c='red', label='loss')
+plt.plot(hist.history['val_loss'], c='blue', label='val_loss')
+plt.title('당뇨병 Loss')
+plt.xlabel('epochs')
+plt.ylabel('loss')
+plt.legend(loc='upper right')
+plt.grid()
+plt.show()
+
+# r2(20-10-1) : 0.5189658962934192
+# r2(20-15-10-1) : 0.394818920018537
+# r2(20-16-10-1) : 0.526455363169092
+# r2(24-20-8-1) : 0.4379119991942728
+# r2(24-12-8-1) : 0.43607822960854803
+# r2(20-12-8-1) : 0.43489047037394446
+# r2(20-16-10-1) : 0.42782492506749203
+# r2(MinMaxScaler 적용) : 0.44209446584642864
+# r2(StandardScaler 적용) : 0.4417559147428828
+# r2(MaxAbsScaler 적용) : 0.43739345360832504
+# r2(RobustScaler 적용) : 0.4139224277181687
+# r2(save) : 0.4269347190916365
+# r2(드롭아웃) : 0.41016588289174527
+# r2(함수형) : 0.3879205255812366
+
+# 총 시간(gpu) : 4.376 초
+# 총 시간(cpu) : 6.794 초
+
+# Epoch 117/1000
+# 총 시간 : 7.961 초
+# loss : 4249.0283203125
+# r2 : 0.19801695314951873
