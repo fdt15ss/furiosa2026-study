@@ -184,4 +184,10 @@ _save/**
 /_data/brain_npy/**
 /_data/kaggle_cat_dog_npy/**
 /_data/archive.zip
-
+*.npy
+/_data/horse-human_npy/**
+/_data/rps_npy/**
+/_data/image/horse-human/**
+/_data/image/rps/**
+/_data/image/men_women/**
+/_data/image/pic.jpg

@@ -1,6 +1,3 @@
-# 실습
-# 맹그러봐!!!
-
 # https://drive.google.com/drive/folders/1XnXBR2rdrHf9GLEgMyDFq9Ellp5DeX2P
 
 import numpy as np
@@ -12,6 +9,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import time
 from datetime import datetime
 import my_util
+import pandas as pd
 
 # train_datagen = ImageDataGenerator(
 #     rescale=1./255,
@@ -58,20 +56,22 @@ import my_util
 # y_train = xy_train[0][1]
 # x_test = xy_test[0][0]
 # y_test = xy_test[0][1]
-path = './_data/kaggle_cat_dog_npy/'
+npy_path = './_data/horse-human_npy/'
 
-x_train = np.load(path + 'keras45_kaggle_cat_dog_x_train.npy')
-y_train = np.load(path + 'keras45_kaggle_cat_dog_y_train.npy')
-x_test = np.load(path + 'keras45_kaggle_cat_dog_x_test.npy')
-y_test = np.load(path + 'keras45_kaggle_cat_dog_y_test.npy')
+x_train = np.load(npy_path + 'keras46_horse-human_x_train.npy')
+y_train = np.load(npy_path + 'keras46_horse-human_y_train.npy')
+x_test = np.load(npy_path + 'keras46_horse-human_x_test.npy')
+y_test = np.load(npy_path + 'keras46_horse-human_y_test.npy')
 
 print(x_train.shape, y_train.shape) # 
 print(x_test.shape, y_test.shape)   # 
 
+
+
 # exit()
 #2. 모델구성
 # 실습 : "맹그러봐!!"
-# acc 0.77
+# acc 1.0
 
 model = Sequential()
 model.add(Conv2D(32, (4,4), input_shape=(x_train[0].shape), activation='relu'))
@@ -92,12 +92,12 @@ model.add(Dropout(0.2))
 # model.add(Dense(16, activation='relu'))
 model.add(Dense(16, activation='relu'))
 model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(2, activation='softmax'))
 
 model.summary()
 # exit()
 #3 컴파일, 훈련
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 
 es = EarlyStopping(
     monitor = 'val_loss',
@@ -106,7 +106,7 @@ es = EarlyStopping(
     restore_best_weights=True,
 )
 
-save_path = './_save/cat_dog/' + datetime.now().strftime('%Y%m%d_%H%M%S')+ '_{epoch:04d}-{val_loss:.4f}.keras'
+save_path = './_save/horse-human/' + datetime.now().strftime('%Y%m%d_%H%M%S')+ '_{epoch:04d}-{val_loss:.4f}.keras'
 mcp = ModelCheckpoint(
     filepath = save_path,
     monitor = 'val_loss',
@@ -120,9 +120,11 @@ start_time = time.time()
 history = model.fit(
     x_train, y_train,
     batch_size = BATCH_SIZE, # 1024 oom, 128 oom, 64 느림, 32 느려짐,
-    epochs = 500,
+    epochs = 1500,
     validation_split=0.2,
     callbacks=[es, mcp],
+    # callbacks=[es, ],
+    
 
 )
 end_time = time.time()
@@ -144,10 +146,9 @@ my_util.record_model_csv(
     test_loss = result[0],
     sub_score = result[1],
     train_ration = 0,
-    csv_file_path="cat_dog.csv"
+    csv_file_path="horse-human.csv"
 )
 
-# my_util.leaveTop(path=save_path, prefix=datetime.now().strftime('%Y%m%d_%H%M%S'), subfix=".keras", count=5, mode="min")
 
 # Epoch 85/1500
 # 걸린시간 :  1408.079 초
