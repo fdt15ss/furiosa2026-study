@@ -9,6 +9,8 @@ from keras.layers import Conv2D, Dense, Dropout, Flatten
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import OneHotEncoder
 from keras.callbacks import EarlyStopping
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import my_util
 
 
 #1. 데이터
@@ -22,11 +24,51 @@ from keras.callbacks import EarlyStopping
 # print(np.max(x_train),np.min(x_train)) #255 0
 # print(np.max(x_test),np.min(x_test)) #255 0
 
+# 데이터 증폭
+datagen = ImageDataGenerator(
+    #증폭 변환하는 파라미터들
+    rescale=1./255,
+    horizontal_flip=True,   # 좌우 반전
+    # vertical_flip=True,     # 상하 반전
+    width_shift_range= 0.1, # 평형 이동
+    height_shift_range=0.1, # 수직 이동
+    rotation_range= 20,      # 각도 조절
+    zoom_range=0.1,         #
+    # shear_range=0.7,        # 좌표 하나를 고정하고 다른 좌표들을 이동
+    fill_mode="nearest",
+)
+
+augment_size = 40000
+
+
+randidx = np.random.randint(x_train.shape[0],size=augment_size)
+
+x_augmented = x_train[randidx].copy()
+y_augmented = y_train[randidx].copy()
+
+x_augmented = datagen.flow(
+    x_augmented.reshape(x_augmented.shape[0],x_augmented.shape[1],x_augmented.shape[2],1),
+    y_augmented,
+    batch_size=augment_size,
+    shuffle=False,
+).next()[0]
+
 # 스케일링 1(Minmax)
-x_train = x_train/255.
-x_test = x_test/255.
+# x_train = x_train/255.
+# x_test = x_test/255.
 # print(np.max(x_train),np.min(x_train))    #1.0 0.0
 # print(np.max(x_test),np.min(x_test))      #1.0 0.0
+
+x_train = x_train.reshape(-1,x_train.shape[1],x_train.shape[2],1)
+x_test = x_test.reshape(-1,x_train.shape[1],x_train.shape[2],1)
+
+x_train = np.concatenate((x_train/255.,x_augmented))
+y_train = np.concatenate((y_train,y_augmented))
+
+x_test = x_test/255.
+
+print(np.unique(y_train, return_counts=True))
+# exit()
 
 # 스케일링 2(MaxAbs)
 # x_train = (x_train-127.5)/127.5
@@ -68,17 +110,17 @@ model.compile(loss = "categorical_crossentropy", optimizer = "adam", metrics=["a
 
 es = EarlyStopping(
     monitor = 'val_loss', mode = "min", 
-    patience = 30, restore_best_weights= True, 
+    patience = 20, restore_best_weights= True, 
 )
 
-batch_size = 64
+BATCH_SIZE = 64
 start_time = time.time()
 
 history = model.fit(x_train,y_train,
-                    verbose=2,
-                    epochs=200,
-                    batch_size=batch_size,
-                    validation_split=0.3,
+                    verbose=1,
+                    epochs=2000,
+                    batch_size=BATCH_SIZE,
+                    validation_split=0.2,
                     callbacks = [es])
 
 train_time = time.time() - start_time
@@ -87,7 +129,7 @@ train_time = time.time() - start_time
 #4. 평가 예측
 print('훈련 시간 : ', round(train_time, 3), '초')
 
-loss = model.evaluate(x_test,y_test)
+loss, acc_eval = model.evaluate(x_test,y_test)
 
 y_pred = model.predict(x_test)
 
@@ -97,3 +139,16 @@ acc = accuracy_score(y_test,y_pred)
 print(acc)
 # 훈련 시간 :  146.9895269870758
 # 0.9879
+
+my_util.record_model_csv(
+    model = model,
+    data_shape = x_train.shape,
+    random_num = 0,
+    batch_size = BATCH_SIZE,
+    history = history,
+    training_time = train_time,
+    test_loss = loss,
+    sub_score = acc_eval,
+    train_ration = 0,
+    csv_file_path="mnist.csv"
+)
