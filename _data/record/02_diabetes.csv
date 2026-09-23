@@ -1,0 +1,4 @@
+﻿time,pyfile,data_shape,random_num,model,model_structure,loss,optimizer,learning_rate,epochs,batch_size,train_second,first_loss,last_loss,test_loss,sub_score,train_ration,total_params
+2026-09-23 10:00:29,keras52_optimizer02_diabetes.py,"(353, 10)",42,sequential,Dense 20 -> Dropout (0.2) -> Dense 16 -> Dropout (0.3) -> Dense 10 -> 1,mse,Adam,,282,256,7.152,25554.310546875,3688.22802734375,3304.974609375,0.3762023918677879,0,737
+2026-09-23 14:59:52,keras53_ReduceLR02_diabetes.py,"(353, 10)",42,sequential,Dense 20 -> Dropout (0.2) -> Dense 16 -> Dropout (0.3) -> Dense 10 -> 1,mse,Adam,3.125000148429535e-05,174,256,4.773,25609.794921875,3756.195556640625,3326.54736328125,0.37213060247233,0,737
+2026-09-23 15:05:49,keras53_ReduceLR02_diabetes.py,"(353, 10)",42,sequential,Dense 20 -> Dropout (0.2) -> Dense 16 -> Dropout (0.3) -> Dense 10 -> 1,mse,Adam,3.906250185536919e-06,210,256,5.599,25664.849609375,3760.150390625,3348.5595703125,0.36797584662614835,0,737
