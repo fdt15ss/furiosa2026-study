@@ -53,7 +53,7 @@ model.add(Dense(3, activation='softmax'))
 from keras.optimizers import Adam
 # learning_rate = 0.01
 # learning_rate = 0.001     # 디폴트
-learning_rate = 0.0001
+learning_rate = 0.0005
 # learning_rate = 0.005
 # learning_rate = 0.05
 # learning_rate = 0.009

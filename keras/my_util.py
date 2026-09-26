@@ -443,7 +443,7 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
 
     csv_file_path = (
-        "C:/study/_data/record/"
+        "./_data/record/"
         + csv_file_path
     )
 

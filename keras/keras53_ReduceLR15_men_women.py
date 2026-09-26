@@ -8,7 +8,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Conv2D, Flatten, Dropout, Input
 from keras.layers import MaxPooling2D, GlobalAveragePooling2D
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import time
 from datetime import datetime
 import my_util
@@ -71,81 +71,88 @@ print(pd.DataFrame(y_train).value_counts())
 # 실습 : "맹그러봐!!"
 # acc 1.0
 
-# model = Sequential()
-# model.add(Conv2D(32, (3,3), input_shape=(x_train[0].shape), activation='relu'))
-# model.add(Conv2D(64, (3,3), activation='relu'))
-# model.add(MaxPooling2D(2,2))
-# model.add(Dropout(0.2))
-# model.add(Conv2D(64, (2,2), activation='relu'))
-# model.add(MaxPooling2D(2,2))
-# model.add(Dropout(0.2))
-# model.add(Conv2D(64,(2,2), activation='relu'))
-# model.add(MaxPooling2D(2,2))
-# model.add(Dropout(0.3))
-# model.add(Conv2D(128,(2,2), activation='relu'))
-# model.add(MaxPooling2D(2,2))
-# model.add(Dropout(0.3))
-# model.add(Conv2D(128,(2,2), activation='relu'))
-# model.add(GlobalAveragePooling2D())
-# # model.add(Flatten())
+model = Sequential()
+model.add(Conv2D(32, (3,3), input_shape=(x_train[0].shape), activation='relu'))
+model.add(Conv2D(64, (3,3), activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.2))
+model.add(Conv2D(64, (2,2), activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.2))
+model.add(Conv2D(64,(2,2), activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.3))
+model.add(Conv2D(128,(2,2), activation='relu'))
+model.add(MaxPooling2D(2,2))
+model.add(Dropout(0.3))
+model.add(Conv2D(128,(2,2), activation='relu'))
+model.add(GlobalAveragePooling2D())
+# model.add(Flatten())
 
-# # model.add(Dense(64, activation='relu'))
-# # model.add(Dense(64, activation='relu'))
-# # model.add(Dense(32, activation='relu'))
 # model.add(Dense(64, activation='relu'))
-# model.add(Dropout(0.2))
-# # model.add(Dense(16, activation='relu'))
+# model.add(Dense(64, activation='relu'))
 # model.add(Dense(32, activation='relu'))
-# model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(64, activation='relu'))
+model.add(Dropout(0.2))
+# model.add(Dense(16, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 
-# model.summary()
-# # exit()
-# #3 컴파일, 훈련
-# from keras.optimizers import Adam
-# # learning_rate = 0.01
-# # learning_rate = 0.001     # 디폴트
-# learning_rate = 0.0005
-# # learning_rate = 0.005
-# # learning_rate = 0.05
-# # learning_rate = 0.009
+model.summary()
+# exit()
+#3 컴파일, 훈련
+from keras.optimizers import Adam
+# learning_rate = 0.01
+learning_rate = 0.001     # 디폴트
+# learning_rate = 0.0001
+# learning_rate = 0.005
+# learning_rate = 0.05
+# learning_rate = 0.009
 
-# model.compile(loss='binary_crossentropy',
-#               optimizer=Adam(learning_rate=learning_rate),
-#               metrics=['acc'])
+model.compile(loss='binary_crossentropy',
+              optimizer=Adam(learning_rate=learning_rate),
+              metrics=['acc'])
 
-# es = EarlyStopping(
-#     monitor = 'val_loss',
-#     patience = 20,
-#     mode = 'auto',
-#     restore_best_weights=True,
-# )
+es = EarlyStopping(
+    monitor = 'val_loss',
+    patience = 20,
+    mode = 'auto',
+    restore_best_weights=True,
+)
+rlr = ReduceLROnPlateau(
+    monitor= 'val_loss',
+    mode='auto',
+    patience=5,
+    verbose=1,
+    factor=0.5,
+)
 
-# save_path = './_save/men_women/' + datetime.now().strftime('%Y%m%d_%H%M%S')+ '_{epoch:04d}-{val_loss:.4f}.keras'
-# mcp = ModelCheckpoint(
-#     filepath = save_path,
-#     monitor = 'val_loss',
-#     mode = 'auto',
-#     save_best_only=True,
+save_path = './_save/men_women/' + datetime.now().strftime('%Y%m%d_%H%M%S')+ '_{epoch:04d}-{val_loss:.4f}.keras'
+mcp = ModelCheckpoint(
+    filepath = save_path,
+    monitor = 'val_loss',
+    mode = 'auto',
+    save_best_only=True,
 
-# )
-# BATCH_SIZE = 4
+)
+BATCH_SIZE = 16
 
-# start_time = time.time()
-# history = model.fit(
-#     x_train, y_train,
-#     batch_size = BATCH_SIZE, # 1024 oom, 128 oom, 64 느림, 32 느려짐,
-#     epochs = 1000,
-#     validation_split=0.2,
-#     callbacks=[es, mcp],
+start_time = time.time()
+history = model.fit(
+    x_train, y_train,
+    batch_size = BATCH_SIZE, # 1024 oom, 128 oom, 64 느림, 32 느려짐,
+    epochs = 1000,
+    validation_split=0.2,
+    callbacks=[es, mcp, rlr],
 
-# )
-# end_time = time.time()
-# train_time = round(end_time - start_time, 3)
-model = load_model('_save\\men_women\\20260923_140316_0072-0.0445.keras')
+)
+end_time = time.time()
+train_time = round(end_time - start_time, 3)
+# model = load_model('_save\\men_women\\20260923_140316_0072-0.0445.keras')
 
 #4. 평가, 예측
 # print('걸린시간 : ', train_time, '초')
-result = model.evaluate(x_test, y_test, batch_size=8)
+result = model.evaluate(x_test, y_test, batch_size=16)
 print('loss : ', result[0])
 print('accuracy : ', result[1])
 
@@ -153,12 +160,12 @@ my_util.record_model_csv(
     model = model,
     data_shape = x_train.shape,
     random_num = 0,
-    # batch_size = BATCH_SIZE,
-    batch_size = 4,
-    history = None,
-    # history = history,
-    # training_time = train_time,
-    training_time = 2523.505,
+    batch_size = BATCH_SIZE,
+    # batch_size = 4,
+    # history = None,
+    history = history,
+    training_time = train_time,
+    # training_time = 2523.505,
     test_loss = result[0],
     sub_score = result[1],
     train_ration = 0,

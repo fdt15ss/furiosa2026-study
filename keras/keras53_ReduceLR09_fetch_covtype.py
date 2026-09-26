@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.metrics import categorical_accuracy
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
@@ -62,9 +62,9 @@ model.add(Dense(7, activation='softmax'))
 #3. 컴파일, 훈련
 from keras.optimizers import Adam
 # learning_rate = 0.01
-learning_rate = 0.001     # 디폴트
+# learning_rate = 0.001     # 디폴트
 # learning_rate = 0.0001
-# learning_rate = 0.005
+learning_rate = 0.0005
 # learning_rate = 0.05
 # learning_rate = 0.009
 
@@ -76,6 +76,14 @@ es = EarlyStopping(
     mode='auto',
     patience=20,
     restore_best_weights=True,
+)
+
+rlr = ReduceLROnPlateau(
+    monitor='val_loss',
+    mode='auto',
+    patience=5,
+    verbose=1,
+    factor = 0.2,
 )
 
 
@@ -102,7 +110,7 @@ start_time = time.time()
 hist = model.fit(x_train, y_train,
           epochs = 2000,
         #   callbacks=[es, mcp],
-          callbacks=[es, ],
+          callbacks=[es, rlr],
           validation_split=0.2,
           batch_size=BATCH_SIZE
           )

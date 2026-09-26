@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Dropout, Flatten, MaxPooling2D, GlobalAveragePooling2D
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import OneHotEncoder
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import my_util
 
@@ -109,7 +109,7 @@ model.add(Dense(100, activation="softmax"))
 from keras.optimizers import Adam
 # learning_rate = 0.01
 # learning_rate = 0.001     # 디폴트
-learning_rate = 0.0005
+learning_rate = 0.002
 # learning_rate = 0.005
 # learning_rate = 0.05
 # learning_rate = 0.009
@@ -123,13 +123,21 @@ es = EarlyStopping(
     patience = 20, restore_best_weights= True, 
 )
 
+rlr = ReduceLROnPlateau(
+    monitor='val_loss',
+    mode = 'auto',
+    patience = 5,
+    verbose=1,
+    factor=0.5
+)
+
 BATCH_SIZE = 256
 start_time = time.time()
 
 history = model.fit(x_train,y_train, verbose=1, epochs=2000,
                     batch_size=BATCH_SIZE,
                     validation_split=0.2,
-                    callbacks = [es]
+                    callbacks = [es, rlr]
                     )
 
 train_time = time.time() - start_time

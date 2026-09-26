@@ -5,7 +5,7 @@ from keras.datasets import fashion_mnist
 import my_util
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, GlobalAveragePooling2D
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import time
 from sklearn.metrics import accuracy_score
 import pandas as pd
@@ -108,6 +108,14 @@ es = EarlyStopping(
     patience = 20, restore_best_weights= True, 
 )
 
+rlr = ReduceLROnPlateau(
+    monitor='val_loss',
+    mode='auto',
+    patience=5,
+    verbose=1,
+    factor=0.5,
+)
+
 save_path = './_save/mnist_fashion/' + datetime.now().strftime('%Y%m%d_%H%M%S')+ '_{epoch:04d}-{val_loss:.4f}.keras'
 mcp = ModelCheckpoint(
     filepath = save_path,
@@ -123,7 +131,8 @@ start_time = time.time()
 history = model.fit(x_train,y_train, verbose=1, epochs=2000,
                     batch_size=BATCH_SIZE, validation_split=0.2,
                     # callbacks = [es]
-                    callbacks = [es, mcp]
+                    # callbacks = [es, mcp],
+                    callbacks = [es, rlr]
 
                     )
 
