@@ -5,7 +5,7 @@ import numpy as np
 import os
 os.environ["TF_GPU_ALLOCATOR"] = "cuda_malloc_async" # 메모리 모으기, 텐서플로 쓰기 전에 써야함.
 from keras.models import Sequential
-from keras.layers import LSTM, GRU, Dense, Dropout
+from keras.layers import LSTM, GRU, Dense, Dropout, Bidirectional
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
@@ -69,7 +69,7 @@ print("=====================")
 # exit()
 
 model = Sequential()
-model.add(LSTM(32, input_shape=(144, 13), return_sequences=False))
+model.add(Bidirectional(LSTM(32, return_sequences=False), input_shape=(144, 13)))
 # model.add(LSTM(32, input_shape=(144, 13), return_sequences=True))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
@@ -91,8 +91,8 @@ date = datetime.datetime.now()
 date = date.strftime("%y%m%d_%H%M")
 
 save_path = "./_save/kaggle_jena/"
-filename = '{epoch:04d}-{val_loss:.4f}.keras'
-filepath = "".join([save_path, 'keras58_', date, "-", filename])
+filename = 'ep{epoch:04d}-vl{val_loss:.4f}.keras'
+filepath = "".join([save_path, 'keras59_', date, "-", filename])
 
 
 mcp = ModelCheckpoint(
