@@ -1,0 +1,2 @@
+﻿time,pyfile,data_shape,random_num,model,model_structure,loss,optimizer,learning_rate,epochs,batch_size,train_second,first_loss,last_loss,test_loss,sub_score,train_ration,total_params
+2026-10-06 16:00:58,keras62_1_reuters.py,"(8982, 146)",0,sequential,Embedding 1000 -> Bidirectional 200 -> Dense 100 -> 46(softmax),categorical_crossentropy,Adam,1.0000000656873453e-05,26,32,244.434,1.7358282804489136,1.5535697937011719,0.7151497006416321,0.8294366598129272,0,1905546

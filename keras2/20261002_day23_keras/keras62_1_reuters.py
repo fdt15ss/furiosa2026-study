@@ -95,15 +95,16 @@ model.add(Dense(46, activation='softmax'))
 es = EarlyStopping(
     monitor='val_loss',
     mode='min',
-    patience=50,
+    patience=20,
     verbose=1,
     restore_best_weights=True
 )
 
-path = './_save/keras62/'
+path = './_save/reuters/'
 date = datetime.datetime.now()
 date = date.strftime("%m%d_%H%M")
-filename = '{epoch:04d}-{val_loss:.4f}.keras'
+# filename = 'ep{epoch:04d}-vl{val_loss:.4f}.keras'
+filename = '.keras'
 filepath = "".join([path + "keras62_1_" + date + "-" + filename])
 
 mcp = ModelCheckpoint(
@@ -117,23 +118,23 @@ mcp = ModelCheckpoint(
 rlr = ReduceLROnPlateau(
     monitor='val_loss',
     mode='min',
-    patience=50,
+    patience=10,
     verbose=1
 )
 
 learning_rate = 0.001
-
+BATCH_SIZE = 32
 model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=learning_rate), metrics=['acc'])
 start_time = time.time()
-model.fit(
+history = model.fit(
     x_train, y_train,
     epochs=3000,
-    batch_size=32,
+    batch_size=BATCH_SIZE,
     validation_split=0.25,
     verbose=1,
     callbacks = [es, mcp, rlr]
 )
-end_time = time.time()
+train_time = round(time.time() - start_time, 3)
 
 #4. 평가, 예측
 results = model.evaluate(x_train, y_train)
@@ -147,7 +148,7 @@ y_test = np.argmax(y_test, axis=1)
 acc = accuracy_score(y_test, y_pred)
 print("x_test의 예측 acc : ", acc)
 
-print("걸린 시간 : ", round(end_time-start_time, 2), "초")
+print("걸린 시간 : ", train_time, "초")
 
 # Results
 # Epoch 107: ReduceLROnPlateau reducing learning rate to 0.00010000000474974513.
@@ -159,3 +160,17 @@ print("걸린 시간 : ", round(end_time-start_time, 2), "초")
 # 71/71 [==============================] - 1s 7ms/step
 # x_test의 예측 acc :  0.7600178094390027
 # 걸린 시간 :  401.51 초
+import my_util
+
+my_util.record_model_csv(
+    model = model,
+    data_shape = x_train.shape,
+    random_num = 0,
+    batch_size = BATCH_SIZE,
+    history = history,
+    training_time = train_time,
+    test_loss = results[0],
+    sub_score = results[1],
+    train_ration = 0,
+    csv_file_path="00_reuters.csv"
+)

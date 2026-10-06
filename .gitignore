@@ -192,3 +192,6 @@ _save/**
 /_data/image/men_women/**
 /_data/image/pic.jpg
 /_data/kaggle_jena/jena_climate_2009_2016.csv
+/_db/Chroma11/**
+/_db/Chroma12/**
+_data/rag_data/**
