@@ -195,3 +195,4 @@ _save/**
 /_db/Chroma11/**
 /_db/Chroma12/**
 _data/rag_data/**
+/_db/Faiss17/**

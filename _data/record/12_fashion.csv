@@ -1,0 +1,2 @@
+﻿time,pyfile,data_shape,random_num,model,model_structure,loss,optimizer,learning_rate,epochs,batch_size,train_second,first_loss,last_loss,test_loss,sub_score,train_ration,total_params
+2026-10-07 10:47:46,keras68_Conv1D_12_fashion.py,"(100000, 784, 1)",42,sequential,Conv1D 128[2](relu) -> 128[2](relu) -> Dropout (0.2) -> Flatten 100096 -> Dense 32(relu) -> 16(relu) -> 10(softmax),categorical_crossentropy,Adam,0.004999999888241291,24,128,270.02,0.752352237701416,0.7949799299240112,0.3316541612148285,0.8834999799728394,0,3237082

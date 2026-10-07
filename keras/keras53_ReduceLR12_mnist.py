@@ -171,5 +171,5 @@ my_util.record_model_csv(
     test_loss = loss,
     sub_score = acc_eval,
     train_ration = 0,
-    csv_file_path="12_mnist.csv"
+    csv_file_path="11_mnist.csv"
 )
