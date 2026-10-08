@@ -8,6 +8,8 @@ import os
 from langchain_community.document_loaders import TextLoader
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
+
+# pip install pypdf
 from langchain_community.document_loaders import PyPDFLoader
 
 # pip install faiss-cpu
