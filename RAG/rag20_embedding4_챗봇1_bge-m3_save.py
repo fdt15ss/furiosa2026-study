@@ -1,15 +1,17 @@
+# 챗봇까지 맹그러봐요
+# transformer 논문을 벡터 디비로 불러와서
+# 요약, 인용 등등 할 수 있는 챗봇으로!!!
+
 # 11-1 카피
 
 import os
 from langchain_community.document_loaders import TextLoader
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
-from langchain_chroma import Chroma
+from langchain_community.document_loaders import PyPDFLoader
 
 # pip install faiss-cpu
-import faiss
 from langchain_community.vectorstores import FAISS
-from langchain_community.docstore.in_memory import InMemoryDocstore
 
 from dotenv import load_dotenv
 load_dotenv() # vscode 자체에서 없어도 가져옴. 하지만 안전빵으로 적어두는 게 좋다.
@@ -17,37 +19,37 @@ api_key = os.environ["MONOROUTER_API_KEY"].strip() # 공백이나 줄바꿈 삭�
 base_url = "https://monogpt.kr/api/monorouter/v1"
 
 #01 데이터 불러온다.
-path = './_data/rag_data/'
-loader1 = TextLoader(path + "samsung_outlook.txt", encoding='utf-8')
-loader2 = TextLoader(path + "nvidia_outlook.txt", encoding='utf-8')
+path = './_data/'
+pdf_loader = PyPDFLoader(path + "attention is all you needs.pdf")
+pdf_docs = pdf_loader.load()
 
-# 문서를 자른다 / 청킹
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size = 300,
-    chunk_overlap = 100,
-    separators = ["\n\n", "\n", " ", ""],   # 통상 디폴트
-)
+# # 문서를 자른다 / 청킹
+# text_splitter = RecursiveCharacterTextSplitter(
+#     chunk_size = 300,
+#     chunk_overlap = 100,
+#     separators = ["\n\n", "\n", " ", ""],   # 통상 디폴트
+# )
 
-split_doc1 = loader1.load_and_split(text_splitter)   # 청크 300, 오버랩 100
-split_doc2 = loader2.load_and_split(text_splitter)   # 청크 300, 오버랩 100
+# split_doc = pdf_docs.load_and_split(text_splitter)   # 청크 300, 오버랩 100
 
 # 문서 개수 확인
 # print(split_doc1)
-print(len(split_doc1), len(split_doc2))     # 9 9
-
-from langchain_openai import OpenAIEmbeddings
-embeddings = OpenAIEmbeddings(
-    model='text-embedding-3-small',
-    # model='text-embedding-3-large', # 3072
-    api_key=api_key,
-    base_url=base_url,
-    # dimensions=5,
+print(len(pdf_docs))     # 9 9
+# exit()
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name='BAAI/bge-m3',
+    model_kwargs={
+        # "device" : "cuda", # Torch not compiled with CUDA enabled
+        "device" : "cpu",
+        # "local_files_only" : True,
+    }
 )
 
 ########################### 요기부터 faiss #########################
 # faiss_index = faiss.IndexFlatL2(len(embeddings.embed_query("hello world"))) # 어떤 문장을 써도 1536
 # faiss_index = faiss.IndexFlatL2(1536)
-print("FAISS 인덱스 초기화 준비 완료")
+# print("FAISS 인덱스 초기화 준비 완료")
 
 # FAISS 벡터 저장소의 벡터 차원 수 (임베딩 차원 수)
 # print(faiss_index.d)
@@ -64,13 +66,15 @@ print("FAISS 인덱스 초기화 준비 완료")
 ##############################################################
 
 db = FAISS.from_documents(
-    documents=split_doc1 + split_doc2,
+    documents=pdf_docs,
     embedding = embeddings,
 
 )
 
-DB_PATH = "./_db/Faiss17"
+DB_PATH = "./_db/Faiss20-1"
 db.save_local(
     folder_path=DB_PATH,
-    index_name='faiss_index17'
+    index_name='faiss_index20-1'
 )
+
+
