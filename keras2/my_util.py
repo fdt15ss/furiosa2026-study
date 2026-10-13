@@ -37,7 +37,6 @@ def update_csv_columns(csv_file_path, required_columns):
         newline='',
         encoding='utf-8-sig'
     ) as f:
-
         reader = csv.reader(f)
         rows = list(reader)
 
@@ -78,21 +77,16 @@ def update_csv_columns(csv_file_path, required_columns):
 
     # 기존 데이터
     for old_row in rows[1:]:
-
         new_row = []
 
         for column in required_columns:
-
             # 기존에 있던 컬럼
             if column in old_column_index:
-
                 index = old_column_index[column]
-
                 if index < len(old_row):
                     new_row.append(old_row[index])
                 else:
                     new_row.append("")
-
             # 새로 추가된 컬럼
             else:
                 new_row.append("")
@@ -109,7 +103,6 @@ def update_csv_columns(csv_file_path, required_columns):
         newline='',
         encoding='utf-8-sig'
     ) as f:
-
         writer = csv.writer(f)
         writer.writerows(updated_rows)
 
@@ -121,7 +114,10 @@ def update_csv_columns(csv_file_path, required_columns):
 def record_model_csv(model, data_shape, batch_size, history, training_time,
                      test_loss, random_num="-1", sub_score="",
                      csv_file_path="model_history_log.csv",
-                     train_ration=0.7):
+                     train_ration=0.7, note=""):
+    """
+    note: 제일 오른쪽 '비고' 컬럼에 기록할 내용 (기본값: 빈 문자열)
+    """
 
     # ======================================================
     # 1. 현재 날짜시간
@@ -169,45 +165,33 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         )
 
         if isinstance(output_shape, list):
-
             output_shape = (
                 output_shape[0]
                 if output_shape
                 else None
             )
-
         elif output_shape is not None:
-
             try:
                 output_shape = tuple(output_shape)
-
             except TypeError:
                 output_shape = None
 
         if isinstance(output_shape, (tuple, list)):
-
             dims = [
                 dim
                 for dim in output_shape
                 if dim is not None
             ]
-
             dim_str = (
                 str(dims[-1])
                 if dims
                 else "?"
             )
-
         elif hasattr(layer, 'units') and layer.units is not None:
-
             dim_str = str(layer.units)
-
         elif hasattr(layer, 'filters') and layer.filters is not None:
-
             dim_str = str(layer.filters)
-
         else:
-
             dim_str = ""
 
         # --------------------------------------------------
@@ -220,29 +204,21 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
             hasattr(layer, 'activation')
             and layer.activation is not None
         ):
-
             act = layer.activation
-
             if (
                 hasattr(act, '__class__')
                 and act.__class__.__name__ != 'function'
             ):
-
                 act_name = (
                     act.__class__.__name__
                     .lower()
                 )
-
             elif hasattr(act, '__name__'):
-
                 act_name = act.__name__.lower()
-
             else:
-
                 act_name = str(act).lower()
 
             if act_name != 'linear':
-
                 extra_info = f"({act_name})"
 
         # --------------------------------------------------
@@ -253,7 +229,6 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
             layer_type == 'Dropout'
             and hasattr(layer, 'rate')
         ):
-
             dim_str = f"({layer.rate})"
 
         # --------------------------------------------------
@@ -264,11 +239,9 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
             'Conv' in layer_type
             and hasattr(layer, 'kernel_size')
         ):
-
             k_size = "x".join(
                 map(str, layer.kernel_size)
             )
-
             extra_info = (
                 f"[{k_size}]"
                 f"{extra_info}"
@@ -288,25 +261,18 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         # --------------------------------------------------
 
         if layer_type == prev_layer_type:
-
             structure_parts.append(
                 node_desc
             )
-
         else:
-
             if node_desc:
-
                 structure_parts.append(
                     f"{layer_type} {node_desc}"
                 )
-
             else:
-
                 structure_parts.append(
                     layer_type
                 )
-
             prev_layer_type = layer_type
 
     # 모델 구조
@@ -350,28 +316,20 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         hasattr(model, 'optimizer')
         and model.optimizer is not None
     ):
-
         try:
-
             lr = model.optimizer.learning_rate
-
             # Tensor / Variable
             if hasattr(lr, 'numpy'):
-
                 learning_rate = float(
                     lr.numpy()
                 )
-
             else:
-
                 learning_rate = float(lr)
-
         except (
             AttributeError,
             TypeError,
             ValueError
         ):
-
             learning_rate = ""
 
     # ======================================================
@@ -382,7 +340,6 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         history is not None
         and hasattr(history, 'history')
     ):
-
         history_dict = history.history
 
         loss_history = history_dict.get(
@@ -395,45 +352,21 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
             []
         )
 
-        # --------------------------------------------------
         # Epochs
-        # --------------------------------------------------
-
         epochs = len(loss_history)
 
-        # --------------------------------------------------
         # val_loss가 있으면 val_loss 사용
-        # --------------------------------------------------
-
         if val_loss_history:
-
             first_loss = val_loss_history[0]
             last_loss = val_loss_history[-1]
-
-        # --------------------------------------------------
         # val_loss가 없으면 loss 사용
-        # --------------------------------------------------
-
         elif loss_history:
-
             first_loss = loss_history[0]
             last_loss = loss_history[-1]
-
-        # --------------------------------------------------
-        # history는 있지만 loss가 없는 경우
-        # --------------------------------------------------
-
         else:
-
             first_loss = ""
             last_loss = ""
-
-    # ======================================================
-    # History 자체가 없는 경우
-    # ======================================================
-
     else:
-
         epochs = ""
         first_loss = ""
         last_loss = ""
@@ -442,13 +375,13 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # 8. CSV 경로
     # ======================================================
 
-    csv_file_path = (
-        "./_data/record/"
-        + csv_file_path
-    )
+    # 폴더가 없으면 자동 생성
+    save_dir = "./_data/record/"
+    os.makedirs(save_dir, exist_ok=True)
+    csv_file_path = os.path.join(save_dir, csv_file_path)
 
     # ======================================================
-    # 9. CSV에서 사용할 최종 컬럼 구조
+    # 9. CSV에서 사용할 최종 컬럼 구조 (맨 끝에 "비고" 추가)
     # ======================================================
 
     required_columns = [
@@ -469,7 +402,8 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         "test_loss",
         "sub_score",
         "train_ration",
-        "total_params"
+        "total_params",
+        "비고"  # <-- 제일 오른쪽에 비고 컬럼 추가
     ]
 
     # ======================================================
@@ -503,7 +437,8 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         test_loss,
         sub_score,
         train_ration,
-        total_params
+        total_params,
+        note  # <-- 비고 내용 기록
     ]
 
     # ======================================================
@@ -524,23 +459,15 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         newline='',
         encoding='utf-8-sig'
     ) as f:
-
         writer = csv.writer(f)
 
-        # --------------------------------------------------
         # 파일이 없으면 Header 작성
-        # --------------------------------------------------
-
         if not file_exists:
-
             writer.writerow(
                 required_columns
             )
 
-        # --------------------------------------------------
         # 데이터 기록
-        # --------------------------------------------------
-
         writer.writerow(
             log_data
         )
@@ -551,7 +478,6 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
 # ==========================================================
 
 def RMSE(y_test, y_predict):
-
     return np.sqrt(
         mean_squared_error(
             y_test,
@@ -565,15 +491,12 @@ def RMSE(y_test, y_predict):
 # ==========================================================
 
 def leaveTop(path, prefix, subfix, count, mode="min"):
-
     if count < 0:
-
         raise ValueError(
             "count must be greater than or equal to 0"
         )
 
     if mode not in ("min", "max"):
-
         raise ValueError(
             "mode must be either 'min' or 'max'"
         )
@@ -587,18 +510,11 @@ def leaveTop(path, prefix, subfix, count, mode="min"):
     candidates = []
 
     for filename in os.listdir(path):
-
-        match = score_pattern.match(
-            filename
-        )
-
+        match = score_pattern.match(filename)
         if match:
-
             candidates.append(
                 (
-                    float(
-                        match.group("score")
-                    ),
+                    float(match.group("score")),
                     filename
                 )
             )
@@ -614,16 +530,8 @@ def leaveTop(path, prefix, subfix, count, mode="min"):
     deleted_files = []
 
     for _, filename in candidates[count:]:
-
-        filepath = os.path.join(
-            path,
-            filename
-        )
-
+        filepath = os.path.join(path, filename)
         os.remove(filepath)
-
-        deleted_files.append(
-            filepath
-        )
+        deleted_files.append(filepath)
 
     return deleted_files

@@ -106,7 +106,7 @@ history = [
 hitstory = [
     {'role' : 'user', 'content' : '안녕'},
     {'role' : 'assistant', 'content' : '안녕하세요'},
-    {'role' : 'user', 'content' : '나는 김기관이다.'},
+    {'role' : 'user', 'content' : '나는 임경빈이다.'},
     {'role' : 'assistant', 'content' : '당신은 임경빈이군요'},
     {'role' : 'user', 'content' : '내가 누구게?'},
     {'role' : 'assistant', 'content' : '당신은 임경빈님입니다.'}
