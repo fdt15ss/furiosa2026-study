@@ -23,13 +23,8 @@ def update_csv_columns(csv_file_path, required_columns):
     - 기존에 있던 컬럼의 데이터는 유지
     """
 
-    # CSV 파일이 없으면 아무것도 하지 않음
     if not os.path.isfile(csv_file_path):
         return
-
-    # ------------------------------------------------------
-    # 기존 CSV 읽기
-    # ------------------------------------------------------
 
     with open(
         csv_file_path,
@@ -40,62 +35,35 @@ def update_csv_columns(csv_file_path, required_columns):
         reader = csv.reader(f)
         rows = list(reader)
 
-    # 빈 파일이면 종료
     if not rows:
         return
 
-    # 기존 컬럼
     old_columns = rows[0]
-
-    # 기존 컬럼 중복 제거
     old_columns = list(dict.fromkeys(old_columns))
-
-    # ------------------------------------------------------
-    # 컬럼 변경이 필요한지 확인
-    # ------------------------------------------------------
 
     if old_columns == required_columns:
         return
-
-    # ------------------------------------------------------
-    # 기존 컬럼 위치 확인
-    # ------------------------------------------------------
 
     old_column_index = {
         column: index
         for index, column in enumerate(old_columns)
     }
 
-    # ------------------------------------------------------
-    # 새로운 구조로 데이터 재구성
-    # ------------------------------------------------------
-
     updated_rows = []
-
-    # Header
     updated_rows.append(required_columns)
 
-    # 기존 데이터
     for old_row in rows[1:]:
         new_row = []
-
         for column in required_columns:
-            # 기존에 있던 컬럼
             if column in old_column_index:
                 index = old_column_index[column]
                 if index < len(old_row):
                     new_row.append(old_row[index])
                 else:
                     new_row.append("")
-            # 새로 추가된 컬럼
             else:
                 new_row.append("")
-
         updated_rows.append(new_row)
-
-    # ------------------------------------------------------
-    # CSV 덮어쓰기
-    # ------------------------------------------------------
 
     with open(
         csv_file_path,
@@ -114,15 +82,15 @@ def update_csv_columns(csv_file_path, required_columns):
 def record_model_csv(model, data_shape, batch_size, history, training_time,
                      test_loss, random_num="-1", sub_score="",
                      csv_file_path="model_history_log.csv",
-                     train_ration=0.7, note=""):
+                     train_ration=0.7, base_model="", note=""):
     """
+    base_model: 전이학습 시 사용된 베이스/사전학습 모델명 (기본값: 빈 문자열, 블랭크 가능)
     note: 제일 오른쪽 '비고' 컬럼에 기록할 내용 (기본값: 빈 문자열)
     """
 
     # ======================================================
     # 1. 현재 날짜시간
     # ======================================================
-
     current_time = datetime.datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
     )
@@ -130,46 +98,26 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
     # 2. 실행 파일명
     # ======================================================
-
     file_name = os.path.basename(sys.argv[0])
 
     # ======================================================
     # 3. 모델 이름
     # ======================================================
-
     model_name = model.name
 
     # ======================================================
     # 4. 모델 구조
     # ======================================================
-
     structure_parts = []
     prev_layer_type = None
 
     for layer in model.layers:
-
-        # --------------------------------------------------
-        # 레이어 타입
-        # --------------------------------------------------
-
         layer_type = layer.__class__.__name__
 
-        # --------------------------------------------------
-        # 출력 노드 수 / 차원 구하기
-        # --------------------------------------------------
-
-        output_shape = getattr(
-            layer,
-            'output_shape',
-            None
-        )
+        output_shape = getattr(layer, 'output_shape', None)
 
         if isinstance(output_shape, list):
-            output_shape = (
-                output_shape[0]
-                if output_shape
-                else None
-            )
+            output_shape = (output_shape[0] if output_shape else None)
         elif output_shape is not None:
             try:
                 output_shape = tuple(output_shape)
@@ -177,16 +125,8 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
                 output_shape = None
 
         if isinstance(output_shape, (tuple, list)):
-            dims = [
-                dim
-                for dim in output_shape
-                if dim is not None
-            ]
-            dim_str = (
-                str(dims[-1])
-                if dims
-                else "?"
-            )
+            dims = [dim for dim in output_shape if dim is not None]
+            dim_str = str(dims[-1]) if dims else "?"
         elif hasattr(layer, 'units') and layer.units is not None:
             dim_str = str(layer.units)
         elif hasattr(layer, 'filters') and layer.filters is not None:
@@ -194,25 +134,11 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         else:
             dim_str = ""
 
-        # --------------------------------------------------
-        # Activation
-        # --------------------------------------------------
-
         extra_info = ""
-
-        if (
-            hasattr(layer, 'activation')
-            and layer.activation is not None
-        ):
+        if hasattr(layer, 'activation') and layer.activation is not None:
             act = layer.activation
-            if (
-                hasattr(act, '__class__')
-                and act.__class__.__name__ != 'function'
-            ):
-                act_name = (
-                    act.__class__.__name__
-                    .lower()
-                )
+            if hasattr(act, '__class__') and act.__class__.__name__ != 'function':
+                act_name = act.__class__.__name__.lower()
             elif hasattr(act, '__name__'):
                 act_name = act.__name__.lower()
             else:
@@ -221,75 +147,30 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
             if act_name != 'linear':
                 extra_info = f"({act_name})"
 
-        # --------------------------------------------------
-        # Dropout
-        # --------------------------------------------------
-
-        if (
-            layer_type == 'Dropout'
-            and hasattr(layer, 'rate')
-        ):
+        if layer_type == 'Dropout' and hasattr(layer, 'rate'):
             dim_str = f"({layer.rate})"
 
-        # --------------------------------------------------
-        # Conv2D
-        # --------------------------------------------------
+        if 'Conv' in layer_type and hasattr(layer, 'kernel_size'):
+            k_size = "x".join(map(str, layer.kernel_size))
+            extra_info = f"[{k_size}]{extra_info}"
 
-        if (
-            'Conv' in layer_type
-            and hasattr(layer, 'kernel_size')
-        ):
-            k_size = "x".join(
-                map(str, layer.kernel_size)
-            )
-            extra_info = (
-                f"[{k_size}]"
-                f"{extra_info}"
-            )
-
-        # --------------------------------------------------
-        # 최종 노드 및 속성 조합
-        # --------------------------------------------------
-
-        node_desc = (
-            f"{dim_str}{extra_info}"
-            .strip()
-        )
-
-        # --------------------------------------------------
-        # 이전 레이어와 비교
-        # --------------------------------------------------
+        node_desc = f"{dim_str}{extra_info}".strip()
 
         if layer_type == prev_layer_type:
-            structure_parts.append(
-                node_desc
-            )
+            structure_parts.append(node_desc)
         else:
             if node_desc:
-                structure_parts.append(
-                    f"{layer_type} {node_desc}"
-                )
+                structure_parts.append(f"{layer_type} {node_desc}")
             else:
-                structure_parts.append(
-                    layer_type
-                )
+                structure_parts.append(layer_type)
             prev_layer_type = layer_type
 
-    # 모델 구조
-    model_structure = " -> ".join(
-        structure_parts
-    )
-
-    # ======================================================
-    # 전체 파라미터
-    # ======================================================
-
+    model_structure = " -> ".join(structure_parts)
     total_params = model.count_params()
 
     # ======================================================
     # 5. Loss 함수 및 Optimizer
     # ======================================================
-
     loss_func = (
         model.loss
         if isinstance(model.loss, str)
@@ -309,57 +190,30 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
     # 6. Learning Rate
     # ======================================================
-
     learning_rate = ""
-
-    if (
-        hasattr(model, 'optimizer')
-        and model.optimizer is not None
-    ):
+    if hasattr(model, 'optimizer') and model.optimizer is not None:
         try:
             lr = model.optimizer.learning_rate
-            # Tensor / Variable
             if hasattr(lr, 'numpy'):
-                learning_rate = float(
-                    lr.numpy()
-                )
+                learning_rate = float(lr.numpy())
             else:
                 learning_rate = float(lr)
-        except (
-            AttributeError,
-            TypeError,
-            ValueError
-        ):
+        except (AttributeError, TypeError, ValueError):
             learning_rate = ""
 
     # ======================================================
     # 7. History
     # ======================================================
-
-    if (
-        history is not None
-        and hasattr(history, 'history')
-    ):
+    if history is not None and hasattr(history, 'history'):
         history_dict = history.history
+        loss_history = history_dict.get('loss', [])
+        val_loss_history = history_dict.get('val_loss', [])
 
-        loss_history = history_dict.get(
-            'loss',
-            []
-        )
-
-        val_loss_history = history_dict.get(
-            'val_loss',
-            []
-        )
-
-        # Epochs
         epochs = len(loss_history)
 
-        # val_loss가 있으면 val_loss 사용
         if val_loss_history:
             first_loss = val_loss_history[0]
             last_loss = val_loss_history[-1]
-        # val_loss가 없으면 loss 사용
         elif loss_history:
             first_loss = loss_history[0]
             last_loss = loss_history[-1]
@@ -374,21 +228,19 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
     # 8. CSV 경로
     # ======================================================
-
-    # 폴더가 없으면 자동 생성
     save_dir = "./_data/record/"
     os.makedirs(save_dir, exist_ok=True)
     csv_file_path = os.path.join(save_dir, csv_file_path)
 
     # ======================================================
-    # 9. CSV에서 사용할 최종 컬럼 구조 (맨 끝에 "비고" 추가)
+    # 9. CSV 최종 컬럼 구조 ("base_model" 추가)
     # ======================================================
-
     required_columns = [
         "time",
         "pyfile",
         "data_shape",
         "random_num",
+        "base_model",       # <-- 전이학습 베이스 모델명 컬럼
         "model",
         "model_structure",
         "loss",
@@ -403,13 +255,12 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         "sub_score",
         "train_ration",
         "total_params",
-        "비고"  # <-- 제일 오른쪽에 비고 컬럼 추가
+        "비고"
     ]
 
     # ======================================================
     # 10. 기존 CSV 자동 마이그레이션
     # ======================================================
-
     update_csv_columns(
         csv_file_path,
         required_columns
@@ -418,12 +269,12 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
     # 11. CSV에 기록할 데이터
     # ======================================================
-
     log_data = [
         current_time,
         file_name,
         data_shape,
         random_num,
+        base_model,         # <-- base_model 값 기록 (전달 안 하면 "")
         model_name,
         model_structure,
         loss_func,
@@ -438,20 +289,13 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         sub_score,
         train_ration,
         total_params,
-        note  # <-- 비고 내용 기록
+        note
     ]
 
     # ======================================================
-    # 12. 파일 존재 여부
+    # 12. 파일 존재 여부 확인 및 작성
     # ======================================================
-
-    file_exists = os.path.isfile(
-        csv_file_path
-    )
-
-    # ======================================================
-    # 13. CSV 기록
-    # ======================================================
+    file_exists = os.path.isfile(csv_file_path)
 
     with open(
         csv_file_path,
@@ -461,16 +305,10 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     ) as f:
         writer = csv.writer(f)
 
-        # 파일이 없으면 Header 작성
         if not file_exists:
-            writer.writerow(
-                required_columns
-            )
+            writer.writerow(required_columns)
 
-        # 데이터 기록
-        writer.writerow(
-            log_data
-        )
+        writer.writerow(log_data)
 
 
 # ==========================================================
