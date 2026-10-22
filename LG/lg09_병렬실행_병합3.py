@@ -39,7 +39,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 #################### 1. State 정의 ####################
 
 class State(TypedDict):
-    messages : Annotated[list, add_messages]
+    messages : Annotated[list, add_messages] # 리스트를 어펜드하는 놈
     search_result : str
     analysis_result : str
 
@@ -64,13 +64,34 @@ def analysis_agent(state : State):
     )
     return {'analysis_result' : response.content}
 
-def merge_agent(state : State):
-    result = (
-        state['search_result'] + '\n\n' +
-        '==============================' + '\n' +
-        state['analysis_result']
-    )
-    return {'messages' : [('assistant', result)]}
+def merge_agent(state : State): ## 결과 통합 에이전트!!!
+    # result = (
+    #     state['search_result'] + '\n\n' +
+    #     '==============================' + '\n' +
+    #     state['analysis_result']
+    # )
+    # return {'messages' : [('assistant', result)]}
+
+    print("결과 통합 에이전트 실행")
+
+    prompt =  f"""
+    다음 두 결과를 종합하여 최종 답변을 작성해주세요.
+
+    [웹 검색 결과]
+    {state['search_result']}
+
+    [AI 분석 결과]
+    {state['analysis_result']}
+
+    검색 결과를 우선적으로 참고하고,
+    최신 정보와 기존 분석을 구분해서 설명해줘.
+    """
+
+    response = llm.invoke(prompt)
+
+    return { "messages" : [response]}
+
+
 
 #################### 3. Graph 구성 ####################
 
@@ -122,55 +143,3 @@ plt.figure(figsize=(12, 8))
 plt.imshow(img)
 plt.axis('off')
 plt.show()
-
-def chatbot(state : State):
-    return {'messages' : [llm_with_tools.invoke(state['messages'])]}
-
-#################### 4. Graph 구성, Node 추가 ##########
-
-graph_builder = StateGraph(State)
-graph_builder.add_node('chatbot', chatbot)
-
-tool_node = ToolNode(tools)
-
-# graph_builder.add_node('tools', tool_node)
-graph_builder.add_node('tools', ToolNode(tools))
-
-#################### 5. Edge 추가 #####################
-graph_builder.add_edge(START, 'chatbot')
-
-# graph_builder.add_edge('chatbot', 'tools')
-graph_builder.add_conditional_edges(
-    'chatbot',
-    tools_condition
-)
-
-graph_builder.add_edge('tools', 'chatbot')
-
-#################### 6. Compile ######################
-
-# 메모리 추가 두번째
-memory = InMemorySaver()
-
-graph = graph_builder.compile(checkpointer=memory)
-
-#################### 7. Graph 실행 ####################
-
-# 메모리 추가 세번째
-config = {'configurable' : {'thread_id' : 'user01'}}
-
-# 첫번째 질문
-response = graph.invoke(
-    {'messages' : [('user', '내 이름은 Mr.Song 이야')]},
-    config=config
-)
-
-print(response['messages'][-1].content)
-
-# 두번째 질문
-print('========== 두번째 질문 ==========')
-response = graph.invoke({
-    'messages' : [('user', '내 이름이 뭐라고 했지?')]},
-    config=config)
-
-print(response['messages'][-1].content)

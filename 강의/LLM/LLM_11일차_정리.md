@@ -1,338 +1,158 @@
-# LLM 11일차 정리 — 랭그래프(LangGraph) 입문
+# LLM 11일차 정리 — 프로젝트 1차 (1일차)
 
-> 오늘의 핵심: **State(상태) · Node(노드) · Edge(엣지)** 3가지 + 플러스 알파로 **Reducer(리듀서, `add_messages`)**
-> 랭그래프 = 우리가 만들었던 **랭체인(retriever → model → 체크 → 결과)을 "그래프"로 바꿔서** 각 기능을 노드로 두고 연결하는 방식
+> 녹취(음성 인식) 원문은 오인식이 많아서, 문맥상 확실한 내용 위주로 정리했습니다.
+> 📌 표시는 녹취에는 없고 복습용으로 제가 덧붙인 내용입니다.
 
 ---
 
-## 1. 랭그래프 큰 그림
+## 1. 오늘 수업 흐름 요약
 
-### 1-1. 왜 그래프인가?
-- 랭체인으로 하던 흐름(retriever 만들기 → 모델 호출 → invoke)을 **노드 단위로 쪼개서** 그래프로 구성
-- 예시 흐름 (수업 중 PPT 설명)
-  1. 질문이 들어옴
-  2. 모델(GPT 등) 호출
-  3. 관련성(relevance) 체크 노드
-  4. 결과 종합
-  5. 마음에 안 들면 **다시 앞 노드로 되돌아가서(재시도)**, 마음에 들면 **END**
-- 작은 예제에서는 랭체인과 차이가 없지만, **규모가 커질수록** 랭그래프의 장점이 체감됨
-- 구조가 Keras의 **함수형 모델**과 비슷 → 위로도, 아래로도, 거꾸로(되돌아가기)도 연결 가능
+- 딥러닝 / 랭그래프 계열 개념 소개 및 코드 실습은 **월요일에 몰아서 진행**하기로 함 (녹취상 "딥렉크", "앵그랩"으로 인식된 부분은 오인식으로 보임)
+- 오늘은 **다른 팀 프로젝트 발표를 듣고 → 팀 프로젝트 진행**
+- 다른 팀 발표를 보고 좋은 기술은 가져다 써도 권장됨
+- **최종 발표는 약 2주 뒤**, 상황에 따라 중간 발표가 있을 수 있음
+- 팀 프로젝트 중 막히는 부분은 강사/선생님께 상담 (코드를 대신 짜주지는 않고 **방향성 위주**로 조언)
+- 규칙: 지정된 공간(2층) 유지, 외출은 쉬는 시간에만, 호출 시 5분 내 집합
 
-### 1-2. 오늘 꼭 외울 4가지 키워드
+### 팀워크 / 태도 관련 당부
+- 팀 프로젝트 중 **절대 싸우지 말 것**, 먼저 화내는 사람이 손해
+- 물처럼 잔잔하게, 회사에서도 마찬가지
+- 프로젝트가 끝난 뒤에 남아서 싸우지 말 것
 
-| 키워드 | 한 줄 정의 |
+---
+
+## 2. 발표 팀 프로젝트 개요 (기후위기 취약 상권 분석 + AI 예측)
+
+### 목표
+기후위기로 오프라인 상권 피해가 커지는 상황에서, **상권 간 편차가 어떻게 확대되는지** 분석하고 **선제적 정책 지원**을 제안
+
+### 수집 데이터
+| 데이터 | 설명 |
 |---|---|
-| **State (상태)** | 노드 사이에 **전달되는 데이터**. 딕셔너리 형태 |
-| **Node (노드)** | 각각 **하나의 기능**을 하는 **함수** (retriever, model, 체크 …) |
-| **Edge (엣지)** | 노드와 노드를 **연결한 선** |
-| **Reducer (리듀서)** | State의 값을 **덮어쓰지 않고 이어 붙이는(append)** 규칙 → `add_messages` |
+| 기상 데이터 | 과거 기상 시계열 |
+| 공간·유동인구 | X/Y 좌표 + 시간대별 유동인구 (SKT 제공) |
+| 카드사 매출 | 일부 지점만 듬성듬성 제공 |
+| 경제 지표 | 월 단위 등 시계열이 길어 증감 정보 위주로 사용 |
 
-- 노드/엣지 개념은 이미 해봤고, 오늘은 **State**까지 정리해서 한 세트를 완성
-- 노드의 기능 구현은 **함수 vs 클래스** 중 **함수**로 한다 (훨씬 쉬움)
-  - 함수 = 기능만 있음
-  - 클래스 = 기능 + 잡다한 것(속성 등) 전부 → 함수보다 개념이 넓음
+- 기간: **2021~2025년** (2020년은 코로나 영향으로 제외)
+- 지역: 강남구, 춘천시 (전국 데이터는 아님)
+- 학습 데이터 규모: 약 1,500건
 
----
+### 계획한 모델 구조
+1. 기상 데이터 → **RNN** 처리
+2. 유동인구 → 한 지점 + 주변 지점을 격자(매트릭스)로 만들어 **CNN** 처리
+3. 매출 데이터 → 지난 며칠/몇 달 치를 **RNN** 처리
+4. 위 결과를 합쳐 **XGBoost / LightGBM / CatBoost** 각각에 입력
+5. **앙상블**로 가중치를 주어 최종 매출 증감 산출
+6. 결과를 **지도 형태**로 시각화 (지점별 점수, 취약/양호 상권 구분)
 
-## 2. 파이썬 기초 문법 (오늘 새로 나온 것)
+### 취약 상권 정의 (발표 시점)
+- 최근 1~2년 데이터에서 **매출 증감이 가장 많이 떨어진 곳**을 취약 상권으로 정의
+- 매출 데이터가 듬성듬성해서 산정 가능한 지점 기준으로 사각형 표시
 
-### 2-1. `TypedDict`
-
-```python
-from typing import Annotated, TypedDict
-```
-
-- `typing`은 파이썬이 **기본 제공**하는 모듈 (pip install 필요 없음)
-- 대문자로 시작 → **클래스**
-- `TypedDict` = **딕셔너리의 키/값 타입을 정해놓는 클래스**
-
-### 2-2. 타입 힌트(Type Hint)
-
-```python
-from typing import Dict
-
-sample: Dict[str, str] = {"name": "홍길동", "age": "39", "job": "개발자"}
-```
-
-- `Dict[str, str]` → "딕셔너리인데 키도 `str`, 값도 `str`로 쓰겠다"
-- **힌트일 뿐 강제성이 없다** → 다른 타입을 넣어도 에러는 안 남
-- 하지만 코드를 읽는 사람이 **"이 안에는 str:str 딕셔너리가 있겠구나"** 하고 바로 판단 가능 → 실무에서 많이 씀
-- 만약 `int`로 쓴다고 힌트를 줬으면 `Dict[str, int]` 형태가 되어야 함
-- 딕셔너리 값 꺼내기는 기존과 동일: `sample["name"]`
-
-> **Q&A**: `'name'`처럼 작은따옴표로 감싼 게 저장되는 건가요?
-> → 따옴표는 문자열 표시일 뿐, 저장되는 건 `name`이라는 키 자체. 부를 때 `sample["name"]`으로 부르면 됨. 큰따옴표/작은따옴표 차이는 없음.
-
-### 2-3. 클래스 상속과 `TypedDict`
-
-```python
-class Person(TypedDict):
-    name: str
-    age: int
-    job: str
-```
-
-- 괄호 안에 클래스를 넣으면 → **함수의 인자가 아니라 "상속"**
-- **상속**: 부모 클래스의 모든 기능 + 그 안에 들어있는 것들을 가져다 쓸 수 있음
-  - 수업 비유: 아빠에게 *시그니엘*(→ 마이바흐)을 상속받으면 거기 있는 욕탕·화장실·배달 주문까지 다 쓸 수 있는 것과 같음
-- `Person(TypedDict)` = "딕셔너리 형태의 **틀(껍데기)** 만 정의"해둔 상태 → **실제 값은 아직 없음**
-- 값을 넣어서 사용할 땐 기존 클래스 쓰듯이 인자를 넣음
-
-```python
-p = Person(name="홍길동", age=40, job="개발자")
-```
-
-- 첫 번째 방식(`Dict[str, str]`)은 **값까지 직접 넣은 것**, `TypedDict`는 **틀(스키마)을 먼저 만드는 것**
-- 클래스도 하나의 **타입**이다 → `Person` 은 `Person` 타입, 스트링처럼 타입으로 쓸 수 있음
-
-### 2-4. `Annotated` (주석 / 부가정보)
-
-```python
-from typing import Annotated, TypedDict
-from langgraph.graph.message import add_messages
-
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-```
-
-- `Annotated[타입, 부가정보]` → "이 필드는 `list` 타입이고, **`add_messages`라는 규칙**을 같이 적용한다"
-- 지금은 깊게 몰라도 되고, **"리스트 + add_messages 한 쌍"** 으로 외워두기 (이해하려 하지 말고 일단 암기)
-- 메시지 말고 다른 키(`a`, `b`, `c` …)도 State에 자유롭게 추가 가능 / 안 써도 됨 (취향 문제)
+### 일정
+- 제출일: **26일**
+- 제출 후 남는 3일은 본선 리허설
+- 제출물: 데이터 분석 결과 + AI 모델 + 인사이트 기반 정책 제안
 
 ---
 
-## 3. 리듀서(Reducer) = `add_messages`
+## 3. 질의응답 & 강사 피드백 (핵심 ⭐)
 
-### 3-1. 왜 필요한가?
-- 대화는 계속 쌓여야 함
+### Q&A에서 나온 질문
+- 3개 모델이 모두 결정트리 기반인데 왜 다 쓰나? → 학습 목적 + 어떤 것이 잘 나올지 몰라서
+- CNN은 이미지에 쓰는 건데? → 유동인구를 지점 주변 격자로 보면 이미지와 비슷한 구조가 됨
+- 취약 상권 기준이 절대값인가 상대값인가? → 아직 미정, 반영 예정
+- 상권의 정의(대학로, 시장, 거리 등)가 불명확하다 → 사람이 이해하기 쉬운 기준으로 구역을 나누면 좋음
 
-  ```
-  사람: 삼성전자 얼마야?
-  AI:   257,000원입니다
-  사람: (다음 질문)
-  AI:   (다음 답변)
-  ```
-- 그냥 리스트에 값을 넣으면 **뒤에서 답변할 때 앞의 값을 덮어써버림**
-- 그래서 **덮어쓰지 않고 리스트에 자동으로 append** 해주는 놈이 필요 → **리듀서**
-- 오늘의 가장 중요한 키워드 중 하나 (랭그래프에선 항상 쓰게 됨)
+### ⭐ 예측 vs 분석
+- **예측과 분석은 다르다**: 기상 자체가 예측이 어려움 (단기 예보 정확도도 낮음)
+- 미래 예측보다 **과거 데이터를 잘 분석해서 "계절별로 이런 영향이 있으니 이렇게 대비하자"** 쪽이 설득력 있음
+- 먼저 "예측을 할 것인가, 분석을 할 것인가"를 정하고, 그에 따라 RNN/CNN이 정말 필요한지 고민
 
-### 3-2. 임포트
+### ⭐ 앙상블 설계
+- XGBoost / LightGBM / CatBoost는 성능이 좋지만 **모두 부스팅 계열 → 편향됨**
+  - 잔차 기반으로 약한 모델을 순차 학습하는 방식이라 부스팅이 놓치는 관점은 못 봄
+- 앙상블의 핵심은 **서로 다른 성격의 모델을 섞는 것**
+- 앙상블 4가지: **Voting, Bagging, Boosting, Stacking**
+  - 각 유형의 대표 모델을 하나씩 골라 조합할 것 (예: Bagging 계열 → Random Forest)
+- 3대장 모델을 마지막에만 쓰지 말고, 위/아래 모델을 **섞어서 구성**해 보고 결과를 비교
 
-```python
-from langgraph.graph.message import add_messages   # 랭그래프에서 제공
-from langchain_core.messages import HumanMessage, AIMessage
-```
+### ⭐ 전처리가 가장 중요
+- 머신러닝에서 가장 중요한 건 **전처리**: 어떤 데이터를 어떻게 넣을 것인가
+- 시계열은 구성요소 분해가 중요: **Trend(추세) / Seasonality(계절성) / Noise(잡음)**
+- 도메인별(기상, 유동인구, 매출, 경제지표) 데이터를 **각각 따로 분석**해 볼 것
+- 공모전은 정확한 점수보다 **아이디어 중심** → "어떤 데이터를 어떻게 수집하고 어떻게 전처리했는지" 과정을 명확히 보여줘야 함
+- 제공 데이터 4종의 전처리 방법 + 별도 수집 데이터의 수집/전처리 과정 정리 필요
 
-### 3-3. 실습 ① — 리듀서가 이어 붙이는 모습
+### 모델 관련 조언
+- RNN/CNN만 쓰면 **레거시처럼 보일 수 있음** → **Transformer 아키텍처를 커스터마이징**해서 적용하는 방향 제안
+- 모델을 많이 붙이기보다 목적에 맞게 정리
 
-```python
-msg1 = HumanMessage(content="안녕", id="1")
-msg2 = AIMessage(content="반가워", id="2")
-
-result = add_messages(msg1, msg2)
-print(result)
-```
-
-- 결과: **리스트 안에 두 메시지가 모두 들어감** (`[HumanMessage, AIMessage]`)
-- `print(msg1)` → 메시지 전체가 나오고, `msg1.content` → `"안녕"`만 나옴
-- 휴먼/AI 메시지가 섞여 들어가도 상관없음 (둘 다 리스트에 들어감)
-
-### 3-4. 실습 ② — **ID가 같으면 덮어쓴다!**
-
-```python
-msg3 = HumanMessage(content="...", id="3")
-msg4 = HumanMessage(content="...", id="3")   # 같은 id
-
-result2 = add_messages(msg3, msg4)
-```
-
-- 결과: **하나만 남음** → `add_messages`는 **id가 동일하면 덮어씀(교체)**
-- 평소에는 **id가 서로 다르게 자동 생성**되므로 보통은 신경 쓸 일 없음
-- 정리: **"값을 덮어쓰지 않고 일단 연결(append)한다"** (단, id가 같으면 교체)
+### 특허 출원 팁
+- 프로젝트 하면서 **특허 출원** 시도 가능 (인터넷으로 출원, 비용 낮거나 무료일 수 있음 → 직접 재확인)
+- 출원 = 신청/등록 사실이고, 제출 시 "특허 출원 완료"를 명시하면 어필 가능
 
 ---
 
-## 4. 랭그래프 만드는 6단계
+## 4. 팀 내부 토론 메모 (녹취 후반부, 오인식 많음)
 
-```
-① State 정의  →  ② Node 정의  →  ③ 그래프 구성(add_node)  →  ④ Edge 연결(add_edge)  →  ⑤ compile  →  ⑥ invoke
-```
-
-### ① State 정의
-
-```python
-from typing import Annotated, TypedDict
-from langgraph.graph.message import add_messages
-
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-```
-
-- 변수 이름은 `messages`를 가장 많이 씀
-- 아직은 **껍데기만 만든 상태** (값 없음)
-
-### ② Node 정의 (함수로)
-
-```python
-def chatbot(state: State):
-    return {"messages": [llm.invoke(state["messages"])]}
-```
-
-- **항상 State를 받아서**, **State 형태(딕셔너리)로 결과를 반환**
-- 노드는 **State에 종속적**이다 → 노드 함수를 만들 땐 `state: State` 로 받고, 결과 메시지를 `{"messages": [...]}` 로 돌려준다
-- `llm.invoke(state["messages"])` 결과는 AI 메시지 → 리스트에 담아 반환 → 리듀서가 기존 리스트에 자동 append
-- **위에서 받은 State → 아래로 전달할 State** (바통 터치 구조)
-
-### ③ 그래프 구성
-
-```python
-from langgraph.graph import StateGraph, START, END
-
-graph_builder = StateGraph(State)
-graph_builder.add_node("chatbot", chatbot)
-```
-
-- `StateGraph(State)` : 랭그래프를 준비. Keras의 `Sequential()` 처럼 만들고 `add` 하는 느낌
-- `add_node("이름", 함수)` : "이런 노드가 있다"고 **등록만** 하는 단계 (**아직 연결 아님**)
-  - 이름 문자열의 **따옴표 주의**
-- `START`, `END` : 시작과 끝을 나타내는 **특수 지점** (노드가 아니라 "여기서부터 시작 / 여기서 끝"이라는 표시)
-
-### ④ Edge 연결
-
-```python
-graph_builder.add_edge(START, "chatbot")
-graph_builder.add_edge("chatbot", END)
-```
-
-- 시작 → chatbot → 끝
-- 노드가 5개면 `add_edge` 도 그만큼 더 연결해주면 됨
-- **노드는 위에서 정의, 연결은 엣지로**
-
-### ⑤ 컴파일
-
-```python
-graph = graph_builder.compile()
-```
-
-- 그래프는 **훈련이 아니라 추론 개념** → 만든 그래프를 컴파일해서 실행 준비
-- Keras의 `compile`과 비슷하지만 **훈련(fit)이 아님**
-
-### ⑥ 실행 (`invoke`)
-
-```python
-response = graph.invoke({"messages": [("user", "삼성전자 주가를 예측해줘")]})
-```
-
-- 입력도 **딕셔너리 형태** (`messages` 키)
-- `("user", "...")` 튜플 → **휴먼 메시지**로 들어감 (역할 이름은 `user` / `assistant` 등 **관용적으로 쓰는 이름에 맞춰줘야** 함)
-- ⚠️ 수업 중 실수: 메시지만 넣고 **답변이 비어 있던 경우** → 입력 형식/노드 반환을 다시 확인하고 재실행하니 정상 출력
-
-### 결과 확인
-
-```python
-response["messages"][0]            # 휴먼 메시지 (사용자 질문)
-response["messages"][1]            # AI 메시지
-response["messages"][1].content    # ← 답변 텍스트만 출력
-response["messages"][0].type       # "human" / "ai" 타입 확인
-```
-
-- `response["messages"]` 는 **리스트** → 0번째는 사람, 1번째는 AI
-- 답변만 보고 싶으면 **`.content`**
+- **취약 기준**: 매출 감소율 **5% 이상** 같은 직관적인 기준 제안 / 결제 금액뿐 아니라 **결제 횟수**도 지표 후보
+- **유동인구 활용**: 연령대·시간대별 유동인구를 지도에 표시 (예: 10대 여성이 언제 어디에 많았나)
+  - 단, 카드 데이터 위치가 **구/시 단위까지만** 나와서 동 단위 분석은 어려움
+- **지식 그래프 + 에이전트** 아이디어: 에이전트가 지식 그래프를 이해하고 결과를 설명해 주는 구조 언급
+- **주제 범위 좁히기**: 폭염 / 폭우 / 이상기온 중 **폭염에 집중**하자는 의견
+  - 기온이 오를수록 유동인구가 줄어드는 임계점(감내 가능한 더위)을 분석
+  - 폭우는 국지성으로 바뀌어 가는 추세, 정부 대응과 연계
+- **정책 제안 방향**: 정부/지자체가 피해를 예방하거나, 발생 후 지원할 수 있도록 근거 제공
+- 개발에서 끝나지 않고 **서비스화(수익화)** 까지 가는 방향도 언급
 
 ---
 
-## 5. 확장 실습 — 노드 3개 만들기 (prepare → chatbot → finish)
+## 5. 📌 복습용 파이썬 메모 (녹취 내용에 기반해 제가 추가)
 
-> 성능 향상이 목적이 아니라 **노드와 엣지 구성 연습**이 목적. 필요 없는 노드가 추가되면 오히려 성능이 떨어질 수도 있음.
-
+### 시계열 분해 (Trend / Seasonality / Noise)
 ```python
-def prepare(state: State):
-    return {"messages": [AIMessage(content="질문을 접수했습니다")]}
+from statsmodels.tsa.seasonal import seasonal_decompose
 
-def chatbot(state: State):
-    return {"messages": [llm.invoke(state["messages"])]}
-
-def finish(state: State):
-    return {"messages": [AIMessage(content="답변을 처리했습니다")]}
-
-graph_builder = StateGraph(State)
-graph_builder.add_node("prepare", prepare)
-graph_builder.add_node("chatbot", chatbot)
-graph_builder.add_node("finish", finish)
-
-graph_builder.add_edge(START, "prepare")
-graph_builder.add_edge("prepare", "chatbot")
-graph_builder.add_edge("chatbot", "finish")
-graph_builder.add_edge("finish", END)
-
-graph = graph_builder.compile()
-response = graph.invoke({"messages": [("user", "삼성전자 주가를 예측해줘")]})
+# series: 날짜 인덱스를 가진 매출 시계열 (pd.Series)
+result = seasonal_decompose(series, model="additive", period=7)  # 주간 계절성 예시
+result.plot()
 ```
 
-### 결과 출력 (`enumerate` 활용)
-
+### 증감률(상대값) 계산 — "절대값 vs 상대값" 질문 대응
 ```python
-for i, msg in enumerate(response["messages"]):
-    print(f"{i} {msg.type} : {msg.content}")
+sales["pct_change"] = sales["amount"].pct_change()                 # 전일 대비
+sales["yoy"] = sales["amount"].pct_change(periods=365)             # 전년 동기 대비
+sales["vulnerable"] = sales["pct_change"] <= -0.05                 # 5% 이상 감소
 ```
 
-- 최종 `messages` 길이 = **4개**
-  | idx | type | 내용 |
-  |---|---|---|
-  | 0 | human | 삼성전자 주가를 예측해줘 |
-  | 1 | ai | 질문을 접수했습니다 (prepare 노드) |
-  | 2 | ai | chatbot(LLM)의 답변 |
-  | 3 | ai | 답변을 처리했습니다 (finish 노드) |
-- **리듀서 덕분에** 각 노드의 결과가 덮어쓰이지 않고 전부 이어 붙음
-- 리스트 → **이터레이터 → for문**, 순서와 값이 필요하면 → **`enumerate`** (파이썬 중급 이상 필수 문법)
-- `f"{i} {msg.type}"` : f-string으로 출력문 안에 변수 값 삽입 (`{}` 위치에 순서대로 들어감)
+### 서로 다른 계열을 섞는 스태킹 앙상블
+```python
+from sklearn.ensemble import RandomForestRegressor, StackingRegressor
+from sklearn.linear_model import Ridge
+from xgboost import XGBRegressor
+
+stack = StackingRegressor(
+    estimators=[
+        ("rf", RandomForestRegressor(n_estimators=200, random_state=42)),  # Bagging 계열
+        ("xgb", XGBRegressor(n_estimators=200, random_state=42)),          # Boosting 계열
+    ],
+    final_estimator=Ridge(),
+)
+stack.fit(X_train, y_train)
+```
 
 ---
 
-## 6. 한눈에 보는 요약
+## 6. 할 일 체크리스트
 
-```
-State  = 노드 사이에 전달되는 상태 (TypedDict, 딕셔너리 형태)
-Node   = 기능 하나를 하는 함수 (State를 받아서 State 형태로 반환)
-Edge   = 노드들을 연결하는 선 (START → ... → END)
-Reducer(add_messages) = 값을 덮어쓰지 않고 리스트에 이어 붙임 (id 같으면 교체)
-
-[순서]  State 정의 → Node 정의 → add_node → add_edge → compile → invoke
-```
-
-### 체크리스트
-- [ ] `TypedDict` + `Annotated[list, add_messages]` 로 State를 만들 수 있다
-- [ ] 노드 함수는 `state: State`를 받고 `{"messages": [...]}` 를 반환한다
-- [ ] `add_node`는 "등록", `add_edge`가 "연결"이라는 걸 구분한다
-- [ ] `START` / `END` 가 특수 지점이라는 걸 안다
-- [ ] `compile()` 후 `invoke()` 로 실행하고, `response["messages"][i].content` 로 결과를 본다
-- [ ] 같은 id의 메시지는 덮어써진다는 걸 안다
-
----
-
-## 7. 파이썬 복습 포인트
-
-| 문법 | 오늘 나온 쓰임 |
-|---|---|
-| `typing` 모듈 | `TypedDict`, `Annotated`, `Dict` (기본 제공 모듈) |
-| 타입 힌트 | 강제성 없음, 가독성·의도 전달용 |
-| 클래스 상속 | `class Person(TypedDict)` → 부모 기능 + 알파를 가져다 씀 |
-| 클래스도 타입 | `Person` 은 `Person` 타입 |
-| 딕셔너리 접근 | `d["key"]` |
-| `enumerate` | 리스트 순회 시 인덱스 + 값 |
-| f-string | `f"{i} {msg.type}"` |
-
----
-
-## 8. 기타 (수업 외 메모)
-
-- **미니(팀) 프로젝트**: 진도는 짧게 나가고 **프로젝트 진행에 집중**, 이번엔 **무조건 아웃풋**을 내야 함
-  - 쉬는 시간 외 자리 이탈 시 **2층 내에서만 이동**, 집합 호출 시 **5분 내 복귀**
-  - 문제가 생기면 바로 강사님께 공유
-- **프로젝트 팁 (팀 논의 내용)**
-  - 대용량 문서를 LLM으로 메타데이터 추출 시 **처리 시간이 매우 큼** (문장 1개 약 6.5초 → 전체 시 수십~100시간 단위 예상)
-  - 로컬 소형 모델(E2B) 사용, 스레드를 늘려도 **차이가 크지 않음**
-  - **전처리 단계에서 메타데이터를 잘 뽑아두면** 검색·활용이 쉬워짐 → 중간 저장(JSON 파일)하고 **끊어서 이어 돌리는** 방식 고려
-- 강사님 한마디: GPT에만 의존하지 말고 **스스로 찾아보면서 해야 실력이 늚**
-
-> ⚠️ 원본 녹취에 음성 인식 오류(예: "엘지" = LangGraph(LG), "리듀서" = Reducer, "엣지/노드" 등)가 많아, 문맥에 맞춰 용어를 바로잡아 정리했습니다.
+- [ ] 예측 / 분석 중 프로젝트 방향 확정
+- [ ] 취약 상권 기준 정의 (절대값 vs 증감률, 5% 기준 등)
+- [ ] 도메인별(기상, 유동인구, 매출, 경제) 데이터 개별 탐색 및 시계열 분해
+- [ ] 데이터 수집 + 전처리 과정 문서화
+- [ ] 앙상블을 서로 다른 계열(Bagging/Boosting/Stacking 등)로 재구성
+- [ ] Transformer 커스터마이징 가능성 검토
+- [ ] 특허 출원 절차 확인
+- [ ] 제출일(26일) 및 최종 발표 일정 확인
+- [ ] 월요일 딥러닝/랭그래프 수업 대비
