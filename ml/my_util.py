@@ -1,0 +1,408 @@
+import csv
+import datetime
+import os
+import re
+import sys
+
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
+
+# ==========================================================
+# CSV 컬럼 자동 마이그레이션
+# ==========================================================
+
+def update_csv_columns(csv_file_path, required_columns):
+    """
+    기존 CSV의 컬럼 구조를 확인하고
+    required_columns와 다르면 새로운 구조로 변경한다.
+
+    - 기존 데이터는 최대한 유지
+    - 새로 추가된 컬럼은 빈 값("")
+    - 컬럼 순서도 required_columns 순서에 맞춤
+    - 기존에 있던 컬럼의 데이터는 유지
+    """
+
+    if not os.path.isfile(csv_file_path):
+        return
+
+    with open(
+        csv_file_path,
+        mode='r',
+        newline='',
+        encoding='utf-8-sig'
+    ) as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+
+    if not rows:
+        return
+
+    old_columns = rows[0]
+    old_columns = list(dict.fromkeys(old_columns))
+
+    if old_columns == required_columns:
+        return
+
+    old_column_index = {
+        column: index
+        for index, column in enumerate(old_columns)
+    }
+
+    updated_rows = []
+    updated_rows.append(required_columns)
+
+    for old_row in rows[1:]:
+        new_row = []
+        for column in required_columns:
+            if column in old_column_index:
+                index = old_column_index[column]
+                if index < len(old_row):
+                    new_row.append(old_row[index])
+                else:
+                    new_row.append("")
+            else:
+                new_row.append("")
+        updated_rows.append(new_row)
+
+    with open(
+        csv_file_path,
+        mode='w',
+        newline='',
+        encoding='utf-8-sig'
+    ) as f:
+        writer = csv.writer(f)
+        writer.writerows(updated_rows)
+
+
+# ==========================================================
+# 모델 기록
+# ==========================================================
+
+def record_model_csv(model, data_shape, batch_size, history, training_time,
+                     test_loss, random_num="-1", sub_score="",
+                     csv_file_path="model_history_log.csv",
+                     train_ration=0.7, base_model="", note=""):
+    """
+    base_model: 전이학습 시 사용된 베이스/사전학습 모델명 (기본값: 빈 문자열, 블랭크 가능)
+    note: 제일 오른쪽 '비고' 컬럼에 기록할 내용 (기본값: 빈 문자열)
+    """
+
+    # ======================================================
+    # 1. 현재 날짜시간
+    # ======================================================
+    current_time = datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    # ======================================================
+    # 2. 실행 파일명
+    # ======================================================
+    file_name = os.path.basename(sys.argv[0])
+
+    # ======================================================
+    # 3. 모델 이름
+    # ======================================================
+    if model is None:
+        model_name = "None"
+    elif hasattr(model, 'name'):
+        model_name = model.name
+    else:
+        # scikit-learn 등 일반 모델의 클래스 이름
+        model_name = model.__class__.__name__
+
+    # ======================================================
+    # 4. 모델 구조 & 파라미터 수 (Keras 모델이 아닐 경우 예외 처리)
+    # ======================================================
+    structure_parts = []
+    prev_layer_type = None
+
+    if model is not None and hasattr(model, 'layers'):
+        for layer in model.layers:
+            layer_type = layer.__class__.__name__
+
+            output_shape = getattr(layer, 'output_shape', None)
+
+            if isinstance(output_shape, list):
+                output_shape = (output_shape[0] if output_shape else None)
+            elif output_shape is not None:
+                try:
+                    output_shape = tuple(output_shape)
+                except TypeError:
+                    output_shape = None
+
+            if isinstance(output_shape, (tuple, list)):
+                dims = [dim for dim in output_shape if dim is not None]
+                dim_str = str(dims[-1]) if dims else "?"
+            elif hasattr(layer, 'units') and layer.units is not None:
+                dim_str = str(layer.units)
+            elif hasattr(layer, 'filters') and layer.filters is not None:
+                dim_str = str(layer.filters)
+            else:
+                dim_str = ""
+
+            extra_info = ""
+            if hasattr(layer, 'activation') and layer.activation is not None:
+                act = layer.activation
+                if hasattr(act, '__class__') and act.__class__.__name__ != 'function':
+                    act_name = act.__class__.__name__.lower()
+                elif hasattr(act, '__name__'):
+                    act_name = act.__name__.lower()
+                else:
+                    act_name = str(act).lower()
+
+                if act_name != 'linear':
+                    extra_info = f"({act_name})"
+
+            if layer_type == 'Dropout' and hasattr(layer, 'rate'):
+                dim_str = f"({layer.rate})"
+
+            if 'Conv' in layer_type and hasattr(layer, 'kernel_size'):
+                k_size = "x".join(map(str, layer.kernel_size))
+                extra_info = f"[{k_size}]{extra_info}"
+
+            node_desc = f"{dim_str}{extra_info}".strip()
+
+            if layer_type == prev_layer_type:
+                structure_parts.append(node_desc)
+            else:
+                if node_desc:
+                    structure_parts.append(f"{layer_type} {node_desc}")
+                else:
+                    structure_parts.append(layer_type)
+                prev_layer_type = layer_type
+
+        model_structure = " -> ".join(structure_parts)
+    elif model is not None:
+        # scikit-learn 등 파라미터 확인이 가능한 경우 하이퍼파라미터 요약
+        if hasattr(model, 'get_params'):
+            params = model.get_params()
+            # 주요 파라미터 몇 가지만 간략히 기록 (n_estimators, max_depth 등)
+            key_params = [f"{k}={v}" for k, v in params.items() if k in ('n_estimators', 'max_depth', 'random_state', 'C', 'kernel')]
+            model_structure = f"{model.__class__.__name__}({', '.join(key_params)})" if key_params else model.__class__.__name__
+        else:
+            model_structure = model.__class__.__name__
+    else:
+        model_structure = ""
+
+    # 파라미터 수 확인
+    if model is not None and hasattr(model, 'count_params'):
+        try:
+            total_params = model.count_params()
+        except Exception:
+            total_params = ""
+    else:
+        total_params = ""
+
+    # ======================================================
+    # 5. Loss 함수 및 Optimizer
+    # ======================================================
+    loss_func = ""
+    if model is not None and hasattr(model, 'loss') and model.loss is not None:
+        loss_func = (
+            model.loss
+            if isinstance(model.loss, str)
+            else getattr(
+                model.loss,
+                '__name__',
+                type(model.loss).__name__
+            )
+        )
+    elif model is not None and hasattr(model, 'criterion'):
+        # RandomForest/DecisionTree 등의 criterion 속성 지원
+        loss_func = str(model.criterion)
+
+    optimizer_name = ""
+    if model is not None and hasattr(model, 'optimizer') and model.optimizer is not None:
+        optimizer_name = (
+            model.optimizer.name
+            if hasattr(model.optimizer, 'name')
+            else type(model.optimizer).__name__
+        )
+
+    # ======================================================
+    # 6. Learning Rate
+    # ======================================================
+    learning_rate = ""
+    if model is not None and hasattr(model, 'optimizer') and model.optimizer is not None:
+        try:
+            lr = model.optimizer.learning_rate
+            if hasattr(lr, 'numpy'):
+                learning_rate = float(lr.numpy())
+            else:
+                learning_rate = float(lr)
+        except (AttributeError, TypeError, ValueError):
+            learning_rate = ""
+
+    # ======================================================
+    # 7. History
+    # ======================================================
+    if history is not None and hasattr(history, 'history'):
+        history_dict = history.history
+        loss_history = history_dict.get('loss', [])
+        val_loss_history = history_dict.get('val_loss', [])
+
+        epochs = len(loss_history)
+
+        if val_loss_history:
+            first_loss = val_loss_history[0]
+            last_loss = val_loss_history[-1]
+        elif loss_history:
+            first_loss = loss_history[0]
+            last_loss = loss_history[-1]
+        else:
+            first_loss = ""
+            last_loss = ""
+    else:
+        epochs = ""
+        first_loss = ""
+        last_loss = ""
+
+    # ======================================================
+    # 8. CSV 경로
+    # ======================================================
+    save_dir = "./_data/record/"
+    os.makedirs(save_dir, exist_ok=True)
+    csv_file_path = os.path.join(save_dir, csv_file_path)
+
+    # ======================================================
+    # 9. CSV 최종 컬럼 구조
+    # ======================================================
+    required_columns = [
+        "time",
+        "pyfile",
+        "data_shape",
+        "random_num",
+        "base_model",
+        "model",
+        "model_structure",
+        "loss",
+        "optimizer",
+        "learning_rate",
+        "epochs",
+        "batch_size",
+        "train_second",
+        "first_loss",
+        "last_loss",
+        "test_loss",
+        "sub_score",
+        "train_ration",
+        "total_params",
+        "비고"
+    ]
+
+    # ======================================================
+    # 10. 기존 CSV 자동 마이그레이션
+    # ======================================================
+    update_csv_columns(
+        csv_file_path,
+        required_columns
+    )
+
+    # ======================================================
+    # 11. CSV에 기록할 데이터
+    # ======================================================
+    log_data = [
+        current_time,
+        file_name,
+        data_shape,
+        random_num,
+        base_model,
+        model_name,
+        model_structure,
+        loss_func,
+        optimizer_name,
+        learning_rate,
+        epochs,
+        batch_size,
+        round(training_time, 4) if isinstance(training_time, (int, float)) else training_time,
+        first_loss,
+        last_loss,
+        test_loss,
+        sub_score,
+        train_ration,
+        total_params,
+        note
+    ]
+
+    # ======================================================
+    # 12. 파일 존재 여부 확인 및 작성
+    # ======================================================
+    file_exists = os.path.isfile(csv_file_path)
+
+    with open(
+        csv_file_path,
+        mode='a',
+        newline='',
+        encoding='utf-8-sig'
+    ) as f:
+        writer = csv.writer(f)
+
+        if not file_exists:
+            writer.writerow(required_columns)
+
+        writer.writerow(log_data)
+
+
+# ==========================================================
+# RMSE
+# ==========================================================
+
+def RMSE(y_test, y_predict):
+    return np.sqrt(
+        mean_squared_error(
+            y_test,
+            y_predict
+        )
+    )
+
+
+# ==========================================================
+# 상위 파일만 남기기
+# ==========================================================
+
+def leaveTop(path, prefix, subfix, count, mode="min"):
+    if count < 0:
+        raise ValueError(
+            "count must be greater than or equal to 0"
+        )
+
+    if mode not in ("min", "max"):
+        raise ValueError(
+            "mode must be either 'min' or 'max'"
+        )
+
+    score_pattern = re.compile(
+        rf"^{re.escape(prefix)}.*-"
+        rf"(?P<score>-?\d+(?:\.\d+)?)"
+        rf"{re.escape(subfix)}$"
+    )
+
+    candidates = []
+
+    for filename in os.listdir(path):
+        match = score_pattern.match(filename)
+        if match:
+            candidates.append(
+                (
+                    float(match.group("score")),
+                    filename
+                )
+            )
+
+    candidates.sort(
+        key=lambda item: (
+            item[0],
+            item[1]
+        ),
+        reverse=mode == "max"
+    )
+
+    deleted_files = []
+
+    for _, filename in candidates[count:]:
+        filepath = os.path.join(path, filename)
+        os.remove(filepath)
+        deleted_files.append(filepath)
+
+    return deleted_files

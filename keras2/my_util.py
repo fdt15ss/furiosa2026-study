@@ -103,95 +103,128 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     # ======================================================
     # 3. 모델 이름
     # ======================================================
-    model_name = model.name
+    if model is None:
+        model_name = "None"
+    elif hasattr(model, 'name'):
+        model_name = model.name
+    else:
+        # scikit-learn 등 일반 모델의 클래스 이름
+        model_name = model.__class__.__name__
 
     # ======================================================
-    # 4. 모델 구조
+    # 4. 모델 구조 & 파라미터 수 (Keras 모델이 아닐 경우 예외 처리)
     # ======================================================
     structure_parts = []
     prev_layer_type = None
 
-    for layer in model.layers:
-        layer_type = layer.__class__.__name__
+    if model is not None and hasattr(model, 'layers'):
+        for layer in model.layers:
+            layer_type = layer.__class__.__name__
 
-        output_shape = getattr(layer, 'output_shape', None)
+            output_shape = getattr(layer, 'output_shape', None)
 
-        if isinstance(output_shape, list):
-            output_shape = (output_shape[0] if output_shape else None)
-        elif output_shape is not None:
-            try:
-                output_shape = tuple(output_shape)
-            except TypeError:
-                output_shape = None
+            if isinstance(output_shape, list):
+                output_shape = (output_shape[0] if output_shape else None)
+            elif output_shape is not None:
+                try:
+                    output_shape = tuple(output_shape)
+                except TypeError:
+                    output_shape = None
 
-        if isinstance(output_shape, (tuple, list)):
-            dims = [dim for dim in output_shape if dim is not None]
-            dim_str = str(dims[-1]) if dims else "?"
-        elif hasattr(layer, 'units') and layer.units is not None:
-            dim_str = str(layer.units)
-        elif hasattr(layer, 'filters') and layer.filters is not None:
-            dim_str = str(layer.filters)
-        else:
-            dim_str = ""
-
-        extra_info = ""
-        if hasattr(layer, 'activation') and layer.activation is not None:
-            act = layer.activation
-            if hasattr(act, '__class__') and act.__class__.__name__ != 'function':
-                act_name = act.__class__.__name__.lower()
-            elif hasattr(act, '__name__'):
-                act_name = act.__name__.lower()
+            if isinstance(output_shape, (tuple, list)):
+                dims = [dim for dim in output_shape if dim is not None]
+                dim_str = str(dims[-1]) if dims else "?"
+            elif hasattr(layer, 'units') and layer.units is not None:
+                dim_str = str(layer.units)
+            elif hasattr(layer, 'filters') and layer.filters is not None:
+                dim_str = str(layer.filters)
             else:
-                act_name = str(act).lower()
+                dim_str = ""
 
-            if act_name != 'linear':
-                extra_info = f"({act_name})"
+            extra_info = ""
+            if hasattr(layer, 'activation') and layer.activation is not None:
+                act = layer.activation
+                if hasattr(act, '__class__') and act.__class__.__name__ != 'function':
+                    act_name = act.__class__.__name__.lower()
+                elif hasattr(act, '__name__'):
+                    act_name = act.__name__.lower()
+                else:
+                    act_name = str(act).lower()
 
-        if layer_type == 'Dropout' and hasattr(layer, 'rate'):
-            dim_str = f"({layer.rate})"
+                if act_name != 'linear':
+                    extra_info = f"({act_name})"
 
-        if 'Conv' in layer_type and hasattr(layer, 'kernel_size'):
-            k_size = "x".join(map(str, layer.kernel_size))
-            extra_info = f"[{k_size}]{extra_info}"
+            if layer_type == 'Dropout' and hasattr(layer, 'rate'):
+                dim_str = f"({layer.rate})"
 
-        node_desc = f"{dim_str}{extra_info}".strip()
+            if 'Conv' in layer_type and hasattr(layer, 'kernel_size'):
+                k_size = "x".join(map(str, layer.kernel_size))
+                extra_info = f"[{k_size}]{extra_info}"
 
-        if layer_type == prev_layer_type:
-            structure_parts.append(node_desc)
-        else:
-            if node_desc:
-                structure_parts.append(f"{layer_type} {node_desc}")
+            node_desc = f"{dim_str}{extra_info}".strip()
+
+            if layer_type == prev_layer_type:
+                structure_parts.append(node_desc)
             else:
-                structure_parts.append(layer_type)
-            prev_layer_type = layer_type
+                if node_desc:
+                    structure_parts.append(f"{layer_type} {node_desc}")
+                else:
+                    structure_parts.append(layer_type)
+                prev_layer_type = layer_type
 
-    model_structure = " -> ".join(structure_parts)
-    total_params = model.count_params()
+        model_structure = " -> ".join(structure_parts)
+    elif model is not None:
+        # scikit-learn 등 파라미터 확인이 가능한 경우 하이퍼파라미터 요약
+        if hasattr(model, 'get_params'):
+            params = model.get_params()
+            # 주요 파라미터 몇 가지만 간략히 기록 (n_estimators, max_depth 등)
+            key_params = [f"{k}={v}" for k, v in params.items() if k in ('n_estimators', 'max_depth', 'random_state', 'C', 'kernel')]
+            model_structure = f"{model.__class__.__name__}({', '.join(key_params)})" if key_params else model.__class__.__name__
+        else:
+            model_structure = model.__class__.__name__
+    else:
+        model_structure = ""
+
+    # 파라미터 수 확인
+    if model is not None and hasattr(model, 'count_params'):
+        try:
+            total_params = model.count_params()
+        except Exception:
+            total_params = ""
+    else:
+        total_params = ""
 
     # ======================================================
     # 5. Loss 함수 및 Optimizer
     # ======================================================
-    loss_func = (
-        model.loss
-        if isinstance(model.loss, str)
-        else getattr(
-            model.loss,
-            '__name__',
-            type(model.loss).__name__
+    loss_func = ""
+    if model is not None and hasattr(model, 'loss') and model.loss is not None:
+        loss_func = (
+            model.loss
+            if isinstance(model.loss, str)
+            else getattr(
+                model.loss,
+                '__name__',
+                type(model.loss).__name__
+            )
         )
-    )
+    elif model is not None and hasattr(model, 'criterion'):
+        # RandomForest/DecisionTree 등의 criterion 속성 지원
+        loss_func = str(model.criterion)
 
-    optimizer_name = (
-        model.optimizer.name
-        if hasattr(model.optimizer, 'name')
-        else type(model.optimizer).__name__
-    )
+    optimizer_name = ""
+    if model is not None and hasattr(model, 'optimizer') and model.optimizer is not None:
+        optimizer_name = (
+            model.optimizer.name
+            if hasattr(model.optimizer, 'name')
+            else type(model.optimizer).__name__
+        )
 
     # ======================================================
     # 6. Learning Rate
     # ======================================================
     learning_rate = ""
-    if hasattr(model, 'optimizer') and model.optimizer is not None:
+    if model is not None and hasattr(model, 'optimizer') and model.optimizer is not None:
         try:
             lr = model.optimizer.learning_rate
             if hasattr(lr, 'numpy'):
@@ -233,14 +266,14 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
     csv_file_path = os.path.join(save_dir, csv_file_path)
 
     # ======================================================
-    # 9. CSV 최종 컬럼 구조 ("base_model" 추가)
+    # 9. CSV 최종 컬럼 구조
     # ======================================================
     required_columns = [
         "time",
         "pyfile",
         "data_shape",
         "random_num",
-        "base_model",       # <-- 전이학습 베이스 모델명 컬럼
+        "base_model",
         "model",
         "model_structure",
         "loss",
@@ -274,7 +307,7 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         file_name,
         data_shape,
         random_num,
-        base_model,         # <-- base_model 값 기록 (전달 안 하면 "")
+        base_model,
         model_name,
         model_structure,
         loss_func,
@@ -282,7 +315,7 @@ def record_model_csv(model, data_shape, batch_size, history, training_time,
         learning_rate,
         epochs,
         batch_size,
-        round(training_time, 4),
+        round(training_time, 4) if isinstance(training_time, (int, float)) else training_time,
         first_loss,
         last_loss,
         test_loss,
