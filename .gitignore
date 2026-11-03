@@ -201,3 +201,5 @@ _data/rag_data/**
 /_db/Faiss20-2/**
 /_data/attention is all you needs.pdf
 /Projects/**
+*.pdf
+*.zip
