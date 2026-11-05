@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mask R-CNN 모델의 발전 변천사와 기술적 진화</title>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2b6cb0;
+            --accent: #3182ce;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --text: #2d3748;
+            --muted: #718096;
+            --border: #e2e8f0;
+            --code-bg: #edf2f7;
+            --table-header: #2c5282;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            padding: 0;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+        header {
+            background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+            color: white;
+            padding: 3rem 1.5rem;
+            margin-bottom: 2.5rem;
+            border-radius: 0 0 12px 12px;
+        }
+        header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+        header p {
+            font-size: 1.05rem;
+            opacity: 0.92;
+            max-width: 720px;
+        }
+        h2 {
+            font-size: 1.45rem;
+            color: var(--primary);
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 3px solid var(--accent);
+        }
+        h3 {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin: 1.8rem 0 0.8rem;
+        }
+        h4 {
+            font-size: 1.05rem;
+            color: #2c5282;
+            margin: 1.3rem 0 0.6rem;
+        }
+        p { margin-bottom: 1rem; }
+        ul, ol {
+            margin: 0.6rem 0 1.2rem 1.5rem;
+        }
+        li { margin-bottom: 0.35rem; }
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 1.4rem 1.6rem;
+            margin: 1.2rem 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.2rem 0 1.8rem;
+            font-size: 0.95rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        th {
+            background: var(--table-header);
+            color: white;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .highlight {
+            background: #ebf8ff;
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.2rem;
+            margin: 1.2rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .key-point {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 0.9rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .warning {
+            background: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 0.9rem 1.2rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SF Mono", "Fira Code", Consolas, monospace;
+            font-size: 0.9em;
+        }
+        .math-block {
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+        .architecture {
+            background: #f7fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.3rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .toc {
+            background: white;
+            border-radius: 10px;
+            padding: 1.3rem 1.6rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+        .toc h3 { margin-top: 0; }
+        .toc ul { list-style: none; margin-left: 0; }
+        .toc li { margin: 0.4rem 0; }
+        .toc a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+        .toc a:hover { text-decoration: underline; }
+        @media print {
+            body { background: white; }
+            header { background: #1a365d !important; -webkit-print-color-adjust: exact; }
+            .card, table { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Mask R-CNN 모델의 발전 변천사와 기술적 진화</h1>
+            <p>
+                컴퓨터 비전 분야에서 객체 탐지(Object Detection), 인스턴스 분할(Instance Segmentation), 
+                위치 추정(Localization)을 통합한 대표적인 딥러닝 아키텍처의 발전 과정을 정리합니다.
+            </p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="toc">
+            <h3>목차</h3>
+            <ul>
+                <li><a href="#sec1">1. Mask R-CNN의 역사적 발전 과정</a></li>
+                <li><a href="#sec2">2. R-CNN (2014)</a></li>
+                <li><a href="#sec3">3. Fast R-CNN (2015)</a></li>
+                <li><a href="#sec4">4. Faster R-CNN (2015)</a></li>
+                <li><a href="#sec5">5. Mask R-CNN (2017)</a></li>
+                <li><a href="#sec6">6. Mask R-CNN 이후의 주요 발전</a></li>
+                <li><a href="#sec7">7. Transformer 기반 Mask R-CNN의 발전</a></li>
+                <li><a href="#sec8">8. 주요 경쟁 모델 비교</a></li>
+                <li><a href="#sec9">9. 기술적 진화의 핵심 비교</a></li>
+            </ul>
+        </div>
+
+        <p>
+            Mask R-CNN의 발전을 이해하려면 단순히 모델 버전의 변화를 살펴보는 것보다, 
+            <strong>객체를 인식하고 분할하는 기술이 어떻게 진화했는지</strong>를 이해하는 것이 중요합니다.
+            특히 다음 기술적 진화가 핵심입니다.
+        </p>
+        <ul>
+            <li>CNN 기반 이미지 특징 추출</li>
+            <li>Region Proposal 기반 객체 탐지</li>
+            <li>Two-Stage Object Detection</li>
+            <li>Pixel-level Instance Segmentation</li>
+            <li>Feature Pyramid Network (FPN)</li>
+            <li>Cascade Detection</li>
+            <li>Transformer 기반 객체 인식 및 분할</li>
+            <li>Foundation Model 기반 범용 객체 분할</li>
+        </ul>
+
+        <!-- ==================== 1 ==================== -->
+        <h2 id="sec1">1. Mask R-CNN의 역사적 발전 과정</h2>
+
+        <h3>1.1 전체 발전 연대표</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>연도</th>
+                    <th>모델</th>
+                    <th>핵심 기술적 발전</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>2014</td><td>R-CNN</td><td>Region Proposal + CNN</td></tr>
+                <tr><td>2015</td><td>Fast R-CNN</td><td>RoI Pooling, 통합 학습</td></tr>
+                <tr><td>2015</td><td>Faster R-CNN</td><td>RPN, End-to-End 학습</td></tr>
+                <tr><td>2016</td><td>FCN</td><td>Fully Convolutional Segmentation</td></tr>
+                <tr><td>2017</td><td><strong>Mask R-CNN</strong></td><td>RoIAlign + Mask Head</td></tr>
+                <tr><td>2017</td><td>FPN</td><td>Multi-scale Feature Pyramid</td></tr>
+                <tr><td>2018</td><td>Cascade R-CNN</td><td>단계별 고품질 Bounding Box</td></tr>
+                <tr><td>2019</td><td>Hybrid Task Cascade</td><td>Detection + Segmentation 단계적 개선</td></tr>
+                <tr><td>2021</td><td>Swin Transformer</td><td>계층형 Transformer Backbone</td></tr>
+                <tr><td>2021</td><td>Mask2Former</td><td>통합 Mask Classification</td></tr>
+                <tr><td>2023</td><td>SAM</td><td>Promptable Foundation Segmentation</td></tr>
+                <tr><td>2024</td><td>SAM 2</td><td>이미지 및 동영상 분할 확장</td></tr>
+            </tbody>
+        </table>
+
+        <div class="highlight">
+            <strong>참고:</strong> 모든 모델이 Mask R-CNN의 직접적인 후속 버전은 아닙니다. 
+            일부는 기존 구조의 개선이고, 일부는 다른 연구 계열에서 발전한 기술입니다.
+        </div>
+
+        <!-- ==================== 2 ==================== -->
+        <h2 id="sec2">2. R-CNN: 객체 탐지의 출발점 (2014)</h2>
+        <p>
+            2014년 Ross Girshick 연구진이 발표한 모델입니다. 
+            기존 컴퓨터 비전은 HOG, SIFT, Sliding Window 등 수작업 특징 추출이 주류였으나, 
+            R-CNN은 CNN을 활용하여 이미지에서 자동으로 특징을 학습하는 새로운 접근법을 제시했습니다.
+        </p>
+
+        <h4>아키텍처</h4>
+        <div class="architecture">Input Image
+    ↓
+Selective Search (약 2,000개 Region Proposal 생성)
+    ↓
+CNN Feature Extraction
+    ↓
+SVM Classification
+    ↓
+Bounding Box Regression</div>
+
+        <h4>작동 원리</h4>
+        <ol>
+            <li>Selective Search를 사용해 객체 후보 영역을 생성합니다.</li>
+            <li>각 후보 영역을 CNN에 입력합니다.</li>
+            <li>CNN에서 특징 벡터를 추출합니다.</li>
+            <li>SVM으로 객체 종류를 분류합니다.</li>
+            <li>Bounding Box Regression으로 객체 위치를 보정합니다.</li>
+        </ol>
+
+        <h4>한계점</h4>
+        <ul>
+            <li>약 2,000개 영역을 각각 CNN에 통과시켜 연산량이 매우 큽니다.</li>
+            <li>학습 과정이 여러 단계로 분리됩니다.</li>
+            <li>실시간 객체 탐지에 부적합합니다.</li>
+            <li>Instance Segmentation 기능이 없습니다.</li>
+        </ul>
+        <div class="key-point">
+            <strong>핵심 의의:</strong> CNN을 객체 탐지에 본격적으로 적용한 중요한 출발점입니다.
+        </div>
+
+        <!-- ==================== 3 ==================== -->
+        <h2 id="sec3">3. Fast R-CNN (2015)</h2>
+        <p>
+            Fast R-CNN은 R-CNN의 가장 큰 비효율성을 해결했습니다. 
+            기존 R-CNN은 각 Region Proposal마다 CNN을 실행했지만, 
+            Fast R-CNN은 <strong>전체 이미지에 CNN을 한 번만 적용</strong>합니다.
+        </p>
+
+        <h4>핵심 구조</h4>
+        <div class="architecture">Input Image
+    ↓
+CNN Backbone → Shared Feature Map
+    ↓
+RoI Pooling
+    ↓
+Classification (Softmax) + Bounding Box Regression</div>
+
+        <h4>주요 발전</h4>
+        <ul>
+            <li>CNN Feature Map 공유</li>
+            <li>RoI Pooling 적용</li>
+            <li>Classification과 Bounding Box Regression을 하나의 네트워크에서 학습</li>
+            <li>Multi-task Loss 적용</li>
+        </ul>
+
+        <p>대표적인 Loss 함수:</p>
+        <div class="math-block">
+            \[ L = L_{cls} + \lambda L_{loc} \]
+        </div>
+        <ul>
+            <li>\( L_{cls} \): 객체 분류 손실</li>
+            <li>\( L_{loc} \): Bounding Box 회귀 손실</li>
+            <li>\( \lambda \): 두 손실의 가중치</li>
+        </ul>
+        <div class="key-point">
+            <strong>핵심 의의:</strong> CNN 연산을 공유하여 R-CNN보다 효율적인 학습 및 추론 구조를 구현했습니다.
+        </div>
+
+        <!-- ==================== 4 ==================== -->
+        <h2 id="sec4">4. Faster R-CNN (2015)</h2>
+        <p>
+            Faster R-CNN은 Region Proposal 생성 과정까지 신경망 내부로 통합했습니다. 
+            기존 Selective Search를 대체하는 핵심 기술이 바로 <strong>RPN (Region Proposal Network)</strong>입니다.
+        </p>
+
+        <h4>RPN의 작동 원리</h4>
+        <p>RPN은 CNN Backbone의 Feature Map을 입력으로 받아 객체가 존재할 가능성이 높은 영역을 예측합니다.</p>
+        <ul>
+            <li>Anchor Boxes</li>
+            <li>Objectness Score</li>
+            <li>Bounding Box Regression</li>
+            <li>Non-Maximum Suppression (NMS)</li>
+        </ul>
+
+        <h4>전체 구조</h4>
+        <div class="architecture">1. Input Image
+2. CNN Backbone
+3. Feature Map
+4. RPN → Region Proposals
+5. RoI Pooling
+6. Classification Head
+7. Bounding Box Regression</div>
+
+        <h4>Anchor Box란?</h4>
+        <p>
+            하나의 위치에서 서로 다른 크기와 종횡비를 갖는 사전 정의된 후보 Bounding Box입니다.
+            예: 128×128, 256×256, 512×512 및 다양한 종횡비 조합으로 여러 객체 형태에 대응합니다.
+        </p>
+        <div class="key-point">
+            <strong>핵심 의의:</strong> Region Proposal 생성까지 딥러닝으로 학습할 수 있게 되면서 
+            현대적인 Two-Stage Object Detector의 기반을 마련했습니다.
+        </div>
+
+        <!-- ==================== 5 ==================== -->
+        <h2 id="sec5">5. Mask R-CNN (2017): 가장 중요한 전환점</h2>
+        <p>
+            2017년 Kaiming He, Georgia Gkioxari, Piotr Dollár, Ross Girshick 연구진이 발표했습니다.
+            기존 Faster R-CNN에 <strong>Mask Prediction Branch</strong>를 추가한 것이 핵심입니다.
+            Faster R-CNN은 객체의 위치와 종류만 탐지했지만, Mask R-CNN은 객체의 정확한 픽셀 영역까지 구분합니다.
+        </p>
+
+        <h3>5.1 Mask R-CNN의 핵심 아키텍처</h3>
+        <div class="architecture">Input Image
+    ↓
+ResNet-50 / ResNet-101 Backbone
+    ↓
+Feature Pyramid Network (FPN)
+    ↓
+Region Proposal Network (RPN)
+    ↓
+RoIAlign
+    ↓
+┌─────────────┬─────────────┬─────────────┐
+│ Class 분류  │ Box 위치    │ Mask 픽셀 분할 │
+└─────────────┴─────────────┴─────────────┘</div>
+
+        <h3>5.2 세 가지 핵심 출력</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>출력 Branch</th>
+                    <th>기능</th>
+                    <th>결과</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Classification Head</td>
+                    <td>객체 종류 식별</td>
+                    <td>사람, 자동차 등</td>
+                </tr>
+                <tr>
+                    <td>Bounding Box Head</td>
+                    <td>객체 위치 추정</td>
+                    <td>좌표 및 크기</td>
+                </tr>
+                <tr>
+                    <td>Mask Head</td>
+                    <td>픽셀 단위 객체 분할</td>
+                    <td>Binary Mask</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>
+            예를 들어 하나의 이미지에 사람 3명과 자동차 2대가 있다면, 
+            각각의 객체에 대해 독립적인 Mask를 생성합니다.
+            이것이 <strong>Semantic Segmentation</strong>과 <strong>Instance Segmentation</strong>의 차이입니다.
+        </p>
+
+        <h3>5.3 가장 중요한 기술: RoIAlign</h3>
+        <p>
+            Mask R-CNN의 가장 중요한 기여 중 하나입니다.
+            기존 RoI Pooling은 좌표를 정수 단위로 반올림하는 과정에서 공간적인 정렬 오차가 발생할 수 있으며,
+            이는 특히 픽셀 단위 Mask Prediction에서 큰 문제가 됩니다.
+        </p>
+        <p>
+            RoIAlign은 좌표를 불필요하게 정수화하지 않고, 
+            <strong>Bilinear Interpolation</strong>을 이용해 특징값을 계산합니다.
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>비교 항목</th>
+                    <th>RoI Pooling</th>
+                    <th>RoIAlign</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>좌표 처리</td>
+                    <td>정수 단위 반올림</td>
+                    <td>실수 좌표 유지</td>
+                </tr>
+                <tr>
+                    <td>특징 추출</td>
+                    <td>Quantization</td>
+                    <td>Bilinear Interpolation</td>
+                </tr>
+                <tr>
+                    <td>공간 정렬</td>
+                    <td>오차 발생 가능</td>
+                    <td>정밀한 정렬</td>
+                </tr>
+                <tr>
+                    <td>Mask Prediction</td>
+                    <td>상대적으로 불리</td>
+                    <td>유리</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>RoIAlign의 핵심 수식:</p>
+        <div class="math-block">
+            \[ f(x,y) = \sum_{i,j} w_{ij} f(x_i, y_j) \]
+        </div>
+        <p>여기서 \( w_{ij} \)는 주변 네 개의 픽셀에 적용되는 Bilinear Interpolation 가중치입니다.</p>
+
+        <h3>5.4 Mask Head</h3>
+        <p>Mask Head는 각 RoI에 대해 객체의 픽셀 단위 마스크를 생성합니다.</p>
+        <ul>
+            <li>4개의 3×3 Convolution Layer</li>
+            <li>1개의 2×2 Deconvolution Layer</li>
+            <li>1×1 Convolution</li>
+            <li>Per-class Binary Mask Prediction</li>
+        </ul>
+        <p>
+            대표적인 Mask 출력 크기는 28×28입니다.
+            Mask Head가 Classification Head와 별도의 Branch로 작동하기 때문에 
+            객체의 종류와 픽셀 영역을 동시에 학습할 수 있습니다.
+        </p>
+
+        <h3>5.5 Mask R-CNN Loss Function</h3>
+        <div class="math-block">
+            \[ L = L_{cls} + L_{box} + L_{mask} \]
+        </div>
+        <ul>
+            <li>\( L_{cls} \): 객체 분류 Loss</li>
+            <li>\( L_{box} \): Bounding Box Regression Loss</li>
+            <li>\( L_{mask} \): Binary Mask Prediction Loss</li>
+        </ul>
+        <p>원본 모델은 각 RoI에 대해 해당 Ground Truth 클래스의 Mask Loss를 계산하는 구조를 사용합니다.</p>
+        <div class="key-point">
+            <strong>핵심 의의:</strong> 객체 탐지와 Instance Segmentation을 하나의 통합 아키텍처에서 수행할 수 있게 만들었습니다.
+        </div>
+
+        <!-- ==================== 6 ==================== -->
+        <h2 id="sec6">6. Mask R-CNN 이후의 주요 발전</h2>
+        <p>Mask R-CNN 발표 이후 연구자들은 크게 네 가지 문제를 해결하기 시작했습니다.</p>
+        <ul>
+            <li>작은 객체를 얼마나 정확하게 탐지할 것인가?</li>
+            <li>겹쳐 있는 객체를 어떻게 구별할 것인가?</li>
+            <li>객체 경계선을 얼마나 정밀하게 분할할 것인가?</li>
+            <li>CNN의 지역적 특징 추출 한계를 어떻게 극복할 것인가?</li>
+        </ul>
+
+        <h3>6.1 Feature Pyramid Network (FPN, 2017)</h3>
+        <p>
+            FPN은 Mask R-CNN의 성능을 향상시키는 핵심 기술입니다.
+            일반적인 CNN은 네트워크가 깊어질수록 Feature Map의 해상도가 낮아져 
+            작은 객체의 세부 정보가 손실될 수 있습니다.
+            FPN은 서로 다른 해상도의 특징을 결합합니다.
+        </p>
+
+        <h4>FPN의 세 가지 구성</h4>
+        <ol>
+            <li><strong>Bottom-up pathway</strong>: CNN을 통한 계층적 특징 추출</li>
+            <li><strong>Top-down pathway</strong>: 고수준 특징의 Upsampling</li>
+            <li><strong>Lateral connections</strong>: 동일 해상도 특징 결합</li>
+        </ol>
+        <p>대표적으로 P2, P3, P4, P5 Feature Map을 생성합니다.</p>
+        <div class="math-block">
+            \[ P_i = \mathrm{Conv}_{1\times1}(C_i) + \mathrm{Upsample}(P_{i+1}) \]
+        </div>
+        <p>이후 3×3 Convolution으로 Feature Map을 정제합니다.</p>
+
+        <div class="key-point">
+            <strong>기대 효과:</strong> 작은 객체 탐지 개선, 다양한 크기의 객체 처리, 
+            고해상도 공간 정보 보존, Mask R-CNN의 Feature Extraction 성능 향상
+        </div>
+        <div class="highlight">
+            FPN은 Mask R-CNN보다 먼저 독립적으로 제안된 기술입니다. 
+            원본 Mask R-CNN 논문은 ResNet과 ResNet-FPN을 모두 실험했고, 
+            ResNet-FPN 기반 구조에서 우수한 성능을 보였습니다.
+        </div>
+
+        <h3>6.2 Cascade R-CNN (2018)</h3>
+        <p>
+            Cascade R-CNN은 Bounding Box의 품질을 단계적으로 개선하기 위한 모델입니다.
+            일반적인 Faster R-CNN은 하나의 Detection Head에서 객체의 위치를 추정하지만,
+            IoU가 높은 객체만 학습시키면 데이터가 부족해지고, 
+            낮은 IoU 기준으로만 학습하면 정확한 위치 추정에 한계가 생깁니다.
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>단계</th>
+                    <th>IoU 기준 (예시)</th>
+                    <th>역할</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Stage 1</td><td>0.5</td><td>초기 객체 탐지</td></tr>
+                <tr><td>Stage 2</td><td>0.6</td><td>위치 정밀화</td></tr>
+                <tr><td>Stage 3</td><td>0.7</td><td>고품질 Bounding Box</td></tr>
+            </tbody>
+        </table>
+        <div class="math-block">
+            \[ B_1 \rightarrow B_2 \rightarrow B_3 \]
+        </div>
+        <p>각 단계에서 이전 단계의 예측 결과를 다음 단계의 입력으로 전달합니다.</p>
+        <div class="warning">
+            위 IoU 값은 구조를 설명하기 위한 대표적인 예시입니다. 
+            실제 설정은 구현 및 실험 조건에 따라 달라집니다.
+        </div>
+        <p>
+            Mask R-CNN과 결합하면 <strong>Cascade Mask R-CNN</strong>이 됩니다.
+            (Cascade Detection Head + Improved Bounding Box Regression + Mask Prediction Head)
+        </p>
+
+        <h3>6.3 PANet (2018)</h3>
+        <p>
+            PANet (Path Aggregation Network)은 FPN의 정보 전달 구조를 개선합니다.
+            FPN이 Top-down 방향으로 고수준 특징을 전달하는 데 중점을 두었다면, 
+            PANet은 <strong>Bottom-up Path Augmentation</strong>을 추가합니다.
+        </p>
+        <ul>
+            <li>Bottom-up Path Augmentation</li>
+            <li>Adaptive Feature Pooling</li>
+            <li>Feature Fusion</li>
+            <li>Instance Segmentation 개선</li>
+        </ul>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>FPN</th>
+                    <th>PANet</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Top-down</td>
+                    <td>지원</td>
+                    <td>지원</td>
+                </tr>
+                <tr>
+                    <td>Bottom-up augmentation</td>
+                    <td>기본 구조에는 없음</td>
+                    <td>추가</td>
+                </tr>
+                <tr>
+                    <td>Feature Fusion</td>
+                    <td>Lateral Connection</td>
+                    <td>강화된 경로 및 Adaptive Pooling</td>
+                </tr>
+                <tr>
+                    <td>주요 목표</td>
+                    <td>다중 스케일</td>
+                    <td>특징 전달 및 인스턴스 정보 강화</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>6.4 Hybrid Task Cascade (HTC, 2019)</h3>
+        <p>
+            HTC는 Detection과 Segmentation을 단계별로 연결하는 모델입니다.
+            일반적인 Cascade Mask R-CNN에서는 Detection과 Mask Prediction이 각 단계에서 연결되지만,
+            HTC는 이 두 작업의 상호작용을 더욱 적극적으로 활용합니다.
+        </p>
+        <ul>
+            <li>Interleaved Execution</li>
+            <li>Mask Information Flow</li>
+            <li>Semantic Segmentation Branch</li>
+            <li>Multi-stage Feature Refinement</li>
+        </ul>
+        <div class="math-block">
+            \[ \mathrm{Box}_1 \rightarrow \mathrm{Mask}_1 \rightarrow \mathrm{Box}_2 \rightarrow \mathrm{Mask}_2 \rightarrow \mathrm{Box}_3 \rightarrow \mathrm{Mask}_3 \]
+        </div>
+        <p>이 구조를 통해 Mask Prediction 결과가 이후 Detection 단계에도 도움을 줄 수 있습니다.</p>
+
+        <!-- ==================== 7 ==================== -->
+        <h2 id="sec7">7. Transformer 기반 Mask R-CNN의 발전</h2>
+        <p>
+            2017년 Mask R-CNN 발표 이후 컴퓨터 비전의 중요한 패러다임 변화가 일어났습니다.
+            바로 <strong>Transformer의 도입</strong>입니다.
+            기존 CNN은 주로 주변 픽셀을 기반으로 특징을 추출하는 반면,
+            Transformer는 Self-Attention을 통해 이미지의 서로 멀리 떨어진 영역 간 관계도 학습할 수 있습니다.
+        </p>
+
+        <h3>7.1 Vision Transformer (ViT, 2020)</h3>
+        <p>
+            Vision Transformer (ViT)는 이미지를 일정 크기의 Patch로 분할한 뒤 
+            Transformer Encoder에 입력하는 모델입니다.
+        </p>
+        <div class="architecture">1. Image Input
+2. Patch Embedding
+3. Positional Embedding
+4. Transformer Encoder
+5. Classification Head</div>
+        <p>Self-Attention 계산식:</p>
+        <div class="math-block">
+            \[ \mathrm{Attention}(Q,K,V) = \mathrm{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V \]
+        </div>
+        <div class="highlight">
+            ViT 자체가 Mask R-CNN의 후속 모델은 아닙니다. 
+            Transformer를 컴퓨터 비전에 도입한 중요한 기반 기술입니다.
+        </div>
+
+        <h3>7.2 Swin Transformer (2021)</h3>
+        <p>
+            Swin Transformer는 CNN의 계층적 특징 추출 방식과 Transformer의 Attention을 결합한 구조입니다.
+        </p>
+        <ul>
+            <li>Hierarchical Feature Representation</li>
+            <li>Window-based Self-Attention</li>
+            <li>Shifted Window Mechanism</li>
+            <li>Multi-scale Feature Extraction</li>
+        </ul>
+        <p>특히 Shifted Window 방식은 인접한 Window 간 정보 전달을 가능하게 합니다.</p>
+        <p>Swin Transformer는 Mask R-CNN의 Backbone으로도 활용할 수 있습니다.</p>
+        <div class="architecture">Image → Swin Backbone → FPN → RPN → RoIAlign → Detection + Mask</div>
+
+        <h3>7.3 Mask2Former (2021/2022)</h3>
+        <p>
+            Mask2Former는 Mask R-CNN의 단순한 개선 버전이 아니라, 
+            다른 접근법을 사용하는 Transformer 기반 Segmentation 모델입니다.
+            논문의 핵심은 <strong>Masked Attention</strong>입니다.
+        </p>
+        <ul>
+            <li>Transformer Decoder</li>
+            <li>Masked Attention</li>
+            <li>Multi-scale Feature Processing</li>
+            <li>Mask Classification</li>
+            <li>Universal Segmentation (Semantic / Instance / Panoptic)</li>
+        </ul>
+        <p>
+            Mask R-CNN이 RoI 단위로 객체를 탐지하고 분할한다면, 
+            Mask2Former는 Query 기반으로 Mask를 예측합니다.
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>Mask R-CNN</th>
+                    <th>Mask2Former</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>기본 구조</td>
+                    <td>Two-Stage Detector</td>
+                    <td>Transformer</td>
+                </tr>
+                <tr>
+                    <td>객체 후보</td>
+                    <td>RPN</td>
+                    <td>Learnable Queries</td>
+                </tr>
+                <tr>
+                    <td>RoIAlign</td>
+                    <td>사용</td>
+                    <td>사용하지 않음</td>
+                </tr>
+                <tr>
+                    <td>특징 처리</td>
+                    <td>CNN + FPN 중심</td>
+                    <td>Pixel Decoder + Transformer</td>
+                </tr>
+                <tr>
+                    <td>Mask 생성</td>
+                    <td>RoI별 Mask Head</td>
+                    <td>Query별 Mask Prediction</td>
+                </tr>
+                <tr>
+                    <td>Segmentation</td>
+                    <td>Instance</td>
+                    <td>Semantic / Instance / Panoptic</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>7.4 Segment Anything Model (SAM, 2023)</h3>
+        <p>
+            Segment Anything Model (SAM)은 Meta AI가 발표한 범용 이미지 분할 Foundation Model입니다.
+            Mask R-CNN과 가장 중요한 차이는 객체를 분할하는 방식입니다.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Mask R-CNN</th>
+                    <th>SAM</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>사전 정의된 객체 클래스 기반 탐지</td>
+                    <td>Point / Bounding Box / Mask Prompt</td>
+                </tr>
+                <tr>
+                    <td>Bounding Box 및 Class Prediction</td>
+                    <td>Prompt 기반 Segmentation</td>
+                </tr>
+                <tr>
+                    <td>학습된 클래스 중심의 Instance Segmentation</td>
+                    <td>사용자가 지정한 대상의 분할</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>SAM의 기본 구조:</p>
+        <div class="architecture">1. Image Encoder
+2. Prompt Encoder
+3. Mask Decoder</div>
+
+        <h3>7.5 SAM 2 (2024)</h3>
+        <p>
+            SAM 2는 이미지 분할뿐 아니라 동영상에서 객체를 추적하면서 분할하는 기능으로 발전했습니다.
+        </p>
+        <ul>
+            <li>Streaming Memory</li>
+            <li>Memory Attention</li>
+            <li>Video Object Segmentation</li>
+            <li>Prompt-based Tracking</li>
+            <li>Frame-to-frame Object Propagation</li>
+        </ul>
+        <p>따라서 SAM 2는 단일 이미지 중심의 Mask R-CNN과는 다른 방향으로 발전한 기술입니다.</p>
+
+        <!-- ==================== 8 ==================== -->
+        <h2 id="sec8">8. Mask R-CNN과 주요 경쟁 모델의 비교</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>모델</th>
+                    <th>발표</th>
+                    <th>핵심 기술</th>
+                    <th>주요 특징</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Mask R-CNN</td>
+                    <td>2017</td>
+                    <td>RoIAlign, Mask Head</td>
+                    <td>Two-Stage</td>
+                </tr>
+                <tr>
+                    <td>Cascade Mask R-CNN</td>
+                    <td>2018</td>
+                    <td>Cascade Refinement</td>
+                    <td>정밀한 탐지</td>
+                </tr>
+                <tr>
+                    <td>PANet</td>
+                    <td>2018</td>
+                    <td>Feature Aggregation</td>
+                    <td>특징 결합</td>
+                </tr>
+                <tr>
+                    <td>HTC</td>
+                    <td>2019</td>
+                    <td>Hybrid Cascade</td>
+                    <td>Detection + Mask</td>
+                </tr>
+                <tr>
+                    <td>YOLACT</td>
+                    <td>2019</td>
+                    <td>Prototype Masks</td>
+                    <td>실시간 처리 지향</td>
+                </tr>
+                <tr>
+                    <td>SOLOv2</td>
+                    <td>2020</td>
+                    <td>Dynamic Kernel</td>
+                    <td>Anchor-free</td>
+                </tr>
+                <tr>
+                    <td>PointRend</td>
+                    <td>2020</td>
+                    <td>Point-based Refinement</td>
+                    <td>경계 정밀화</td>
+                </tr>
+                <tr>
+                    <td>QueryInst</td>
+                    <td>2021</td>
+                    <td>Query-based Instance Segmentation</td>
+                    <td>Transformer 계열</td>
+                </tr>
+                <tr>
+                    <td>Mask2Former</td>
+                    <td>2022</td>
+                    <td>Masked Attention</td>
+                    <td>범용 분할</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>주요 연구 방향 세 가지</h4>
+        <ol>
+            <li>
+                <strong>Two-Stage 계열</strong><br>
+                Mask R-CNN → Cascade Mask R-CNN → Hybrid Task Cascade<br>
+                객체 후보를 먼저 탐지한 다음, 각 객체를 정밀하게 분할합니다.
+            </li>
+            <li>
+                <strong>Real-Time 계열</strong><br>
+                YOLACT → SOLOv2 → RTMDet-Ins 등<br>
+                높은 처리 속도와 계산 효율성을 목표로 합니다.
+            </li>
+            <li>
+                <strong>Transformer 계열</strong><br>
+                DETR 계열 → MaskFormer → Mask2Former<br>
+                객체 탐지와 분할을 Query 및 Attention 기반으로 처리합니다.
+            </li>
+        </ol>
+
+        <!-- ==================== 9 ==================== -->
+        <h2 id="sec9">9. 기술적 진화의 핵심 비교</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>발전 단계</th>
+                    <th>기존 문제</th>
+                    <th>핵심 해결 기술</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>R-CNN</td>
+                    <td>CNN 반복 계산</td>
+                    <td>Region Proposal</td>
+                </tr>
+                <tr>
+                    <td>Fast R-CNN</td>
+                    <td>반복적인 Feature Extraction</td>
+                    <td>Shared Feature Map</td>
+                </tr>
+                <tr>
+                    <td>Faster R-CNN</td>
+                    <td>외부 Proposal 생성</td>
+                    <td>RPN</td>
+                </tr>
+                <tr>
+                    <td>Mask R-CNN</td>
+                    <td>픽셀 단위 분할 불가</td>
+                    <td>Mask Head + RoIAlign</td>
+                </tr>
+                <tr>
+                    <td>FPN</td>
+                    <td>작은 객체 탐지</td>
+                    <td>Multi-scale Features</td>
+                </tr>
+                <tr>
+                    <td>Cascade R-CNN</td>
+                    <td>Bounding Box 정확도</td>
+                    <td>Multi-stage Refinement</td>
+                </tr>
+                <tr>
+                    <td>HTC</td>
+                    <td>Detection과 Mask 간 정보 단절</td>
+                    <td>Interleaved Cascade</td>
+                </tr>
+                <tr>
+                    <td>Swin 기반 Mask R-CNN</td>
+                    <td>CNN의 제한적인 관계 모델링</td>
+                    <td>Transformer Backbone</td>
+                </tr>
+                <tr>
+                    <td>Mask2Former</td>
+                    <td>작업별 특화 구조</td>
+                    <td>Unified Mask Transformer</td>
+                </tr>
+                <tr>
+                    <td>SAM 2</td>
+                    <td>정적인 이미지 분할</td>
+                    <td>Prompt + Video Memory</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>9.1 CNN과 Transformer의 근본적인 차이</h3>
+
+        <div class="card">
+            <h4>CNN 기반</h4>
+            <ul>
+                <li>Local Receptive Field</li>
+                <li>Convolution</li>
+                <li>Hierarchical Features</li>
+                <li>공간적 지역 정보에 강점</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h4>Transformer 기반</h4>
+            <ul>
+                <li>Self-Attention</li>
+                <li>Global Context</li>
+                <li>Query Representation</li>
+                <li>장거리 관계 학습</li>
+            </ul>
+        </div>
+
+        <div class="highlight">
+            <strong>주의:</strong> CNN이 지역 정보만 처리하고 Transformer가 항상 전역 정보를 처리한다는 식으로 
+            단순화해서는 안 됩니다. 현대 CNN도 넓은 수용영역을 확보할 수 있으며, 
+            Transformer도 Window Attention을 사용할 수 있습니다.
+            두 구조는 서로 경쟁하면서도 결합할 수 있습니다.
+        </div>
+
+        <footer>
+            <p>Mask R-CNN 발전 변천사 정리 (1 ~ 9.1절)</p>
+            <p>참고 핵심 논문: Faster R-CNN (2015), Mask R-CNN (2017), FPN (2017), Cascade R-CNN (2018), HTC (2019), Swin Transformer (2021), Mask2Former (2022)</p>
+        </footer>
+    </div>
+</body>
+</html>
