@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>객체 검출 · 딥러닝 · 머신러닝 · 파이썬 필수 용어 대백과사전 (R-CNN 시리즈 전반)</title>
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-dark: #1d4ed8;
+      --secondary: #0d9488;
+      --secondary-light: #f0fdfa;
+      --accent: #f59e0b;
+      --accent-light: #fffbeb;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --success: #10b981;
+      --purple: #7c3aed;
+      --purple-light: #f5f3ff;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+      --radius: 12px;
+      --font-code: "Fira Code", Consolas, Monaco, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.7;
+      padding-bottom: 90px;
+    }
+
+    /* Scroll progress */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #0d9488, #7c3aed, #f59e0b);
+      width: 0%;
+      z-index: 9999;
+      transition: width 0.1s;
+    }
+
+    /* Hero Header */
+    header {
+      background: linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e3a8a 100%);
+      color: #ffffff;
+      padding: 56px 24px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.25) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .header-content {
+      max-width: 1080px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #93c5fd;
+    }
+    header h1 {
+      font-size: 2.35rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      font-size: 1.1rem;
+      color: #cbd5e1;
+      max-width: 860px;
+      line-height: 1.65;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    /* Search & Filter Bar */
+    .search-filter-card {
+      position: sticky;
+      top: 8px;
+      z-index: 900;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07);
+    }
+    .search-input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.95rem;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+    .category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .category-btn {
+      background: #f1f5f9;
+      border: 1px solid transparent;
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .category-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-color: #bfdbfe;
+    }
+    .category-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+
+    /* Term Section Card */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 34px 30px;
+      margin-bottom: 36px;
+      box-shadow: var(--card-shadow);
+      transition: box-shadow 0.2s ease;
+    }
+    .section-card:hover {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .section-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+    .section-subtitle {
+      font-size: 0.93rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Individual Term Card */
+    .term-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 22px 20px;
+      margin-bottom: 22px;
+      transition: all 0.2s;
+    }
+    .term-card:last-child {
+      margin-bottom: 0;
+    }
+    .term-card:hover {
+      border-color: #cbd5e1;
+    }
+    .term-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .term-name-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .term-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .term-en {
+      font-size: 0.9rem;
+      color: #64748b;
+      font-weight: 500;
+      font-style: italic;
+    }
+    .term-tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    /* Tag styles */
+    .tag {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .tag-blue { background: #dbeafe; color: #1d4ed8; }
+    .tag-teal { background: #ccfbf1; color: #0f766e; }
+    .tag-amber { background: #fef3c7; color: #b45309; }
+    .tag-red { background: #fee2e2; color: #b91c1c; }
+    .tag-purple { background: #ede9fe; color: #6d28d9; }
+    .tag-python { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+    /* Box styles */
+    .analogy-box {
+      background: #fffbeb;
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.92rem;
+      color: #78350f;
+    }
+    .analogy-label {
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      color: #b45309;
+    }
+
+    .key-box {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.92rem;
+      color: #1e3a8a;
+    }
+    .key-label {
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      color: var(--primary-dark);
+    }
+
+    .python-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #0284c7;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .python-label {
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      color: #0369a1;
+      font-size: 0.88rem;
+    }
+
+    /* Code Snippet */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin: 8px 0;
+    }
+    code {
+      font-family: var(--font-code);
+      background: #f1f5f9;
+      color: #be123c;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.86em;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Tables */
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .styled-table thead tr {
+      background-color: #1e293b;
+      color: #ffffff;
+      text-align: left;
+    }
+    .styled-table th, .styled-table td {
+      padding: 11px 15px;
+      border-bottom: 1px solid var(--border);
+    }
+    .styled-table tbody tr:nth-of-type(even) {
+      background-color: #f8fafc;
+    }
+    .styled-table tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* Interactive Simulator Box */
+    .sim-container {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius);
+      padding: 22px;
+      margin: 20px 0;
+    }
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .sim-title {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .control-item {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .control-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      justify-content: space-between;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Badges */
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .result-pass { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .result-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+    /* Back to top button */
+    #back-to-top {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      z-index: 800;
+      transition: all 0.2s;
+    }
+    #back-to-top:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <span class="badge">R-CNN · Fast · Faster · Mask R-CNN 스터디 공식 가이드</span>
+      <h1>객체 검출 · 딥러닝 · 머신러닝 · 파이썬 필수 용어 대백과사전</h1>
+      <p>
+        논문과 코드 속에서 쏟아지는 난해한 전문 용어(mAP, IoU, RPN, RoIAlign, Smooth L1, SVD, Hard Negative, SVM, PyTorch Ops 등)를 
+        <strong>직관적인 일상 비유</strong>, <strong>기술적 수학 원리</strong>, 그리고 <strong>파이썬/파이토치(PyTorch) 구현 코드</strong> 관점에서 친절하게 풀어드립니다.
+      </p>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Search & Filter Card -->
+    <div class="search-filter-card">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="term-search" class="search-input" placeholder="궁금한 용어를 검색해보세요 (예: mAP, IoU, RPN, RoIAlign, SVD, PyTorch, NMS, Loss 등)..." />
+      </div>
+      <div class="category-pills">
+        <button class="category-btn active" data-filter="all">전체 보기 (<span id="count-all">0</span>)</button>
+        <button class="category-btn" data-filter="cat-metric">🎯 평가 지표 (mAP/IoU/PR)</button>
+        <button class="category-btn" data-filter="cat-ml">🧠 딥러닝·머신러닝 핵심 (사전학습/SVM/SVD)</button>
+        <button class="category-btn" data-filter="cat-arch">🏗️ 백본 & 신경망 구조 (ResNet/FPN/FCN)</button>
+        <button class="category-btn" data-filter="cat-proposal">📦 영역 제안 & 검출 (Anchor/RPN/NMS/회귀)</button>
+        <button class="category-btn" data-filter="cat-roi">🔬 피처 정합 (RoIPool vs RoIAlign)</button>
+        <button class="category-btn" data-filter="cat-loss">⚖️ 손실 함수 (Softmax/Smooth L1)</button>
+        <button class="category-btn" data-filter="cat-python">🐍 파이썬 & PyTorch 구현</button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 1: 평가 지표 (Evaluation Metrics) -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-metric">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">🎯</div>
+        <div>
+          <h2 class="section-title">1. 평가 지표 (Metrics: mAP, IoU, Precision, Recall)</h2>
+          <div class="section-subtitle">검출 모델의 성능을 측정하는 척도와 PASCAL VOC 및 MS COCO 표준 채점 기준</div>
+        </div>
+      </div>
+
+      <!-- Term: mAP -->
+      <div class="term-card" data-keywords="map mean average precision ap 평균 정밀도 voc coco 성능">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">mAP (mean Average Precision)</span>
+            <span class="term-en">전체 클래스 평균 정밀도</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-blue">평가 지표</span>
+            <span class="tag tag-amber">논문 핵심</span>
+          </div>
+        </div>
+        <p>
+          객체 검출(Object Detection) 모델의 <strong>최종 성적표에 해당하는 단 하나의 대표 점수</strong>입니다.
+          각 물체 클래스(사람, 자동차, 의자 등)마다 구한 <strong>AP(Average Precision, PR 곡선 아래 면적)를 전교생 평균을 내듯 산술평균</strong>한 값입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 기말고사 평균 점수</div>
+          국어 AP(80점) + 수학 AP(90점) + 영어 AP(70점) $\rightarrow$ 전 과목 평균 점수 = 80점(mAP). 
+          한두 클래스만 잘 맞추고 다른 클래스를 다 틀리면 mAP가 급락하므로, 모델의 고른 검출 역량을 공정하게 평가합니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 단순 Accuracy(정확도) 대신 mAP를 쓸까?</div>
+          사진에서 물체가 차지하는 면적은 5% 미만이고 <strong>95%는 아무것도 없는 배경(Background)</strong>입니다. 
+          모델이 박스를 1개도 안 치고 "아무것도 없음"만 출력해도 배경 픽셀 맞춘 비율이 95%가 나오는 <strong>극단적 클래스 불균형(Class Imbalance)</strong>이 생기기 때문입니다.
+        </div>
+      </div>
+
+      <!-- Term: IoU -->
+      <div class="term-card" data-keywords="iou intersection over union 교집합 합집합 jaccard 자카드 0.5 0.75 위치">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">IoU (Intersection over Union)</span>
+            <span class="term-en">교집합 대 합집합 비율</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-blue">위치 정합</span>
+            <span class="tag tag-teal">기초 수학</span>
+          </div>
+        </div>
+        <p>
+          모델이 예측한 박스(Prediction)와 실제 정답 박스(Ground Truth)가 <strong>공간적으로 얼마나 일치하는지(0~1)를 나타내는 지표</strong>입니다.
+        </p>
+        $$ \text{IoU} = \frac{\text{교집합 면적 (Area of Overlap)}}{\text{합집합 면적 (Area of Union)}} = \frac{A \cap B}{A \cup B} $$
+        <ul style="margin-left: 20px; font-size: 0.92rem; color: #334155;">
+          <li><strong>IoU $\ge$ 0.5</strong>: PASCAL VOC 대회 기준 "합격선" (물체를 찾았다고 인정)</li>
+          <li><strong>IoU $\ge$ 0.75</strong>: COCO 엄격한 기준 (박스 테두리가 딱 맞아떨어져야 합격)</li>
+        </ul>
+
+        <!-- Live Interactive IoU Simulator -->
+        <div class="sim-container">
+          <div class="sim-header">
+            <span class="sim-title">🎮 직접 만져보는 실시간 IoU 계산기</span>
+            <span class="tag tag-teal">LIVE DEMO</span>
+          </div>
+          <div class="control-row">
+            <div class="control-item">
+              <div class="control-label"><span>예측 박스 X축 이동</span><span id="iou-val-x" style="font-family: var(--font-code); color: var(--primary);">130 px</span></div>
+              <input type="range" id="iou-slider-x" min="30" max="320" value="130" />
+            </div>
+            <div class="control-item">
+              <div class="control-label"><span>예측 박스 Y축 이동</span><span id="iou-val-y" style="font-family: var(--font-code); color: var(--primary);">70 px</span></div>
+              <input type="range" id="iou-slider-y" min="20" max="220" value="70" />
+            </div>
+            <div class="control-item">
+              <div class="control-label"><span>합격 기준치 (Threshold)</span><span id="iou-val-th" style="font-family: var(--font-code); color: #d97706;">0.50</span></div>
+              <input type="range" id="iou-slider-th" min="0.10" max="0.90" step="0.05" value="0.50" />
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
+            <canvas id="iouCanvas" width="420" height="240"></canvas>
+            <div style="flex: 1; min-width: 220px; background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-size: 0.8rem; color: var(--text-muted);">실시간 측정 IoU</div>
+              <div id="iou-text" style="font-size: 2rem; font-weight: 800; color: var(--primary);">0.58 (58.2%)</div>
+              <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin: 10px 0; overflow: hidden;">
+                <div id="iou-bar" style="width: 58%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981);"></div>
+              </div>
+              <div id="iou-badge" class="result-badge result-pass">✅ True Positive (합격!)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Term: Precision & Recall & PR Curve -->
+      <div class="term-card" data-keywords="precision recall pr curve 정밀도 재현율 pr곡선 auc ap 면적 trade off">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Precision, Recall & PR Curve</span>
+            <span class="term-en">정밀도, 재현율, 그리고 PR 곡선</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-blue">트레이드오프</span>
+            <span class="tag tag-amber">신뢰도 곡선</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0;">
+          <div style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 3px solid #2563eb;">
+            <strong>🎯 정밀도 (Precision) = $\frac{TP}{TP + FP}$</strong><br>
+            "모델이 검출했다고 외친 박스 중 진짜 맞춘 비율"<br>
+            <span style="font-size: 0.85rem; color: #1e40af;">→ 100% 확실한 용의자만 잡는 <strong>신중한 경찰</strong> (무고한 시민을 안 잡음)</span>
+          </div>
+          <div style="background: #f0fdfa; padding: 12px; border-radius: 8px; border-left: 3px solid #0d9488;">
+            <strong>📢 재현율 (Recall) = $\frac{TP}{TP + FN}$</strong><br>
+            "실제 존재하는 모든 정답 중 모델이 찾아낸 비율"<br>
+            <span style="font-size: 0.85rem; color: #0f766e;">→ 의심되면 일단 다 체포하는 <strong>의욕 경찰</strong> (범인을 놓치지 않음)</span>
+          </div>
+        </div>
+        <p style="font-size: 0.92rem;">
+          모델은 박스마다 <strong>신뢰도(Confidence Score)</strong>를 부여합니다. 
+          기준 신뢰도를 1.0에서 0.0까지 낮추면 박스를 많이 뽑게 되어 <strong>Recall은 올라가지만 오답(FP)도 늘어나 Precision은 떨어집니다</strong>. 
+          이 줄다리기를 그래프로 그린 것이 <strong>PR Curve(우하향 곡선)</strong>이며, <strong>그 아래 면적(AUC)이 바로 AP(Average Precision)</strong>입니다!
+        </p>
+
+        <!-- Live PR Curve Simulator -->
+        <div class="sim-container">
+          <div class="sim-header">
+            <span class="sim-title">📈 신뢰도(Confidence) 조절에 따른 PR 곡선 작동 실습</span>
+            <span class="tag tag-amber">PR ENGINE</span>
+          </div>
+          <div class="control-row">
+            <div class="control-item" style="max-width: 380px;">
+              <div class="control-label"><span>신뢰도 임계값 (Cutoff)</span><span id="pr-conf-val" style="font-family: var(--font-code); color: var(--primary); font-weight: 700;">0.60</span></div>
+              <input type="range" id="pr-conf-slider" min="0.10" max="0.95" step="0.05" value="0.60" />
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
+            <canvas id="prCanvas" width="360" height="230"></canvas>
+            <div style="flex: 1; min-width: 220px; background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="margin-bottom: 10px;">
+                <span style="font-size: 0.82rem; color: #64748b;">현재 정밀도 (Precision):</span>
+                <span id="pr-p-val" style="font-size: 1.25rem; font-weight: 800; color: #2563eb; margin-left: 8px;">100%</span>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <span style="font-size: 0.82rem; color: #64748b;">현재 재현율 (Recall):</span>
+                <span id="pr-r-val" style="font-size: 1.25rem; font-weight: 800; color: #0d9488; margin-left: 8px;">40%</span>
+              </div>
+              <div>
+                <span style="font-size: 0.82rem; color: #64748b;">곡선 면적 (AP 점수):</span>
+                <span id="pr-ap-val" style="font-size: 1.25rem; font-weight: 800; color: #d97706; margin-left: 8px;">0.78</span>
+              </div>
+              <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 10px; margin-bottom: 0;">
+                슬라이더를 낮추면 빨간 점이 우하단으로 움직이며 더 많은 객체를 검출합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Term: VOC vs COCO mAP notations -->
+      <div class="term-card" data-keywords="coco voc ap50 ap75 aps apm apl 0.5:0.95 small medium large 표기법">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">논문 표기법 해독: $AP_{50}, AP_{75}, AP_{S/M/L}$</span>
+            <span class="term-en">VOC vs MS COCO 벤치마크 표준 표기</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">벤치마크</span>
+          </div>
+        </div>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>논문 표기</th>
+              <th>풀네임</th>
+              <th>IoU 기준선</th>
+              <th>해석 요령</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>$AP$</strong> (COCO 기본)</td>
+              <td>$mAP@[0.50:0.95]$</td>
+              <td>0.50부터 0.95까지 0.05 단위 (10개)</td>
+              <td><strong>현대 논문의 절대 표준</strong>. 위치가 칼같이 맞아야 점수가 잘 나옵니다.</td>
+            </tr>
+            <tr>
+              <td><strong>$AP_{50}$</strong></td>
+              <td>$mAP@0.50$</td>
+              <td>0.50</td>
+              <td>PASCAL VOC 대회 기준. 대충 절반만 걸치면 합격으로 쳐주는 관대한 점수.</td>
+            </tr>
+            <tr>
+              <td><strong>$AP_{75}$</strong></td>
+              <td>$mAP@0.75$</td>
+              <td>0.75</td>
+              <td>엄격한 기준. 고정밀 검출 모델을 평가할 때 봅니다.</td>
+            </tr>
+            <tr>
+              <td><strong>$AP_S / AP_M / AP_L$</strong></td>
+              <td>Small / Med / Large</td>
+              <td>면적별 분할</td>
+              <td>$32^2$ 픽셀 미만의 작은 물체($AP_S$), 중간 물체($AP_M$), 큰 물체($AP_L$) 성능.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 2: 딥러닝 & 머신러닝 핵심 개념 -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-ml">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">🧠</div>
+        <div>
+          <h2 class="section-title">2. 머신러닝 & 딥러닝 핵심 개념</h2>
+          <div class="section-subtitle">R-CNN부터 Mask R-CNN까지 모델을 학습시키는 데 쓰인 머신러닝 원리</div>
+        </div>
+      </div>
+
+      <!-- Term: Supervised Pre-training & Fine-tuning -->
+      <div class="term-card" data-keywords="supervised pre-training fine-tuning transfer learning 지도사전학습 미세조정 전이학습 imagenet alexnet">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">지도 사전학습 & 도메인 특화 미세조정</span>
+            <span class="term-en">Supervised Pre-training & Domain-specific Fine-tuning</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">학습 패러다임</span>
+            <span class="tag tag-teal">전이학습</span>
+          </div>
+        </div>
+        <p>
+          R-CNN 논문의 가장 위대한 공헌 중 하나입니다. 당시 객체 검출 데이터셋(PASCAL VOC)은 수천 장에 불과하여 수천만 개의 가중치를 가진 CNN을 바닥부터(From scratch) 학습하면 극심한 과적합(Overfitting)에 빠졌습니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 의대 본과 진학 전 기초 생물학 공부</div>
+          <strong>사전 학습(Pre-training)</strong>: 100만 장의 ImageNet 이미지로 시각 세계의 일반적인 선, 모서리, 질감(기초 교양)을 배웁니다.<br>
+          <strong>미세 조정(Fine-tuning)</strong>: 사전에 배운 시각 지식을 바탕으로 우리가 진짜 풀고 싶은 VOC 검출 문제(전공 특화)에 맞추어 모델을 가볍게 추가 학습합니다.
+        </div>
+      </div>
+
+      <!-- Term: Linear SVM -->
+      <div class="term-card" data-keywords="svm support vector machine 서포트 벡터 머신 linear 선형 r-cnn hinge loss 분류기">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">선형 서포트 벡터 머신 (Linear SVM)</span>
+            <span class="term-en">Support Vector Machine</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">고전 머신러닝</span>
+            <span class="tag tag-amber">R-CNN 사용</span>
+          </div>
+        </div>
+        <p>
+          두 클래스 사이의 <strong>여백(Margin, 마진)을 최대화하는 결정 경계면(Hyperplane)</strong>을 찾는 대표적인 전통 머신러닝 분류 알고리즘입니다.
+        </p>
+        <div class="key-box">
+          <div class="key-label">❓ R-CNN은 왜 CNN의 소프트맥스를 안 쓰고 따로 SVM을 돌렸을까?</div>
+          CNN을 미세조정할 때는 데이터 부족 때문에 IoU 0.5 이상을 모두 양성으로 쳐주는 느슨한 기준을 썼습니다. 반면 SVM을 학습시킬 때는 **"오직 진짜 정답 박스(GT)만 양성, IoU 0.3 미만만 음성"**이라는 아주 깐깐한 기준으로 학습시켜 정확도를 3.3%p 끌어올렸기 때문입니다. (이 번거로운 2중 구조는 Fast R-CNN에서 단일 Softmax로 통합되며 사라졌습니다.)
+        </div>
+      </div>
+
+      <!-- Term: Hard Negative Mining -->
+      <div class="term-card" data-keywords="hard negative mining 하드 네거티브 마이닝 오답 채굴 헷갈리는 배경 svm">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">하드 네거티브 마이닝 (Hard Negative Mining)</span>
+            <span class="term-en">어려운 음성 샘플 선별 학습</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">샘플링 기법</span>
+          </div>
+        </div>
+        <p>
+          이미지 1장 안에는 수만 개의 배경 영역이 있습니다. 하지만 하늘이나 무늬 없는 벽 같은 **"너무나 뻔한 배경(Easy Negatives)"**은 학습해 봐야 모델에 큰 도움이 되지 않습니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 오답 노트 만들기</div>
+          실제로는 물체가 아닌 배경인데 모델이 *"어라? 이거 사람인가?"* 하고 높은 점수를 주며 <strong>자신 있게 헷갈려 한 어려운 배경(Hard Negatives)들만 쏙쏙 골라내어(Mining)</strong> 집중적으로 재학습시키는 기법입니다.
+        </div>
+      </div>
+
+      <!-- Term: Truncated SVD -->
+      <div class="term-card" data-keywords="svd truncated svd 특이값 분해 행렬 분해 fast r-cnn fc layer 가속화 차원축소">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">절단 특이값 분해 (Truncated SVD)</span>
+            <span class="term-en">행렬 압축을 통한 완전 연결(FC) 계층 가속화</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">선형대수학</span>
+            <span class="tag tag-teal">Fast R-CNN 가속</span>
+          </div>
+        </div>
+        <p>
+          Fast R-CNN에서 추론 시간의 절반 가까이를 잡아먹는 커다란 완전 연결 계층(FC 계층)의 가중치 행렬 $W$($u \times v$)를 작은 두 개의 행렬로 쪼개어 연산량을 30% 이상 줄이는 수학적 압축 기술입니다.
+        </p>
+        $$ W \approx U \Sigma_t V^T $$
+        <p style="font-size: 0.92rem; color: #334155;">
+          파라미터 수가 $u \times v$에서 $t(u + v)$로 대폭 축소되어 정확도 손실은 0.3% 미만이면서 속도는 비약적으로 빨라집니다.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 3: 백본 & 신경망 아키텍처 -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-arch">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #0d9488, #059669);">🏗️</div>
+        <div>
+          <h2 class="section-title">3. 백본 & 신경망 아키텍처</h2>
+          <div class="section-subtitle">AlexNet, VGG16, ResNet, FPN, FCN 등 피처를 추출하는 중추 신경망들</div>
+        </div>
+      </div>
+
+      <!-- Term: Backbone & Feature Map -->
+      <div class="term-card" data-keywords="backbone feature map cnn conv receptive field 백본 피처맵 수용영역">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">백본 (Backbone) & 특징 맵 (Feature Map)</span>
+            <span class="term-en">특징 추출 기본 신경망</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-teal">CNN 기초</span>
+          </div>
+        </div>
+        <p>
+          <strong>백본(Backbone, 등뼈)</strong>은 이미지 전체로부터 고차원 시각 특징을 추출해 내는 기본 베이스 네트워크(예: ResNet-50, VGG-16)를 부르는 말입니다.
+          합성곱 계층을 거치며 나온 다채널 텐서를 <strong>특징 맵(Feature Map)</strong>이라고 부릅니다.
+        </p>
+        <ul style="margin-left: 20px; font-size: 0.92rem; color: #334155;">
+          <li><strong>초반 계층 (Low-level)</strong>: 선, 모서리, 색상 대비 등 기하학적 기본 특징</li>
+          <li><strong>후반 계층 (High-level)</strong>: 눈, 코, 입, 바퀴, 날개 등 복잡한 의미론적(Semantic) 추상 특징</li>
+          <li><strong>수용 영역 (Receptive Field)</strong>: 피처맵의 한 점(1픽셀)이 바라보고 있는 원본 이미지의 실제 시야각 범위</li>
+        </ul>
+      </div>
+
+      <!-- Term: ResNet & Skip Connection -->
+      <div class="term-card" data-keywords="resnet skip connection residual 잔차연결 vanishing gradient 기울기 소실 fpn">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">ResNet & 스킵 연결 (Skip Connection)</span>
+            <span class="term-en">Residual Network</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-teal">딥러닝 구조</span>
+          </div>
+        </div>
+        <p>
+          신경망 층을 100층 이상 깊게 쌓으면 역전파 과정에서 미분값이 사라지는 **기울기 소실(Vanishing Gradient)** 문제가 발생합니다. 
+          ResNet은 입력을 그대로 다음 층으로 건너뛰어 더해주는 지름길인 <strong>잔차 연결($F(x) + x$)</strong>을 도입하여 101층, 152층까지도 안정적으로 학습시킬 수 있게 만든 딥러닝 역사의 거대한 이정표입니다.
+        </p>
+      </div>
+
+      <!-- Term: FPN -->
+      <div class="term-card" data-keywords="fpn feature pyramid network 특징 피라미드 다중 스케일 작은 물체 top-down lateral">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">FPN (Feature Pyramid Network)</span>
+            <span class="term-en">특징 피라미드 네트워크</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-teal">피라미드 구조</span>
+            <span class="tag tag-blue">Mask R-CNN 핵심</span>
+          </div>
+        </div>
+        <p>
+          물체는 아주 작은 동전부터 화면을 꽉 채우는 트럭까지 크기가 제각각입니다. 
+          FPN은 깊은 층의 풍부한 의미 정보(Top-down)와 얕은 층의 선명한 위치 해상도 정보(Bottom-up)를 **측면 연결(Lateral Connection)**로 융합하여, 
+          <strong>$P_2$부터 $P_6$까지 크기별로 여러 개의 피처맵 피라미드를 만들어 작은 물체($AP_S$)를 기가 막히게 잘 찾도록 설계된 구조</strong>입니다.
+        </p>
+      </div>
+
+      <!-- Term: FCN -->
+      <div class="term-card" data-keywords="fcn fully convolutional network 완전 합성곱 신경망 마스크 세그멘테이션 1x1 conv">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">FCN (Fully Convolutional Network)</span>
+            <span class="term-en">완전 합성곱 신경망</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-teal">세그멘테이션</span>
+          </div>
+        </div>
+        <p>
+          위치 정보를 잃어버리는 1차원 완전 연결(FC) 계층을 완전히 제거하고, <strong>모든 층을 $1 \times 1$ 및 $3 \times 3$ 합성곱(Conv) 계층으로만 구성</strong>한 네트워크입니다.
+          입력의 2차원 공간 구조를 끝까지 유지하므로 <strong>픽셀 단위의 마스크 외곽선(Mask)을 예측하는 데 특화</strong>되어 있으며 Mask R-CNN의 마스크 헤드로 채택되었습니다.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 4: 영역 제안 & 검출 핵심 부품 -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-proposal">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">📦</div>
+        <div>
+          <h2 class="section-title">4. 영역 제안 & 검출 핵심 부품</h2>
+          <div class="section-subtitle">Selective Search, Bounding Box Regression, Anchor Box, RPN, NMS</div>
+        </div>
+      </div>
+
+      <!-- Term: Selective Search -->
+      <div class="term-card" data-keywords="selective search 선택적 탐색 r-cnn fast r-cnn cpu 병목 superpixel">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Selective Search (선택적 탐색)</span>
+            <span class="term-en">전통 영상처리 기반 후보 영역 추출</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">R-CNN / Fast R-CNN</span>
+            <span class="tag tag-red">CPU 병목 (2초)</span>
+          </div>
+        </div>
+        <p>
+          딥러닝 이전의 알고리즘으로, 인접한 픽셀들의 색상, 무늬(Texture), 크기 유사도를 바탕으로 작은 영역들을 눈사람 굴리듯 병합(Hierarchical Grouping)하여 
+          <em>"여기에 물체가 있을 법하다"</em>는 사각형 약 2,000개를 제안해 주는 기술입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 치명적 단점: 거북이 알고리즘</div>
+          CPU에서만 돌아가서 <strong>사진 1장당 무려 2초</strong>나 걸렸습니다. Fast R-CNN이 신경망 추론을 0.2초로 줄여놓아도 이 녀석 때문에 전체 시스템이 2초가 넘게 걸리는 심각한 병목이었으며, Faster R-CNN의 RPN에 의해 완전히 퇴출당했습니다.
+        </div>
+      </div>
+
+      <!-- Term: Bounding Box Regression -->
+      <div class="term-card" data-keywords="bounding box regression 바운딩 박스 회귀 좌표 오프셋 offset tx ty tw th log scale">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Bounding Box Regression (바운딩 박스 회귀)</span>
+            <span class="term-en">경계 상자 위치 및 크기 정제</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">좌표 정제</span>
+            <span class="tag tag-blue">필수 수식</span>
+          </div>
+        </div>
+        <p>
+          후보 박스 $P$의 위치와 크기가 실제 물체 $G$와 살짝 빗나갔을 때, 박스를 딱 맞게 이동 및 크기 조절해 주는 보정 회귀 모델입니다.
+        </p>
+        $$ t_x = \frac{G_x - P_x}{P_w}, \quad t_y = \frac{G_y - P_y}{P_h}, \quad t_w = \log\left(\frac{G_w}{P_w}\right), \quad t_h = \log\left(\frac{G_h}{P_h}\right) $$
+        <div class="key-box">
+          <div class="key-label">❓ 왜 픽셀 좌표 $(x, y, w, h)$를 직접 안 맞추고 오프셋 $t$를 예측할까?</div>
+          1,000픽셀짜리 고해상도 이미지에서의 10픽셀 오차와, 100픽셀짜리 작은 물체에서의 10픽셀 오차는 차원이 다릅니다. 
+          따라서 박스 자체의 가로/세로 길이에 비례하는 상대적 변화량으로 정규화(Scale-invariant)해야 신경망이 안정적으로 학습되기 때문입니다!
+        </div>
+      </div>
+
+      <!-- Term: Anchor Box -->
+      <div class="term-card" data-keywords="anchor box 앵커 박스 템플릿 종횡비 scale aspect ratio 9개 faster r-cnn rpn">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Anchor Box (앵커 박스)</span>
+            <span class="term-en">사전 정의된 규격 참조 틀</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">Faster R-CNN 심장</span>
+          </div>
+        </div>
+        <p>
+          세상에는 서 있는 사람(홀쭉함), 지나가는 승용차(길쭉함), 교통 표지판(정사각형) 등 다양한 비율의 물체가 있습니다.
+          Faster R-CNN은 피처맵의 매 격자점마다 <strong>3가지 크기($128^2, 256^2, 512^2$) $\times$ 3가지 종횡비($1:1, 1:2, 2:1$) = 총 9개의 템플릿 규격 틀(Anchor)</strong>을 미리 깔아두고 물체를 탐색합니다.
+        </p>
+      </div>
+
+      <!-- Term: RPN -->
+      <div class="term-card" data-keywords="rpn region proposal network 영역 제안 네트워크 objectness score 10ms fcn">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">RPN (Region Proposal Network)</span>
+            <span class="term-en">영역 제안 네트워크</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">초고속 제안</span>
+            <span class="tag tag-teal">10ms</span>
+          </div>
+        </div>
+        <p>
+          Selective Search를 딥러닝 내부로 완전히 흡수한 네트워크입니다. 
+          공유 피처맵 위를 작은 $3 \times 3$ 윈도우로 훑으며, 앵커 박스들을 기준으로:
+        </p>
+        <ol style="margin-left: 20px; font-size: 0.92rem; color: #334155;">
+          <li><strong>객체성 점수 (Objectness Score)</strong>: "이 앵커 안에 배경 말고 진짜 물체가 있는가?" (2개 점수)</li>
+          <li><strong>박스 정제 오프셋 (Box Delta)</strong>: "실제 물체 모양에 맞추려면 얼마큼 줄이고 늘려야 하는가?" (4개 좌표)</li>
+        </ol>
+        <p style="font-size: 0.92rem; color: #334155; margin-top: 8px;">
+          이 모든 계산을 GPU 안에서 <strong>단 10밀리초(0.01초) 만에 끝내버립니다</strong>!
+        </p>
+      </div>
+
+      <!-- Term: NMS -->
+      <div class="term-card" data-keywords="nms non maximum suppression 비최대 억제 중복 박스 제거 greedy soft nms">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">NMS (Non-Maximum Suppression, 비최대 억제)</span>
+            <span class="term-en">중복 바운딩 박스 가지치기</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">후처리 필수</span>
+            <span class="tag tag-blue">알고리즘</span>
+          </div>
+        </div>
+        <p>
+          모델이 고양이 1마리를 보고 주변에 40개의 겹치는 박스를 중복 출력했을 때, 
+          <strong>가장 점수가 높은 1등 박스만 남기고 나머지 겹친 박스들을 가차 없이 지워버리는 가지치기 알고리즘</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 NMS 3줄 요약 작동 과정</div>
+          1. 모든 박스를 신뢰도 점수 순서로 줄세운다.<br>
+          2. 점수가 가장 높은 1등 박스를 최종 장바구니에 담는다.<br>
+          3. 1등 박스와 IoU가 높은(예: 0.7 이상 겹치는) 나머지 박스들은 "같은 물체를 중복 검출한 것"으로 보고 삭제한다. (반복)
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 5: 피처 정합 (RoI Pooling vs RoIAlign) -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-roi">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #0284c7, #0369a1);">🔬</div>
+        <div>
+          <h2 class="section-title">5. 피처 정합 (Feature Alignment)</h2>
+          <div class="section-subtitle">RoI Pooling의 양자화 오차와 Mask R-CNN을 탄생시킨 RoIAlign의 쌍선형 보간</div>
+        </div>
+      </div>
+
+      <!-- RoI Pooling vs RoIAlign Detailed Comparison -->
+      <div class="term-card" data-keywords="roi pooling roialign bilnear interpolation 쌍선형 보간 양자화 quantization misalignment 마스크">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">RoI Pooling vs RoIAlign 비교</span>
+            <span class="term-en">Quantization vs Bilinear Interpolation</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-blue">Mask R-CNN 핵심 혁신</span>
+            <span class="tag tag-red">오차 해결</span>
+          </div>
+        </div>
+
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th style="width: 20%;">비교 항목</th>
+              <th style="width: 40%;">RoI Pooling (Fast / Faster R-CNN)</th>
+              <th style="width: 40%;">RoIAlign (Mask R-CNN)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>좌표 처리</strong></td>
+              <td>정수로 반올림/내림 (<span style="color: #b91c1c; font-weight: bold;">양자화 Quantization</span>)</td>
+              <td>소수점 실수 좌표 그대로 보존 (<span style="color: #15803d; font-weight: bold;">No Quantization</span>)</td>
+            </tr>
+            <tr>
+              <td><strong>샘플링 방식</strong></td>
+              <td>정수 격자 영역에서 Max Pooling</td>
+              <td>각 구역 내 4개 가상 지점에서 <strong>쌍선형 보간법 (Bilinear Interpolation)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>위치 오차</strong></td>
+              <td>피처맵 0.5px 오차 $\rightarrow$ <strong>원본에서 8~16px 심각한 위치 어긋남</strong></td>
+              <td><strong>위치 오차 정확히 0 (완벽 정렬)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>성능 영향</strong></td>
+              <td>대충 박스 칠 땐 티가 안 나지만 마스크 분할 시 엉망이 됨</td>
+              <td>이 계층 하나 바꾼 것만으로 <strong>Mask AP 3~7포인트 수직 상승</strong>!</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- SVG Diagram -->
+        <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-top: 14px; text-align: center;">
+          <svg viewBox="0 0 740 210" style="max-width: 100%; height: auto;">
+            <!-- Left: RoI Pooling -->
+            <g transform="translate(20, 15)">
+              <rect x="0" y="0" width="320" height="175" rx="8" fill="#fef2f2" stroke="#fecaca" />
+              <text x="160" y="24" text-anchor="middle" font-weight="bold" fill="#b91c1c" font-size="14">RoI Pooling (정수 버림으로 삐뚤어짐)</text>
+              <rect x="40" y="45" width="240" height="100" fill="none" stroke="#e2e8f0" stroke-width="2" />
+              <line x1="120" y1="45" x2="120" y2="145" stroke="#e2e8f0" stroke-width="1.5" />
+              <line x1="200" y1="45" x2="200" y2="145" stroke="#e2e8f0" stroke-width="1.5" />
+              <line x1="40" y1="95" x2="280" y2="95" stroke="#e2e8f0" stroke-width="1.5" />
+              <!-- Misaligned Box -->
+              <rect x="52" y="52" width="205" height="85" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3" />
+              <rect x="40" y="45" width="160" height="100" fill="rgba(239, 68, 68, 0.2)" stroke="#b91c1c" stroke-width="2" />
+              <text x="120" y="100" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="bold">강제 반올림 격자 일치 (오차 발생!)</text>
+            </g>
+            <!-- Right: RoIAlign -->
+            <g transform="translate(400, 15)">
+              <rect x="0" y="0" width="320" height="175" rx="8" fill="#f0fdf4" stroke="#bbf7d0" />
+              <text x="160" y="24" text-anchor="middle" font-weight="bold" fill="#15803d" font-size="14">RoIAlign (완벽한 소수점 쌍선형 보간)</text>
+              <rect x="40" y="45" width="240" height="100" fill="none" stroke="#bbf7d0" stroke-width="2" />
+              <line x1="120" y1="45" x2="120" y2="145" stroke="#bbf7d0" stroke-width="1.5" />
+              <line x1="200" y1="45" x2="200" y2="145" stroke="#bbf7d0" stroke-width="1.5" />
+              <line x1="40" y1="95" x2="280" y2="95" stroke="#bbf7d0" stroke-width="1.5" />
+              <!-- Precise Box -->
+              <rect x="55" y="55" width="210" height="80" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2" />
+              <circle cx="85" cy="75" r="3" fill="#2563eb" />
+              <circle cx="115" cy="75" r="3" fill="#2563eb" />
+              <circle cx="85" cy="115" r="3" fill="#2563eb" />
+              <circle cx="115" cy="115" r="3" fill="#2563eb" />
+              <circle cx="165" cy="75" r="3" fill="#2563eb" />
+              <circle cx="195" cy="75" r="3" fill="#2563eb" />
+              <circle cx="165" cy="115" r="3" fill="#2563eb" />
+              <circle cx="195" cy="115" r="3" fill="#2563eb" />
+              <text x="160" y="160" text-anchor="middle" fill="#047857" font-size="11" font-weight="bold">연속 좌표 위 4개 샘플링 지점 보간(•)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 6: 손실 함수 & 활성화 함수 -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-loss">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #be123c, #9f1239);">⚖️</div>
+        <div>
+          <h2 class="section-title">6. 손실 함수 & 활성화 함수</h2>
+          <div class="section-subtitle">Multi-task Loss, Smooth L1 Loss, Softmax vs Sigmoid</div>
+        </div>
+      </div>
+
+      <!-- Term: Multi-task Loss -->
+      <div class="term-card" data-keywords="multi-task loss 다중 작업 손실 분류 회귀 마스크 동시학습 iverson bracket">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Multi-task Loss (다중 작업 손실)</span>
+            <span class="term-en">복수 임무를 동시에 학습시키는 손실 함수</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-red">손실 함수</span>
+          </div>
+        </div>
+        <p>
+          분류기 따로, 박스 회귀기 따로, 마스크 모델 따로따로 학습시키던 옛날 방식을 버리고, 
+          <strong>단 하나의 손실 함수로 모든 임무를 묶어 신경망 전체를 한 번에 종단간(End-to-End) 학습</strong>시키는 기법입니다.
+        </p>
+        $$ L = L_{\text{cls}} + \lambda [u \ge 1] L_{\text{box}} + L_{\text{mask}} $$
+        <div class="key-box">
+          <div class="key-label">🔍 $[u \ge 1]$ (아이버슨 대괄호)의 비밀</div>
+          배경 클래스(라벨 0)인 경우 박스 위치를 맞출 필요가 전혀 없습니다! 
+          따라서 배경일 때는 박스 손실 $L_{\text{box}}$를 0으로 꺼버리고, 진짜 전경 물체($u \ge 1$)일 때만 박스 손실을 켜주는 <strong>스마트 스위치 역할</strong>을 합니다.
+        </div>
+      </div>
+
+      <!-- Term: Smooth L1 Loss -->
+      <div class="term-card" data-keywords="smooth l1 loss huber loss l1 l2 이상치 그래디언트 폭발 outlier">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Smooth L1 Loss (스무스 L1 손실)</span>
+            <span class="term-en">이상치에 강건한 박스 회귀 손실</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-red">박스 회귀 표준</span>
+          </div>
+        </div>
+        <p>
+          박스 좌표 오차($x$)를 줄일 때 보통 $L_2(x^2)$나 $L_1(|x|)$를 떠올리지만, 둘 다 치명적 약점이 있습니다:
+        </p>
+        <ul style="margin-left: 20px; font-size: 0.92rem; color: #334155; margin-bottom: 10px;">
+          <li><strong>$L_2$ 손실 ($x^2$)</strong>: 엉뚱한 예측(이상치)이 들어오면 제곱이 되어 <strong>기울기가 폭발</strong>해 학습을 망칩니다.</li>
+          <li><strong>$L_1$ 손실 ($|x|$)</strong>: 0 근처에서 미분이 불연속적이라 최적점 부근에서 덜덜 떨며 진동합니다.</li>
+        </ul>
+        $$ \text{Smooth}_{L1}(x) = \begin{cases} 0.5 x^2 & \text{if } |x| < 1 \quad (\text{0 부근에서는 부드러운 L2}) \\ |x| - 0.5 & \text{otherwise} \quad (\text{멀어지면 이상치에 강한 L1}) \end{cases} $$
+        <p style="font-size: 0.9rem; color: #0f766e; font-weight: 600;">
+          👉 0 근처에서는 미분이 매끄럽게 수렴하고, 오차가 커져도 1차 선형으로 증가하여 이상치에 흔들리지 않는 천재적인 손실 함수입니다.
+        </p>
+      </div>
+
+      <!-- Term: Softmax vs Sigmoid -->
+      <div class="term-card" data-keywords="softmax sigmoid cross-entropy bce 이진교차엔트로피 클래스 경쟁 분리 decoupling">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Softmax vs Sigmoid (클래스 경쟁 분리)</span>
+            <span class="term-en">Multinomial vs Independent Binary Classification</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-red">활성화 함수</span>
+            <span class="tag tag-blue">Mask R-CNN 원리</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0;">
+          <div style="background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+            <strong>소프트맥스 (Softmax)</strong><br>
+            • 모든 클래스 확률의 합이 100%가 됨<br>
+            • "사람" 확률이 올라가면 "말" 확률이 억지로 깎이는 <strong>클래스 간 제로섬 경쟁</strong> 유발
+          </div>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px;">
+            <strong>시그모이드 (Sigmoid / BCE)</strong><br>
+            • 각 클래스마다 0~1 사이 독립된 확률 출력<br>
+            • 마스크 브랜치에서 <strong>클래스 경쟁을 완전히 배제(Decoupling)</strong>하여 각 클래스별 형상 분할에만 집중하게 함
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 7: 파이썬 & PyTorch 구현 관점 -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-python">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #0284c7, #0f172a);">🐍</div>
+        <div>
+          <h2 class="section-title">7. 파이썬 & 파이토치(PyTorch) 코드 매핑</h2>
+          <div class="section-subtitle">논문의 난해한 수식들이 실제 Python/PyTorch 코드에서 어떻게 구현되는가</div>
+        </div>
+      </div>
+
+      <!-- Code: NumPy IoU Vectorized -->
+      <div class="term-card" data-keywords="python pytorch numpy iou 코드 구현 벡터화 broadcasting">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">파이썬으로 구현하는 벡터화된 IoU 계산 로직</span>
+            <span class="term-en">NumPy / PyTorch Vectorized IoU</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-python">Python Code</span>
+          </div>
+        </div>
+        <p style="font-size: 0.9rem;">
+          이중 for문을 돌리면 파이썬에서는 너무 느리기 때문에, 행렬 브로드캐스팅(Broadcasting)을 활용하여 $N$개의 예측 박스와 $M$개의 정답 박스 사이의 IoU를 단 한 번에 $(N, M)$ 형태로 고속 연산합니다:
+        </p>
+        <pre><code class="language-python">import torch
+
+def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
+    """
+    boxes1: (N, 4) [x1, y1, x2, y2]
+    boxes2: (M, 4) [x1, y1, x2, y2]
+    반환값: (N, M) 형태의 모든 쌍별 IoU 행렬
+    """
+    # 1. 각 박스의 넓이 계산
+    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+
+    # 2. 교집합(Intersection) 좌상단/우하단 좌표 계산 (Broadcasting)
+    lt = torch.max(boxes1[:, None, :2], boxes2[:, :2])  # (N, M, 2)
+    rb = torch.min(boxes1[:, None, 2:], boxes2[:, 2:])  # (N, M, 2)
+
+    wh = (rb - lt).clamp(min=0)  # 겹치지 않으면 0
+    inter = wh[:, :, 0] * wh[:, :, 1]  # (N, M)
+
+    # 3. 합집합(Union) = Area1 + Area2 - Inter
+    union = area1[:, None] + area2 - inter
+
+    return inter / union  # IoU (N, M)</code></pre>
+      </div>
+
+      <!-- Code: torchvision ops -->
+      <div class="term-card" data-keywords="torchvision ops nms roi_align roi_pool pytorch built-in">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">PyTorch 공식 내장 연산자 (torchvision.ops)</span>
+            <span class="term-en">C++/CUDA로 가속된 실무 핵심 Ops</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-python">torchvision</span>
+          </div>
+        </div>
+        <p style="font-size: 0.9rem;">
+          실무 딥러닝 프로젝트나 Detectron2, MMDetection, YOLO 등에서는 논문에 나온 연산자들을 C++/CUDA로 고속화된 <code>torchvision.ops</code>를 통해 단 1줄로 호출합니다:
+        </p>
+        <pre><code class="language-python">from torchvision.ops import nms, roi_align, roi_pool
+
+# 1. NMS 실행: 중복 박스 제거 후 살아남을 인덱스 반환
+keep_indices = nms(boxes=boxes, scores=scores, iou_threshold=0.5)
+final_boxes = boxes[keep_indices]
+
+# 2. RoIAlign 실행: (N, C, H, W) 피처맵에서 픽셀 보간 풀링 수행
+# boxes: (K, 5) 형태 -> [batch_idx, x1, y1, x2, y2]
+aligned_features = roi_align(
+    input=feature_map, 
+    boxes=roi_boxes, 
+    output_size=(7, 7), 
+    spatial_scale=1.0/16.0,  # 백본 다운샘플링 비율
+    sampling_ratio=2        # bin당 샘플링 포인트 수 (총 4개)
+)</code></pre>
+      </div>
+
+      <!-- Code: collate_fn for Detection -->
+      <div class="term-card" data-keywords="collate_fn dataloader variable boxes pytorch 객체검출 데이터로더">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">객체 검출 DataLoader의 비밀: 왜 collate_fn이 필수일까?</span>
+            <span class="term-en">Variable-length Bounding Boxes in Batches</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-python">PyTorch 엔지니어링</span>
+          </div>
+        </div>
+        <div class="key-box">
+          <div class="key-label">⚠️ 분류(Classification)와 검출(Detection)의 데이터 배치 차이점</div>
+          일반 이미지 분류는 모든 라벨이 1차원 정수 스칼라이므로 <code>torch.stack</code>으로 간단히 묶을 수 있습니다.<br>
+          하지만 객체 검출은 <strong>1번 사진에는 고양이가 2마리(박스 2개), 2번 사진에는 사람이 15명(박스 15개)</strong>으로 이미지마다 박스 개수가 제각각입니다! 
+          따라서 기본 DataLoader를 쓰면 행렬 차원이 안 맞아 에러가 나므로, 박스 텐서들을 튜플/리스트로 묶어주는 <strong>커스텀 collate_fn</strong>이 반드시 필요합니다:
+        </div>
+        <pre><code class="language-python"># 객체 검출 전용 DataLoader 커스텀 collate_fn
+def collate_fn(batch):
+    images = [item[0] for item in batch]
+    targets = [item[1] for item in batch]
+    # 이미지는 stack으로 묶고, 타깃 박스 딕셔너리는 튜플로 유지
+    return torch.stack(images, dim=0), tuple(targets)
+
+data_loader = torch.utils.data.DataLoader(
+    dataset, batch_size=4, shuffle=True, collate_fn=collate_fn
+)</code></pre>
+      </div>
+    </section>
+
+  </div>
+
+  <button id="back-to-top" title="맨 위로 이동">↑</button>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // ---------------------------------------------------------
+    // Reading Progress & Back to Top
+    // ---------------------------------------------------------
+    const progBar = document.getElementById('progress-bar');
+    const bttBtn = document.getElementById('back-to-top');
+
+    window.addEventListener('scroll', () => {
+      const top = document.documentElement.scrollTop;
+      const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      progBar.style.width = (top / h * 100) + '%';
+
+      if (top > 400) {
+        bttBtn.style.display = 'flex';
+      } else {
+        bttBtn.style.display = 'none';
+      }
+    });
+
+    bttBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ---------------------------------------------------------
+    // Live Search & Category Filtering
+    // ---------------------------------------------------------
+    const searchInput = document.getElementById('term-search');
+    const catButtons = document.querySelectorAll('.category-btn');
+    const termCards = document.querySelectorAll('.term-card');
+    const sections = document.querySelectorAll('.section-card');
+
+    document.getElementById('count-all').textContent = termCards.length;
+
+    let currentFilter = 'all';
+
+    function filterTerms() {
+      const query = searchInput.value.toLowerCase().trim();
+
+      sections.forEach(sec => {
+        const secCat = sec.getAttribute('data-category');
+        const cardsInSec = sec.querySelectorAll('.term-card');
+        let secHasVisible = false;
+
+        cardsInSec.forEach(card => {
+          const keywords = (card.getAttribute('data-keywords') || '').toLowerCase();
+          const cardText = card.innerText.toLowerCase();
+          const matchSearch = query === '' || keywords.includes(query) || cardText.includes(query);
+          const matchCat = currentFilter === 'all' || secCat === currentFilter;
+
+          if (matchSearch && matchCat) {
+            card.style.display = 'block';
+            secHasVisible = true;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        sec.style.display = secHasVisible ? 'block' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', filterTerms);
+
+    catButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        catButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        filterTerms();
+      });
+    });
+
+    // ---------------------------------------------------------
+    // IoU Live Simulator
+    // ---------------------------------------------------------
+    const iouCanvas = document.getElementById('iouCanvas');
+    const iouCtx = iouCanvas.getContext('2d');
+    const slX = document.getElementById('iou-slider-x');
+    const slY = document.getElementById('iou-slider-y');
+    const slTh = document.getElementById('iou-slider-th');
+    const valX = document.getElementById('iou-val-x');
+    const valY = document.getElementById('iou-val-y');
+    const valTh = document.getElementById('iou-val-th');
+    const resText = document.getElementById('iou-text');
+    const resBar = document.getElementById('iou-bar');
+    const resBadge = document.getElementById('iou-badge');
+
+    const gtBox = { x: 90, y: 40, w: 180, h: 140 };
+
+    function drawIoU() {
+      const pred = {
+        x: parseInt(slX.value),
+        y: parseInt(slY.value),
+        w: 180,
+        h: 140
+      };
+      const th = parseFloat(slTh.value);
+
+      valX.textContent = pred.x + ' px';
+      valY.textContent = pred.y + ' px';
+      valTh.textContent = th.toFixed(2);
+
+      iouCtx.clearRect(0, 0, iouCanvas.width, iouCanvas.height);
+
+      // Grid
+      iouCtx.strokeStyle = '#f1f5f9';
+      iouCtx.lineWidth = 1;
+      for (let x = 0; x < iouCanvas.width; x += 20) {
+        iouCtx.beginPath(); iouCtx.moveTo(x, 0); iouCtx.lineTo(x, iouCanvas.height); iouCtx.stroke();
+      }
+      for (let y = 0; y < iouCanvas.height; y += 20) {
+        iouCtx.beginPath(); iouCtx.moveTo(0, y); iouCtx.lineTo(iouCanvas.width, y); iouCtx.stroke();
+      }
+
+      // Overlap math
+      const x1 = Math.max(gtBox.x, pred.x);
+      const y1 = Math.max(gtBox.y, pred.y);
+      const x2 = Math.min(gtBox.x + gtBox.w, pred.x + pred.w);
+      const y2 = Math.min(gtBox.y + gtBox.h, pred.y + pred.h);
+
+      let interArea = 0;
+      if (x2 > x1 && y2 > y1) {
+        interArea = (x2 - x1) * (y2 - y1);
+      }
+      const areaGT = gtBox.w * gtBox.h;
+      const areaPred = pred.w * pred.h;
+      const unionArea = areaGT + areaPred - interArea;
+      const iou = unionArea > 0 ? (interArea / unionArea) : 0;
+
+      // Draw GT Box (Green)
+      iouCtx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+      iouCtx.fillRect(gtBox.x, gtBox.y, gtBox.w, gtBox.h);
+      iouCtx.strokeStyle = '#10b981';
+      iouCtx.lineWidth = 2.5;
+      iouCtx.strokeRect(gtBox.x, gtBox.y, gtBox.w, gtBox.h);
+
+      // Draw Pred Box (Blue)
+      iouCtx.fillStyle = 'rgba(37, 99, 235, 0.2)';
+      iouCtx.fillRect(pred.x, pred.y, pred.w, pred.h);
+      iouCtx.strokeStyle = '#2563eb';
+      iouCtx.lineWidth = 2.5;
+      iouCtx.strokeRect(pred.x, pred.y, pred.w, pred.h);
+
+      // Overlap (Orange)
+      if (interArea > 0) {
+        iouCtx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+        iouCtx.fillRect(x1, y1, x2 - x1, y2 - y1);
+        iouCtx.strokeStyle = '#d97706';
+        iouCtx.lineWidth = 1.5;
+        iouCtx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      }
+
+      iouCtx.font = 'bold 12px sans-serif';
+      iouCtx.fillStyle = '#065f46';
+      iouCtx.fillText('Ground Truth', gtBox.x + 8, gtBox.y + 20);
+      iouCtx.fillStyle = '#1e40af';
+      iouCtx.fillText('Prediction', pred.x + 8, pred.y + pred.h - 10);
+
+      // Update text
+      resText.textContent = `${iou.toFixed(2)} (${(iou * 100).toFixed(1)}%)`;
+      resBar.style.width = Math.min(100, Math.round(iou * 100)) + '%';
+
+      if (iou >= th) {
+        resBadge.className = 'result-badge result-pass';
+        resBadge.innerHTML = `✅ True Positive (IoU ${iou.toFixed(2)} ≥ ${th.toFixed(2)})`;
+      } else {
+        resBadge.className = 'result-badge result-fail';
+        resBadge.innerHTML = `❌ False Positive (IoU ${iou.toFixed(2)} < ${th.toFixed(2)} 미달)`;
+      }
+    }
+
+    slX.addEventListener('input', drawIoU);
+    slY.addEventListener('input', drawIoU);
+    slTh.addEventListener('input', drawIoU);
+    drawIoU();
+
+    // ---------------------------------------------------------
+    // PR Curve Live Simulator
+    // ---------------------------------------------------------
+    const prCanvas = document.getElementById('prCanvas');
+    const prCtx = prCanvas.getContext('2d');
+    const prSlider = document.getElementById('pr-conf-slider');
+    const prConfVal = document.getElementById('pr-conf-val');
+    const prPVal = document.getElementById('pr-p-val');
+    const prRVal = document.getElementById('pr-r-val');
+
+    const sampleCats = [
+      { conf: 0.94, iou: 0.88, isCat: true },
+      { conf: 0.89, iou: 0.76, isCat: true },
+      { conf: 0.81, iou: 0.32, isCat: false },
+      { conf: 0.72, iou: 0.82, isCat: true },
+      { conf: 0.65, iou: 0.69, isCat: true },
+      { conf: 0.52, iou: 0.15, isCat: false },
+      { conf: 0.41, iou: 0.74, isCat: true },
+      { conf: 0.23, iou: 0.05, isCat: false }
+    ];
+    const totalActualCats = 5;
+
+    function updatePR() {
+      const th = parseFloat(prSlider.value);
+      prConfVal.textContent = th.toFixed(2);
+
+      let tp = 0, fp = 0;
+      sampleCats.forEach(c => {
+        if (c.conf >= th) {
+          if (c.isCat && c.iou >= 0.5) tp++;
+          else fp++;
+        }
+      });
+
+      const p = (tp + fp) > 0 ? (tp / (tp + fp)) : 1.0;
+      const r = tp / totalActualCats;
+
+      prPVal.textContent = Math.round(p * 100) + '%';
+      prRVal.textContent = Math.round(r * 100) + '%';
+
+      renderPRGraph(p, r);
+    }
+
+    function renderPRGraph(currP, currR) {
+      prCtx.clearRect(0, 0, prCanvas.width, prCanvas.height);
+      const pad = 36;
+      const w = prCanvas.width - pad * 2;
+      const h = prCanvas.height - pad * 2;
+
+      // Axes
+      prCtx.strokeStyle = '#94a3b8';
+      prCtx.lineWidth = 1.5;
+      prCtx.beginPath();
+      prCtx.moveTo(pad, pad);
+      prCtx.lineTo(pad, pad + h);
+      prCtx.lineTo(pad + w, pad + h);
+      prCtx.stroke();
+
+      prCtx.font = '10px sans-serif';
+      prCtx.fillStyle = '#64748b';
+      prCtx.fillText('Recall →', pad + w / 2 - 20, pad + h + 24);
+      prCtx.fillText('0', pad - 10, pad + h + 12);
+      prCtx.fillText('1.0', pad + w - 10, pad + h + 12);
+      prCtx.fillText('1.0', pad - 20, pad + 10);
+
+      // Interpolated points
+      const pts = [
+        { r: 0.0, p: 1.0 },
+        { r: 0.4, p: 1.0 },
+        { r: 0.8, p: 0.80 },
+        { r: 1.0, p: 0.71 }
+      ];
+
+      // Fill area under curve
+      prCtx.beginPath();
+      prCtx.moveTo(pad, pad + h);
+      pts.forEach((pt, i) => {
+        const x = pad + pt.r * w;
+        const y = pad + h - pt.p * h;
+        if (i === 0) prCtx.lineTo(x, y);
+        else {
+          prCtx.lineTo(x, pad + h - pts[i-1].p * h);
+          prCtx.lineTo(x, y);
+        }
+      });
+      prCtx.lineTo(pad + w, pad + h);
+      prCtx.closePath();
+      prCtx.fillStyle = 'rgba(217, 119, 6, 0.15)';
+      prCtx.fill();
+
+      // Line
+      prCtx.strokeStyle = '#d97706';
+      prCtx.lineWidth = 2;
+      prCtx.beginPath();
+      pts.forEach((pt, i) => {
+        const x = pad + pt.r * w;
+        const y = pad + h - pt.p * h;
+        if (i === 0) prCtx.moveTo(x, y);
+        else {
+          prCtx.lineTo(x, pad + h - pts[i-1].p * h);
+          prCtx.lineTo(x, y);
+        }
+      });
+      prCtx.stroke();
+
+      // Current point
+      const curX = pad + currR * w;
+      const curY = pad + h - currP * h;
+      prCtx.beginPath();
+      prCtx.arc(curX, curY, 6, 0, Math.PI * 2);
+      prCtx.fillStyle = '#ef4444';
+      prCtx.fill();
+      prCtx.strokeStyle = '#ffffff';
+      prCtx.lineWidth = 2;
+      prCtx.stroke();
+
+      prCtx.fillStyle = '#b91c1c';
+      prCtx.font = 'bold 10px sans-serif';
+      prCtx.fillText(`(${currR.toFixed(2)}, ${currP.toFixed(2)})`, curX + 8, curY - 5);
+    }
+
+    prSlider.addEventListener('input', updatePR);
+    updatePR();
+  </script>
+</body>
+</html>
