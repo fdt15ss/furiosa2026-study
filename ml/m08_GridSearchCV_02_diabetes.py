@@ -1,4 +1,4 @@
-# 디아벳
+# 디아벳!!
 
 import numpy as np
 from sklearn.datasets import load_digits, load_iris, load_diabetes
