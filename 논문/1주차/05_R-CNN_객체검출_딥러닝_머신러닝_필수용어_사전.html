@@ -520,7 +520,7 @@
     <div class="search-filter-card">
       <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
-        <input type="text" id="term-search" class="search-input" placeholder="궁금한 용어를 검색해보세요 (예: SVM, 결정 경계면, 앵커, 오프셋, RoI Pooling, 회귀, mAP 등)..." />
+        <input type="text" id="term-search" class="search-input" placeholder="궁금한 용어를 검색해보세요 (예: 인스턴스 분할, RoIAlign, Deconv, 마스크 로짓, Decoupling, mAP, SVM 등)..." />
       </div>
       <div class="category-pills">
         <button class="category-btn active" data-filter="all">전체 보기 (<span id="count-all">0</span>)</button>
@@ -531,6 +531,7 @@
         <button class="category-btn" data-filter="cat-roi">🔬 피처 정합 (RoIPool vs RoIAlign)</button>
         <button class="category-btn" data-filter="cat-loss">⚖️ 손실 함수 (Softmax/Smooth L1)</button>
         <button class="category-btn" data-filter="cat-python">🐍 파이썬 & PyTorch 구현</button>
+        <button class="category-btn" data-filter="cat-mask">🎭 Mask R-CNN & 인스턴스 분할 (핵심 10종)</button>
       </div>
     </div>
 
@@ -1566,6 +1567,377 @@ data_loader = torch.utils.data.DataLoader(
 )</code></pre>
       </div>
     </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 8: Mask R-CNN & 인스턴스 분할 심화 (김상현 님 발표 21slides 핵심 용어) -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-mask">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">🎭</div>
+        <div>
+          <h2 class="section-title">8. Mask R-CNN & 인스턴스 분할 심화 (김상현 님 발표 21slides 핵심 용어)</h2>
+          <div class="section-subtitle">Faster R-CNN에 Mask Branch를 병렬 증설하여 픽셀 마스크·클래스·박스를 동시 예측하는 메커니즘과 실전 PyTorch 핵심 Ops</div>
+        </div>
+      </div>
+
+      <!-- Term 27: 인스턴스 분할 (Instance Segmentation) -->
+      <div class="term-card" data-keywords="인스턴스 분할 instance segmentation classification detection semantic segmentation 픽셀 마스크 pixel mask 21slides slide2">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">인스턴스 분할 (Instance Segmentation)</span>
+            <span class="term-en">Pixel-level Object Identification with Distinct Instance Boundaries</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">Mask R-CNN 핵심</span>
+            <span class="tag tag-amber">컴퓨터 비전 과업</span>
+          </div>
+        </div>
+        <p>
+          단순히 물체가 사진 속 어디에 있는지 사각형 박스로 찾는 객체 검출(Object Detection)을 넘어, 
+          <strong>동일한 클래스에 속한 여러 객체(예: 사람 A, 사람 B, 사람 C)를 개별 개체(Instance) 단위로 완벽히 분리하고 각 객체가 차지하는 픽셀 마스크를 0과 1로 정밀하게 예측</strong>하는 비전 인식 기술입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 사과 바구니 사진 판독</div>
+          <ul>
+            <li><strong>이미지 분류 (Classification)</strong>: "이 사진에 사과가 있다." (클래스 이름만)</li>
+            <li><strong>객체 검출 (Detection)</strong>: "사과 3개가 각각 이 네모 상자 좌표 안에 있다." (Class + Bounding Box)</li>
+            <li><strong>시맨틱 분할 (Semantic Segmentation)</strong>: "사과 영역을 전부 빨간 페인트로 칠한다." (사과 3개가 겹쳐 있으면 한 덩어리로 뭉개짐)</li>
+            <li><strong>인스턴스 분할 (Instance Segmentation)</strong>: "1번 사과는 파란 실루엣, 2번 사과는 노란 실루엣, 3번 사과는 초록 실루엣으로 칼로 오려내듯 개별 분리한다." (Class + Box + Pixel Mask)</li>
+          </ul>
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 Mask R-CNN의 동시 예측 3중 구조</div>
+          $$\text{Output} = \{ \text{Class Label}, \; [x_1, y_1, x_2, y_2], \; \mathbf{M}_{28 \times 28} \}$$
+          Faster R-CNN이 탐지한 RoI 후보에 <strong>Box Head(클래스/좌표)</strong>와 <strong>Mask Head(픽셀 형상)</strong>를 완전히 병렬(Parallel)로 연결하여, 탐지 속도 저하(오버헤드 단 20% 미만) 없이 고화질 픽셀 분할을 완성합니다.
+        </div>
+      </div>
+
+      <!-- Term 28: 클래스-마스크 분리 예측 (Class-Mask Decoupling) -->
+      <div class="term-card" data-keywords="클래스 마스크 분리 decoupling class mask softmax sigmoid fcn 픽셀 경쟁 배제 slide10 slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">클래스-마스크 분리 예측 (Class-Mask Decoupling)</span>
+            <span class="term-en">Decoupling Classification and Mask Prediction (Independent Binary Sigmoids)</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">Mask R-CNN 혁신</span>
+            <span class="tag tag-teal">손실 설계</span>
+          </div>
+        </div>
+        <p>
+          전통적 FCN(Fully Convolutional Network) 방식처럼 <strong>픽셀마다 전체 클래스 간 확률 합이 1이 되도록 경합시키는 다중 클래스 Softmax를 사용하지 않고</strong>, 
+          <strong>"무슨 물체인가?"는 Classification Branch(Box Head)에 일임하고, Mask Branch는 오직 "해당 물체의 픽셀 실루엣 형태가 어떻게 생겼는가?"만 독립적인 Sigmoid로 분리하여 예측</strong>하는 Mask R-CNN의 핵심 설계 원리입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 캐스팅 디렉터와 특수분장팀의 완벽한 분업</div>
+          오디션 심사위원(Box Head)이 지원자를 보고 "이 사람은 헐크 역이다"라고 판정하면, 특수분장팀(Mask Head)은 헐크 전용 초록색 바디수트 실루엣만 정밀하게 입힙니다. 
+          특수분장팀 내부에서 "이 배우가 아이언맨인가 헐크인가"를 두고 픽셀 단위로 싸우지 않으므로, 오직 헐크의 우람한 체형 윤곽선(Shape)을 살리는 데만 100% 집중할 수 있습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 Softmax 대신 Sigmoid가 결정적이었는가?</div>
+          FCN 스타일의 Softmax Cross-Entropy는 클래스 간의 상호 배제(Mutual Exclusion)를 강제하여, 경계선 픽셀에서 클래스 간 간섭(Cross-class Competition)이 발생합니다. 
+          Mask R-CNN은 클래스별로 $K$개의 독립 채널을 두고 <strong>Per-pixel Binary Cross-Entropy</strong>를 적용함으로써 클래스 간 간섭을 원천 차단했습니다. 
+          논문 절제 연구(Ablation Study)에서 Softmax 대비 <strong>mAP가 무려 +5.5%p 향상</strong>되는 결정적 차이를 증명했습니다.
+        </div>
+      </div>
+
+      <!-- Term 29: 전치 합성곱 (Transposed Convolution / Deconvolution) -->
+      <div class="term-card" data-keywords="전치 합성곱 transposed convolution deconvolution deconv convtranspose2d 업샘플링 upsampling slide10 slide11">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">전치 합성곱 (Transposed Convolution / Deconvolution)</span>
+            <span class="term-en">Learnable Fractionally-Strided Convolution for Spatial Upsampling</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">신경망 연산자</span>
+            <span class="tag tag-blue">PyTorch ConvTranspose2d</span>
+          </div>
+        </div>
+        <p>
+          특징 맵의 공간 해상도를 2배 이상 키우기 위해 사용하는 <strong>가중치 학습이 가능한 역방향 합성곱 연산</strong>입니다. 
+          Mask Head에서 RoIAlign을 통해 얻은 $14 \times 14$ 크기의 특성을 최종 마스크인 $28 \times 28$ 공간 해상도로 확장할 때 핵심으로 사용됩니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 단순 돋보기 확대 vs 복원 전문 화가의 세밀화</div>
+          일반 Bilinear Interpolation이 사진을 흐릿하게 단순 기계적으로 늘리는 '돋보기'라면, 
+          전치 합성곱은 데이터 역전파를 통해 물체의 윤곽선을 어떻게 메꿔야 선명해지는지 스스로 학습한 '전문 복원 화가'가 픽셀 간격을 메꾸는 방식입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 수학적 연산 원리 및 Checkerboard Artifact 방지</div>
+          일반 합성곱이 입력 $X$에 행렬 $C$를 곱해 저해상도 $Y = C X$를 만든다면, 전치 합성곱은 전치 행렬 $C^T$를 곱해 고해상도 $\hat{X} = C^T Y$를 복원합니다.
+          <br/>
+          <strong>실무 주의:</strong> Stride와 Kernel Size의 배수가 불일치하면 바둑판 모양의 격자 왜곡(Checkerboard Artifacts)이 발생합니다. Mask R-CNN은 <code>kernel_size=2, stride=2</code>를 정확히 2배 매칭하여 아티팩트 없이 매끄러운 2배 업샘플링($14 \rightarrow 28$)을 달성합니다.
+        </div>
+        <div class="code-box">
+<span class="code-comment"># Slide 11: MaskHead 업샘플링 계층 정의</span>
+<span class="code-kw">self</span>.deconv = nn.ConvTranspose2d(
+    in_channels=<span class="code-num">256</span>, out_channels=<span class="code-num">256</span>, 
+    kernel_size=<span class="code-num">2</span>, stride=<span class="code-num">2</span>
+)
+<span class="code-comment"># 입력 [N, 256, 14, 14] -> 출력 [N, 256, 28, 28]</span>
+        </div>
+      </div>
+
+      <!-- Term 30: 클래스별 마스크 로짓 (Class-specific Mask Logits) -->
+      <div class="term-card" data-keywords="클래스별 마스크 로짓 class specific mask logits kx28x28 coco 80 채널 분리 slide10 slide12 slide15 slide17">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">클래스별 마스크 로짓 (Class-specific Mask Logits)</span>
+            <span class="term-en">Multi-channel Tensor $[N, K, 28, 28]$ without Inter-class Competition</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">출력 텐서 형상</span>
+            <span class="tag tag-blue">PyTorch Conv2d 1x1</span>
+          </div>
+        </div>
+        <p>
+          MaskPredictor가 최종 출력하는 4차원 텐서 <code>[N, K, 28, 28]</code>입니다. 
+          여기서 $N$은 RoI 후보 개수, $K$는 전경(Foreground) 클래스 개수(COCO 데이터셋 기준 80개), $28 \times 28$은 각 클래스별 독립 마스크의 공간 해상도입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 80칸짜리 맞춤형 스텐실(Stencil) 도안 서랍장</div>
+          어떤 물체 후보가 들어오면 모델은 80개 서랍 각각에 "만약 이 물체가 사람이라면 이 실루엣, 만약 자전거라면 이 실루엣, 만약 자동차라면 이 실루엣"을 독립된 80장의 스텐실 판(28×28)으로 동시에 준비해 둡니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 단일 채널(1×28×28)이 아니라 K개 채널을 출력하는가?</div>
+          사람, 비행기, 컵은 윤곽선의 기하학적 통계(Aspect Ratio, 굴곡, 구멍 등)가 근본적으로 다릅니다. 단일 채널로 모든 클래스의 형태를 억지로 표현하려 하면 복잡한 형태 학습에 혼선이 빚어집니다. 
+          클래스마다 전용 28×28 마스크 채널을 제공하면 다음과 같은 학습/추론의 명확한 분기가 가능해집니다:
+          <ul>
+            <li><strong>학습 시 (Slide 15)</strong>: Ground Truth 라벨이 '3번(자동차)'이면 <strong>3번 채널만 선택</strong>해 손실을 계산하고, 나머지 79개 채널에는 그래디언트 역전파를 하지 않습니다.</li>
+            <li><strong>추론 시 (Slide 17)</strong>: Box Head가 분류한 최고 점수 클래스(예: 사람)의 채널 1장만 꺼내 <code>sigmoid() &gt; 0.5</code>로 최종 마스크를 결정합니다.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Term 31: MultiScaleRoIAlign (FPN 기반 멀티스케일 RoI 정합) -->
+      <div class="term-card" data-keywords="multiscaleroialign fpn 멀티스케일 roi 정합 p2 p3 p4 p5 sampling ratio slide7 slide8 slide13">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">MultiScaleRoIAlign (FPN 기반 동적 멀티스케일 RoI 정합)</span>
+            <span class="term-en">Dynamic Feature Pyramid Assignment for Variable-Sized Proposals</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">RoI 정합 Ops</span>
+            <span class="tag tag-teal">torchvision.ops</span>
+          </div>
+        </div>
+        <p>
+          Feature Pyramid Network(FPN)의 다중 해상도 특징 맵 피라미드($P_2, P_3, P_4, P_5$) 중에서, 
+          <strong>각 RoI 바운딩 박스의 물리적 면적 크기($w \times h$)에 따라 가장 적합한 단 하나의 피라미드 레벨을 동적으로 계산하여 할당한 뒤 RoIAlign을 수행</strong>하는 연산자입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 물체 크기에 맞춘 카메라 렌즈 자동 교체</div>
+          풍경 속 거대한 덤프트럭은 넓은 화각의 광각 렌즈($P_5$, 저해상도/넓은 수용영역)로 촬영하고, 
+          멀리 있는 작은 참새는 초망원 렌즈($P_2$, 1/4 고해상도/미세 텍스처 보존)로 줌인하여 촬영하는 것과 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 피라미드 레벨 할당 공식 및 Mask 경로의 14×14 해상도</div>
+          $$k = \left\lfloor k_0 + \log_2 \left( \frac{\sqrt{w \cdot h}}{224} \right) \right\rfloor \quad (k_0 = 4)$$
+          <ul>
+            <li>$\sqrt{wh} = 224$ (기준 크기) $\rightarrow k = 4$ ($P_4$ 피처 맵에 매핑)</li>
+            <li>$\sqrt{wh} &lt; 112$ (작은 물체) $\rightarrow k = 2$ or $3$ ($P_2, P_3$ 고해상도 피처 맵)</li>
+            <li>$\sqrt{wh} \ge 448$ (거대한 물체) $\rightarrow k = 5$ ($P_5$ 저해상도 피처 맵)</li>
+          </ul>
+          <strong>Box RoI vs Mask RoI 해상도 차이 (Slide 7):</strong> Box Head는 클래스와 오프셋만 맞추면 되므로 $7 \times 7$ 크기로 가볍게 풀링하지만, 
+          Mask Head는 픽셀 경계선의 정밀 보존이 필수적이므로 <strong>2배 더 큰 $14 \times 14$ 해상도</strong>로 특징을 추출합니다 (<code>output_size=14, sampling_ratio=2</code>).
+        </div>
+      </div>
+
+      <!-- Term 32: 마스크 정답 생성 (Mask Target Generation via RoIAlign) -->
+      <div class="term-card" data-keywords="마스크 정답 생성 mask target generation roi_align gt masks positive rois 28x28 slide14">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">마스크 정답 생성 기법 (Mask Target Generation via RoIAlign)</span>
+            <span class="term-en">Sub-pixel Accurate 28×28 Ground Truth Mask Extraction using roi_align</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">파이토치 고급 트릭</span>
+            <span class="tag tag-teal">학습 파이프라인</span>
+          </div>
+        </div>
+        <p>
+          전체 원본 이미지 해상도($H \times W$) 상에 그려진 실측 정답(Ground Truth) 폴리곤 마스크에서, 
+          <strong>모델이 학습 손실을 계산할 수 있도록 선별된 각 Positive RoI 영역에 딱 맞추어 28×28 크기의 고정 텐서로 크롭 및 리사이즈</strong>하는 정답 데이터셋 가공 기법입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 빵 반죽에서 쿠키 틀로 찍어내기</div>
+          식탁 전체 크기($H \times W$)의 넓은 반죽에서 쿠키 틀(Positive RoI 박스)을 올려놓고 누른 뒤, 
+          그 잘라낸 조각을 표준 규격 상자(28×28 타깃)에 정밀하게 담아 정답 쿠키로 사용하는 것입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 파이토치 내장 roi_align의 역발상 활용 (Slide 14)</div>
+          일반적으로 <code>roi_align</code>은 신경망의 특징 맵(Feature Map)에서 RoI 피처를 뽑을 때 씁니다. 
+          하지만 PyTorch 실무 구현에서는 <strong>원본 GT 마스크 이미지 자체에 <code>roi_align(spatial_scale=1.0, output_size=(28, 28))</code>을 적용</strong>합니다!
+          <br/>
+          CPU에서 OpenCV로 하나하나 <code>cv2.resize()</code> 루프를 돌리는 대신, GPU 상에서 <code>aligned=True</code> 옵션으로 서브픽셀 보간을 적용하여 수천 개의 양성 RoI 타깃을 밀리초 단위로 초고속 일괄 생성합니다.
+        </div>
+      </div>
+
+      <!-- Term 33: 포지티브 RoI 필터링 (Positive RoI Filtering) -->
+      <div class="term-card" data-keywords="포지티브 roi positive roi negative roi 샘플링 마스크 손실 제외 foreground background iou 0.5 slide14 slide15 slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">포지티브 RoI 필터링 (Positive RoI Filtering in Mask Loss)</span>
+            <span class="term-en">Restricting Mask Supervision Exclusively to Matched Foreground RoIs</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">학습 안정화</span>
+            <span class="tag tag-teal">손실 설계</span>
+          </div>
+        </div>
+        <p>
+          RPN이 제안한 수많은 후보 영역 중, <strong>실제 정답 객체(Ground Truth Box)와의 IoU가 0.5 이상으로 매칭된 양성 후보(Positive RoI)에 대해서만 Mask Loss를 계산하고, 배경(Negative RoI)은 마스크 손실 계산에서 완전히 제외</strong>하는 규칙입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 인물화 스케치 채색 시험</div>
+          캔버스에 사람을 그린 학생(Positive)에게는 "눈코입 윤곽선 채색이 얼마나 섬세한가(Mask Loss)"를 엄격히 채점하지만, 
+          빈 도화지 허공이나 바닥 배경(Negative)을 낸 학생에게 "왜 사람 윤곽선을 안 그렸냐"며 마스크 감점을 주지 않는 것과 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 배경(Negative RoI)에는 마스크 손실을 주면 안 되는가?</div>
+          <ul>
+            <li><strong>Classification / RPN</strong>: 물체가 없는 빈 공간에 대해 "여기는 배경(0)이다"라는 음성 피드백을 배워야 하므로 Negative RoI 학습이 필수적입니다.</li>
+            <li><strong>Mask Branch</strong>: 마스크 브랜치는 물체의 <strong>'기하학적 실루엣(Shape)'</strong>을 학습하는 전용 모듈입니다. 배경 패치(아스팔트, 하늘 등)에는 애초에 물체의 형태가 정의되어 있지 않습니다.</li>
+            <li>배경 RoI에 대해 억지로 0(빈 마스크)을 타깃으로 주어 학습시키면, 마스크 헤드가 전경 물체 경계선에서도 0(배경)을 출력하려는 극단적 보수화 현상에 빠져 윤곽선 예측 성능이 처참하게 붕괴됩니다.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Term 34: BCEWithLogitsLoss (수치 안정성 보장 이진 교차 엔트로피) -->
+      <div class="term-card" data-keywords="bcewithlogitsloss binary cross entropy logit sigmoid 수치 안정성 log sum exp nan 방지 slide15">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">BCEWithLogitsLoss (수치 안정성 이진 교차 엔트로피)</span>
+            <span class="term-en">Numerically Stable Binary Cross-Entropy with Integrated Log-Sum-Exp Trick</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">손실 함수</span>
+            <span class="tag tag-blue">PyTorch F.binary_cross_entropy_with_logits</span>
+          </div>
+        </div>
+        <p>
+          Mask Head의 최종 로짓(Logit) 출력값에 대해 먼저 <code>torch.sigmoid()</code>를 취한 뒤 <code>BCELoss</code>를 계산하지 않고, 
+          <strong>시그모이드 활성화와 이진 교차 엔트로피 수식을 수학적으로 하나로 통합하여 부동소수점 오버플로우/언더플로우(NaN)를 원천 차단하는 최적화 손실 함수</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 환율 이중 환전 수수료 방지 직통 결제</div>
+          원화를 달러로 바꿨다가 다시 엔화로 바꾸면 환전 오차와 수수료가 누적되어 잔돈이 사라지지만, 
+          원화에서 엔화로 다이렉트 환율 공식을 적용하면 계산 오차 없이 정확한 금액이 정산되는 원리와 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 수학적 안정화 공식 (Log-Sum-Exp Trick)</div>
+          기본 식: $\mathcal{L} = - [y \log \sigma(x) + (1-y) \log(1 - \sigma(x))]$
+          <br/>
+          만약 예측 로짓 $x = 88.0$과 같이 매우 크다면, 컴퓨터의 IEEE 754 부동소수점 표현 한계로 인해 $\sigma(x) = 1.0$으로 반올림되고, 
+          그 결과 $\log(1 - \sigma(x)) = \log(0) \rightarrow -\infty$가 되어 <strong>손실값에 치명적인 <code>NaN</code>(Not a Number)이 폭발</strong>합니다.
+          <br/>
+          파이토치의 <code>binary_cross_entropy_with_logits</code>는 내부적으로 다음 항등식을 사용합니다:
+          $$\mathcal{L}(x, y) = \max(x, 0) - x \cdot y + \log\left(1 + e^{-|x|}\right)$$
+          절댓값 $|x|$ 처리를 통해 $e^{-|x|}$ 항은 아무리 $x$가 커지거나 작아져도 항상 0과 1 사이로 안전하게 수렴하므로 수치 폭발 없이 완벽한 그래디언트를 역전파합니다.
+        </div>
+      </div>
+
+      <!-- Term 35: 마스크 후처리 & 원본 캔버스 복원 (Mask Post-Processing & Canvas Paste) -->
+      <div class="term-card" data-keywords="마스크 후처리 mask post processing 캔버스 복원 canvas paste interpolate bilinear 원본 복원 slide18">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">마스크 후처리 & 원본 캔버스 복원 (Mask Post-Processing & Canvas Paste)</span>
+            <span class="term-en">RoI-Space to Full Image-Space Geometric Interpolation and Canvas Insertion</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">추론 후처리</span>
+            <span class="tag tag-teal">기하학적 복원</span>
+          </div>
+        </div>
+        <p>
+          신경망 추론 완료 후, Mask Branch가 출력한 $28 \times 28$ 크기의 국소 영역 정규화 확률 마스크를 
+          <strong>원본 고화질 이미지의 실제 바운딩 박스 크기($(y_2-y_1) \times (x_2-x_1)$)로 확대하고, 원본 크기 Canvas의 정확한 좌표에 붙여넣어 최종 불리언(True/False) 인스턴스 마스크를 완성하는 기하학적 복원 알고리즘</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 미니어처 스티커를 실물 가구 크기로 확대해 붙이기</div>
+          공장에서 규격화되어 나온 가로세로 2.8cm짜리 스티커 도안($28 \times 28$)을, 
+          실제 거실 바닥에 놓인 가로 180cm, 세로 120cm짜리 소파(Bounding Box) 크기에 딱 맞게 프로젝터로 쏘아 확대한 뒤 거실 평면도(Canvas)의 해당 위치에 정확히 붙이는 작업입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 실무 복원 4단계 파이프라인 (Slide 18 코드 핵심)</div>
+          <ol>
+            <li><strong>정수 좌표 클리핑</strong>: <code>box.round().long()</code>으로 박스 좌표 $[x_1, y_1, x_2, y_2]$를 정수화하고 이미지 경계 $[0, W], [0, H]$ 내로 클리핑.</li>
+            <li><strong>쌍선형 보간 확대</strong>: <code>F.interpolate(prob[None, None], size=(y2-y1, x2-x1), mode="bilinear")</code>로 박스 해상도로 부드럽게 보간.</li>
+            <li><strong>캔버스 삽입</strong>: 원본 크기 영행렬 <code>canvas = prob.new_zeros((H, W))</code> 생성 후 슬라이싱 영역 <code>canvas[y1:y2, x1:x2] = resized</code>에 삽입.</li>
+            <li><strong>임계값 이진화</strong>: <code>canvas &gt; 0.5</code>를 판정하여 해당 인스턴스만의 최종 2차원 불리언 마스크 텐서 완성.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Term 36: Two-Stage Detection 5중 종합 손실 함수 (L_total) -->
+      <div class="term-card" data-keywords="two stage detection 전체 손실 l_total 5중 손실 rpn obj box cls mask multitask loss slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Two-Stage Detection 5중 종합 손실 함수 ($L_{total}$)</span>
+            <span class="term-en">End-to-End 5-Component Multi-Task Loss Formulation</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">수식 정밀 해독</span>
+            <span class="tag tag-amber">논문 vs 실무</span>
+          </div>
+        </div>
+        <p>
+          논문 본문에서는 흔히 RoI 단계 손실만을 요약하여 $\mathcal{L}_{RoI} = \mathcal{L}_{cls} + \mathcal{L}_{box} + \mathcal{L}_{mask}$로 표기하지만, 
+          <strong>실제 딥러닝 탐지기 전체를 단일 신경망으로 엔드투엔드(End-to-End) 학습시킬 때 역전파되는 5개 손실의 종합 총합 공식</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 5종 경기(펜타슬론) 종합 점수</div>
+          수영, 펜싱, 사격, 승마, 크로스컨트리 5개 종목 점수를 모두 합산해 종합 우승자를 뽑듯, 
+          신경망의 공통 척추(Backbone + FPN)는 이 5개 종목의 오차 신호를 동시에 받아 어떤 작업에서도 균형 잡힌 최강의 특징 표현력을 완성합니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 5개 손실 구성 요소 정밀 해부 (Slide 16)</div>
+          $$\mathcal{L}_{total} = \mathcal{L}_{RPN,obj} + \mathcal{L}_{RPN,box} + \mathcal{L}_{cls} + \mathcal{L}_{box} + \mathcal{L}_{mask}$$
+          <table style="width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">손실 항</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">담당 모듈</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">학습 목표</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">사용 손실 함수</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{RPN,obj}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RPN Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">앵커 박스가 객체인가(1) 배경인가(0)</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Binary Cross-Entropy</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{RPN,box}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RPN Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">앵커 좌표를 객체 대략 위치로 1차 보정</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Smooth L1 Loss</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{cls}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Fast R-CNN Box Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RoI가 어떤 구체적 클래스인가 (80+배경)</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Cross-Entropy Loss (Softmax)</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{box}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Fast R-CNN Box Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RoI 박스를 실측 GT Box로 2차 정밀 밀착</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Smooth L1 Loss</td>
+              </tr>
+              <tr style="background: #faf5ff;">
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code); color: #7c3aed; font-weight: bold;">$\mathcal{L}_{mask}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold; color: #7c3aed;">Mask Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold;">Positive RoI의 28×28 픽셀 마스크 형상 복원</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold;">BCEWithLogitsLoss (Sigmoid)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
   </div>
 
