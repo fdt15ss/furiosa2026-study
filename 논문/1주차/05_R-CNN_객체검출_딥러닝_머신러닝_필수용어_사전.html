@@ -45,11 +45,11 @@
       font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
       color: var(--text-main);
-      line-height: 1.7;
+      line-height: 1.75;
       padding-bottom: 90px;
     }
 
-    /* Scroll progress */
+    /* Scroll progress bar */
     #progress-bar {
       position: fixed;
       top: 0;
@@ -65,7 +65,7 @@
     header {
       background: linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e3a8a 100%);
       color: #ffffff;
-      padding: 56px 24px 48px;
+      padding: 60px 24px 52px;
       position: relative;
       overflow: hidden;
     }
@@ -73,7 +73,7 @@
       content: "";
       position: absolute;
       top: 0; right: 0; bottom: 0; left: 0;
-      background: radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.25) 0%, transparent 65%);
+      background: radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.28) 0%, transparent 65%);
       pointer-events: none;
     }
     .header-content {
@@ -86,7 +86,7 @@
       display: inline-block;
       padding: 6px 14px;
       border-radius: 9999px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
       letter-spacing: 0.05em;
       text-transform: uppercase;
@@ -239,8 +239,8 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
-      padding: 22px 20px;
-      margin-bottom: 22px;
+      padding: 24px 22px;
+      margin-bottom: 24px;
       transition: all 0.2s;
     }
     .term-card:last-child {
@@ -253,7 +253,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
       gap: 8px;
     }
@@ -299,9 +299,9 @@
       background: #fffbeb;
       border-left: 4px solid var(--accent);
       border-radius: 0 8px 8px 0;
-      padding: 12px 16px;
+      padding: 14px 18px;
       margin: 14px 0;
-      font-size: 0.92rem;
+      font-size: 0.93rem;
       color: #78350f;
     }
     .analogy-label {
@@ -309,7 +309,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       color: #b45309;
     }
 
@@ -317,9 +317,9 @@
       background: var(--primary-light);
       border-left: 4px solid var(--primary);
       border-radius: 0 8px 8px 0;
-      padding: 12px 16px;
+      padding: 14px 18px;
       margin: 14px 0;
-      font-size: 0.92rem;
+      font-size: 0.93rem;
       color: #1e3a8a;
     }
     .key-label {
@@ -327,26 +327,27 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       color: var(--primary-dark);
     }
 
-    .python-box {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-left: 4px solid #0284c7;
+    .deepdive-box {
+      background: #faf5ff;
+      border-left: 4px solid #9333ea;
       border-radius: 0 8px 8px 0;
-      padding: 14px 16px;
-      margin: 14px 0;
+      padding: 16px 18px;
+      margin: 16px 0;
+      font-size: 0.93rem;
+      color: #581c87;
     }
-    .python-label {
+    .deepdive-label {
       font-weight: 800;
       display: flex;
       align-items: center;
       gap: 6px;
       margin-bottom: 8px;
-      color: #0369a1;
-      font-size: 0.88rem;
+      color: #7e22ce;
+      font-size: 0.98rem;
     }
 
     /* Code Snippet */
@@ -359,7 +360,7 @@
       font-family: var(--font-code);
       font-size: 0.85rem;
       line-height: 1.5;
-      margin: 8px 0;
+      margin: 10px 0;
     }
     code {
       font-family: var(--font-code);
@@ -379,7 +380,7 @@
     .styled-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 18px 0;
+      margin: 16px 0;
       font-size: 0.9rem;
       border-radius: 8px;
       overflow: hidden;
@@ -391,7 +392,7 @@
       text-align: left;
     }
     .styled-table th, .styled-table td {
-      padding: 11px 15px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
     }
     .styled-table tbody tr:nth-of-type(even) {
@@ -403,7 +404,7 @@
 
     /* Interactive Simulator Box */
     .sim-container {
-      background: #f1f5f9;
+      background: #f8fafc;
       border: 1px solid #cbd5e1;
       border-radius: var(--radius);
       padding: 22px;
@@ -519,17 +520,18 @@
     <div class="search-filter-card">
       <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
-        <input type="text" id="term-search" class="search-input" placeholder="궁금한 용어를 검색해보세요 (예: mAP, IoU, RPN, RoIAlign, SVD, PyTorch, NMS, Loss 등)..." />
+        <input type="text" id="term-search" class="search-input" placeholder="궁금한 용어를 검색해보세요 (예: 인스턴스 분할, RoIAlign, Deconv, 마스크 로짓, Decoupling, mAP, SVM 등)..." />
       </div>
       <div class="category-pills">
         <button class="category-btn active" data-filter="all">전체 보기 (<span id="count-all">0</span>)</button>
         <button class="category-btn" data-filter="cat-metric">🎯 평가 지표 (mAP/IoU/PR)</button>
-        <button class="category-btn" data-filter="cat-ml">🧠 딥러닝·머신러닝 핵심 (사전학습/SVM/SVD)</button>
+        <button class="category-btn" data-filter="cat-ml">🧠 머신러닝·SVM·오프셋 (핵심원리)</button>
         <button class="category-btn" data-filter="cat-arch">🏗️ 백본 & 신경망 구조 (ResNet/FPN/FCN)</button>
-        <button class="category-btn" data-filter="cat-proposal">📦 영역 제안 & 검출 (Anchor/RPN/NMS/회귀)</button>
+        <button class="category-btn" data-filter="cat-proposal">📦 앵커·RPN·회귀·NMS (검출부품)</button>
         <button class="category-btn" data-filter="cat-roi">🔬 피처 정합 (RoIPool vs RoIAlign)</button>
         <button class="category-btn" data-filter="cat-loss">⚖️ 손실 함수 (Softmax/Smooth L1)</button>
         <button class="category-btn" data-filter="cat-python">🐍 파이썬 & PyTorch 구현</button>
+        <button class="category-btn" data-filter="cat-mask">🎭 Mask R-CNN & 인스턴스 분할 (핵심 10종)</button>
       </div>
     </div>
 
@@ -546,7 +548,7 @@
       </div>
 
       <!-- Term: mAP -->
-      <div class="term-card" data-keywords="map mean average precision ap 평균 정밀도 voc coco 성능">
+      <div class="term-card" data-keywords="map mean average precision ap 평균 정밀도 voc coco 성능 평가 지표">
         <div class="term-top">
           <div class="term-name-group">
             <span class="term-title">mAP (mean Average Precision)</span>
@@ -558,8 +560,8 @@
           </div>
         </div>
         <p>
-          객체 검출(Object Detection) 모델의 <strong>최종 성적표에 해당하는 단 하나의 대표 점수</strong>입니다.
-          각 물체 클래스(사람, 자동차, 의자 등)마다 구한 <strong>AP(Average Precision, PR 곡선 아래 면적)를 전교생 평균을 내듯 산술평균</strong>한 값입니다.
+          객체 검출(Object Detection) 모델의 <strong>최종 성적표에 해당하는 단 하나의 종합 대표 점수</strong>입니다.
+          각 물체 클래스(사람, 자동차, 의자 등)마다 구한 <strong>AP(Average Precision, PR 곡선 아래 면적)를 전 과목 평균 내듯 산술평균</strong>한 값입니다.
         </p>
         <div class="analogy-box">
           <div class="analogy-label">💡 1초 비유: 기말고사 평균 점수</div>
@@ -586,12 +588,12 @@
           </div>
         </div>
         <p>
-          모델이 예측한 박스(Prediction)와 실제 정답 박스(Ground Truth)가 <strong>공간적으로 얼마나 일치하는지(0~1)를 나타내는 지표</strong>입니다.
+          모델이 예측한 박스(Prediction)와 실제 정답 박스(Ground Truth)가 <strong>공간적으로 얼마나 일치하는지(0~1)를 나타내는 자(Ruler)</strong>입니다.
         </p>
         $$ \text{IoU} = \frac{\text{교집합 면적 (Area of Overlap)}}{\text{합집합 면적 (Area of Union)}} = \frac{A \cap B}{A \cup B} $$
         <ul style="margin-left: 20px; font-size: 0.92rem; color: #334155;">
-          <li><strong>IoU $\ge$ 0.5</strong>: PASCAL VOC 대회 기준 "합격선" (물체를 찾았다고 인정)</li>
-          <li><strong>IoU $\ge$ 0.75</strong>: COCO 엄격한 기준 (박스 테두리가 딱 맞아떨어져야 합격)</li>
+          <li><strong>IoU $\ge$ 0.5</strong>: PASCAL VOC 대회 기준 "합격선" (물체 위치를 잘 찾았다고 인정)</li>
+          <li><strong>IoU $\ge$ 0.75</strong>: COCO 엄격한 기준 (박스 테두리가 딱 들어맞아야 합격)</li>
         </ul>
 
         <!-- Live Interactive IoU Simulator -->
@@ -628,76 +630,115 @@
         </div>
       </div>
 
-      <!-- Term: Precision & Recall & PR Curve -->
-      <div class="term-card" data-keywords="precision recall pr curve 정밀도 재현율 pr곡선 auc ap 면적 trade off">
+      <!-- Term: Precision & Recall & Complete Interactive PR Simulator -->
+      <div class="term-card" data-keywords="precision recall pr curve 정밀도 재현율 pr곡선 auc ap 면적 trade off 신뢰도 confidence 시뮬레이터">
         <div class="term-top">
           <div class="term-name-group">
-            <span class="term-title">Precision, Recall & PR Curve</span>
-            <span class="term-en">정밀도, 재현율, 그리고 PR 곡선</span>
+            <span class="term-title">Precision, Recall 그리고 PR 곡선(PR Curve)</span>
+            <span class="term-en">정밀도, 재현율, 그리고 PR 곡선 작동 메커니즘</span>
           </div>
           <div class="term-tags">
             <span class="tag tag-blue">트레이드오프</span>
-            <span class="tag tag-amber">신뢰도 곡선</span>
+            <span class="tag tag-amber">수학적 검증 완료</span>
           </div>
         </div>
+        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0;">
-          <div style="background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 3px solid #2563eb;">
+          <div style="background: #eff6ff; padding: 14px; border-radius: 8px; border-left: 3px solid #2563eb;">
             <strong>🎯 정밀도 (Precision) = $\frac{TP}{TP + FP}$</strong><br>
             "모델이 검출했다고 외친 박스 중 진짜 맞춘 비율"<br>
-            <span style="font-size: 0.85rem; color: #1e40af;">→ 100% 확실한 용의자만 잡는 <strong>신중한 경찰</strong> (무고한 시민을 안 잡음)</span>
+            <span style="font-size: 0.85rem; color: #1e40af;">→ 100% 확실한 용의자만 체포하는 <strong>신중한 경찰</strong> (무고한 사람 안 잡음)</span>
           </div>
-          <div style="background: #f0fdfa; padding: 12px; border-radius: 8px; border-left: 3px solid #0d9488;">
+          <div style="background: #f0fdfa; padding: 14px; border-radius: 8px; border-left: 3px solid #0d9488;">
             <strong>📢 재현율 (Recall) = $\frac{TP}{TP + FN}$</strong><br>
             "실제 존재하는 모든 정답 중 모델이 찾아낸 비율"<br>
-            <span style="font-size: 0.85rem; color: #0f766e;">→ 의심되면 일단 다 체포하는 <strong>의욕 경찰</strong> (범인을 놓치지 않음)</span>
+            <span style="font-size: 0.85rem; color: #0f766e;">→ 조금이라도 의심되면 일단 다 체포하는 <strong>의욕 경찰</strong> (범인을 안 놓침)</span>
           </div>
         </div>
+
         <p style="font-size: 0.92rem;">
-          모델은 박스마다 <strong>신뢰도(Confidence Score)</strong>를 부여합니다. 
-          기준 신뢰도를 1.0에서 0.0까지 낮추면 박스를 많이 뽑게 되어 <strong>Recall은 올라가지만 오답(FP)도 늘어나 Precision은 떨어집니다</strong>. 
-          이 줄다리기를 그래프로 그린 것이 <strong>PR Curve(우하향 곡선)</strong>이며, <strong>그 아래 면적(AUC)이 바로 AP(Average Precision)</strong>입니다!
+          모델은 박스마다 <strong>신뢰도(Confidence Score, 0~100%)</strong>를 부여합니다.<br>
+          • <strong>신뢰도 기준을 90%로 높이면</strong>: 확실한 박스만 남겨서 오답(FP)이 없으므로 <strong>Precision은 100%</strong>가 되지만, 애매한 물체들을 다 놓쳐(FN 증가) <strong>Recall은 폭락</strong>합니다.<br>
+          • <strong>신뢰도 기준을 20%로 낮추면</strong>: 뭐든 다 찾아내므로 물체를 거의 안 놓쳐 <strong>Recall은 100%</strong>가 되지만, 온갖 배경 오답(FP)이 섞여 <strong>Precision은 바닥</strong>을 칩니다.<br>
+          이 줄다리기를 그래프로 그린 것이 <strong>PR 곡선(우하향 곡선)</strong>이며, <strong>그 아래 면적(Area Under Curve, AUC)이 바로 AP(Average Precision)</strong>입니다!
         </p>
 
-        <!-- Live PR Curve Simulator -->
-        <div class="sim-container">
+        <!-- Upgraded PR Curve Live Simulator -->
+        <div class="sim-container" style="background: #f1f5f9; border: 2px solid #cbd5e1;">
           <div class="sim-header">
-            <span class="sim-title">📈 신뢰도(Confidence) 조절에 따른 PR 곡선 작동 실습</span>
-            <span class="tag tag-amber">PR ENGINE</span>
+            <span class="sim-title">📈 [수학적 완벽 검증] 신뢰도(Confidence) 조절에 따른 PR 곡선 & AP 실시간 연동기</span>
+            <span class="tag tag-teal">LIVE MATH ENGINE</span>
           </div>
+          <p style="font-size: 0.86rem; color: #475569; margin-bottom: 14px;">
+            실제 이미지에 <strong>총 5마리의 고양이</strong>가 존재합니다. 
+            슬라이더를 움직여 신뢰도 임계값(Cutoff)을 변경하면, <strong>표에서 채택/탈락되는 박스들이 실시간 반영되고 그래프의 빨간 점이 실제 계산된 곡선 위를 정확히 따라 움직입니다</strong>!
+          </p>
+
           <div class="control-row">
-            <div class="control-item" style="max-width: 380px;">
-              <div class="control-label"><span>신뢰도 임계값 (Cutoff)</span><span id="pr-conf-val" style="font-family: var(--font-code); color: var(--primary); font-weight: 700;">0.60</span></div>
-              <input type="range" id="pr-conf-slider" min="0.10" max="0.95" step="0.05" value="0.60" />
+            <div class="control-item" style="max-width: 420px;">
+              <div class="control-label">
+                <span>신뢰도 임계값 (Confidence Threshold)</span>
+                <span id="pr-slider-val" style="font-family: var(--font-code); color: var(--primary); font-size: 1.15rem; font-weight: 800;">0.65</span>
+              </div>
+              <input type="range" id="pr-slider" min="0.10" max="0.95" step="0.05" value="0.65" />
             </div>
           </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
-            <canvas id="prCanvas" width="360" height="230"></canvas>
-            <div style="flex: 1; min-width: 220px; background: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
-              <div style="margin-bottom: 10px;">
-                <span style="font-size: 0.82rem; color: #64748b;">현재 정밀도 (Precision):</span>
-                <span id="pr-p-val" style="font-size: 1.25rem; font-weight: 800; color: #2563eb; margin-left: 8px;">100%</span>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+            <!-- Left: Table of Detections -->
+            <div style="flex: 1.2; min-width: 320px;">
+              <div style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                모델의 예측 박스 8개 (신뢰도 순 정렬 / 실제 고양이 정답: 5마리)
               </div>
-              <div style="margin-bottom: 10px;">
-                <span style="font-size: 0.82rem; color: #64748b;">현재 재현율 (Recall):</span>
-                <span id="pr-r-val" style="font-size: 1.25rem; font-weight: 800; color: #0d9488; margin-left: 8px;">40%</span>
+              <table class="styled-table" style="margin: 0; font-size: 0.8rem; background: #ffffff;">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>신뢰도</th>
+                    <th>IoU</th>
+                    <th>판정</th>
+                    <th>상태</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-table-body">
+                  <!-- Dynamically populated by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right: Canvas & Real-time Stats -->
+            <div style="flex: 1; min-width: 280px;">
+              <canvas id="prCanvas" width="340" height="230"></canvas>
+              
+              <div style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 0.82rem; color: #64748b;">현재 정밀도 (Precision):</span>
+                  <strong id="stat-p" style="color: #2563eb; font-size: 1.1rem;">100% (4 / 4)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 0.82rem; color: #64748b;">현재 재현율 (Recall):</span>
+                  <strong id="stat-r" style="color: #0d9488; font-size: 1.1rem;">80% (4 / 5)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+                  <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">AP (곡선 아래 총면적):</span>
+                  <strong id="stat-ap" style="color: #d97706; font-size: 1.15rem;">0.862</strong>
+                </div>
               </div>
-              <div>
-                <span style="font-size: 0.82rem; color: #64748b;">곡선 면적 (AP 점수):</span>
-                <span id="pr-ap-val" style="font-size: 1.25rem; font-weight: 800; color: #d97706; margin-left: 8px;">0.78</span>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; line-height: 1.4;">
+                <span style="color: #2563eb;">● 파란 점선</span>: 실제 PR 측정점 / 
+                <span style="color: #d97706; font-weight: bold;">─ 주황 실선</span>: 계단식 보간(Interpolation) 곡선 / 
+                <span style="color: #ef4444; font-weight: bold;">● 빨간 점</span>: 현재 작동 위치
               </div>
-              <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 10px; margin-bottom: 0;">
-                슬라이더를 낮추면 빨간 점이 우하단으로 움직이며 더 많은 객체를 검출합니다.
-              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Term: VOC vs COCO mAP notations -->
+      <!-- Term: VOC vs COCO notations -->
       <div class="term-card" data-keywords="coco voc ap50 ap75 aps apm apl 0.5:0.95 small medium large 표기법">
         <div class="term-top">
           <div class="term-name-group">
-            <span class="term-title">논문 표기법 해독: $AP_{50}, AP_{75}, AP_{S/M/L}$</span>
+            <span class="term-title">논문 표기법 완벽 해독 사전: $AP_{50}, AP_{75}, AP_{S/M/L}$</span>
             <span class="term-en">VOC vs MS COCO 벤치마크 표준 표기</span>
           </div>
           <div class="term-tags">
@@ -744,14 +785,136 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- SECTION 2: 딥러닝 & 머신러닝 핵심 개념 -->
+    <!-- SECTION 2: 머신러닝 & SVM & 오프셋 핵심 개념 -->
     <!-- ========================================================================= -->
     <section class="section-card" data-category="cat-ml">
       <div class="section-header">
         <div class="section-icon" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">🧠</div>
         <div>
-          <h2 class="section-title">2. 머신러닝 & 딥러닝 핵심 개념</h2>
-          <div class="section-subtitle">R-CNN부터 Mask R-CNN까지 모델을 학습시키는 데 쓰인 머신러닝 원리</div>
+          <h2 class="section-title">2. 머신러닝 & SVM & 오프셋 핵심 원리</h2>
+          <div class="section-subtitle">결정 경계면, 최대 마진, 서포트 벡터, 그리고 '오프셋'의 근본적 의미</div>
+        </div>
+      </div>
+
+      <!-- Term: Linear SVM Deep Dive -->
+      <div class="term-card" data-keywords="svm support vector machine 서포트 벡터 머신 linear 선형 결정 경계면 decision boundary hyperplane 초평면 마진 margin dmz">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">선형 서포트 벡터 머신 (Linear SVM) & 결정 경계면</span>
+            <span class="term-en">Decision Boundary, Hyperplane & Maximum Margin</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">머신러닝 정석</span>
+            <span class="tag tag-amber">질문 집중 해설</span>
+          </div>
+        </div>
+
+        <div class="deepdive-box">
+          <div class="deepdive-label">❓ "결정 경계면(Decision Boundary)을 찾는다는 게 도대체 무슨 뜻인가요?"</div>
+          <p style="margin-bottom: 8px;">
+            컴퓨터에게 수많은 데이터가 주어졌을 때, <strong>"이쪽은 강아지이고 저쪽은 고양이다"라고 두 영역을 칼같이 갈라놓는 기준선(경계)</strong>을 수학적으로 찾는다는 뜻입니다!
+          </p>
+          <ul style="margin-left: 20px; line-height: 1.8;">
+            <li><strong>1차원 (수직선)</strong>: 시험 점수로 합격/불합격을 가를 때, <code>60점</code>이라는 <strong>하나의 점(Point)</strong>이 결정 경계가 됩니다.</li>
+            <li><strong>2차원 (평면)</strong>: 키와 몸무게 좌표에 점들을 찍었을 때, 농구선수와 마라토너를 가르는 <strong>하나의 직선(Line)</strong>이 결정 경계가 됩니다.</li>
+            <li><strong>3차원 (공간)</strong>: 키, 몸무게, 나이 3가지 정보가 있을 때, 공간을 양분하는 <strong>평평한 벽/면(Plane)</strong>이 결정 경계가 됩니다.</li>
+            <li><strong>4차원 이상 (고차원 공간)</strong>: R-CNN에서는 1개 박스마다 무려 <strong>4,096차원의 특징 벡터</strong>가 나옵니다. 4096차원 공간을 반으로 똑 가르는 평평한 면을 수학에서는 <strong>'초평면(Hyperplane)'</strong>이라고 부릅니다!</li>
+          </ul>
+        </div>
+
+        <!-- SVG Diagram for SVM Margin -->
+        <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin: 14px 0; text-align: center;">
+          <div style="font-weight: 700; color: #1e293b; margin-bottom: 10px; font-size: 0.95rem;">
+            🎨 [도식화] 선형 SVM이 최적의 결정 경계면(중앙 분리대)을 찾는 원리
+          </div>
+          <svg viewBox="0 0 680 240" style="max-width: 100%; height: auto;">
+            <!-- Background grids -->
+            <rect x="20" y="20" width="640" height="200" fill="#f8fafc" rx="8" stroke="#cbd5e1" />
+            
+            <!-- Road/Margin Corridor -->
+            <polygon points="120,20 280,20 540,220 380,220" fill="rgba(37, 99, 235, 0.08)" />
+            
+            <!-- Margin boundary lines (Dashed) -->
+            <line x1="200" y1="20" x2="460" y2="220" stroke="#2563eb" stroke-width="2" stroke-dasharray="6,4" />
+            <line x1="280" y1="20" x2="540" y2="220" stroke="#0d9488" stroke-width="2" stroke-dasharray="6,4" />
+            
+            <!-- Optimal Decision Boundary (Solid red) -->
+            <line x1="240" y1="20" x2="500" y2="220" stroke="#ef4444" stroke-width="3" />
+            <text x="350" y="90" fill="#ef4444" font-weight="bold" font-size="12" transform="rotate(38 350 90)">결정 경계면 (Decision Boundary: w·x + b = 0)</text>
+
+            <!-- Margin Double Arrow -->
+            <line x1="200" y1="120" x2="280" y2="120" stroke="#b45309" stroke-width="2" />
+            <text x="210" y="112" fill="#b45309" font-weight="bold" font-size="11">최대 마진 (Margin)</text>
+
+            <!-- Class A Points (Blue Circles) -->
+            <circle cx="100" cy="50" r="7" fill="#3b82f6" />
+            <circle cx="140" cy="90" r="7" fill="#3b82f6" />
+            <circle cx="80" cy="140" r="7" fill="#3b82f6" />
+            <circle cx="160" cy="170" r="7" fill="#3b82f6" />
+            <!-- Support Vectors for Class A -->
+            <circle cx="200" cy="70" r="8" fill="#1d4ed8" stroke="#f59e0b" stroke-width="3" />
+            <text x="130" y="65" fill="#1d4ed8" font-size="11" font-weight="bold">서포트 벡터 A</text>
+
+            <!-- Class B Points (Teal Squares) -->
+            <rect x="520" y="60" width="14" height="14" fill="#0d9488" />
+            <rect x="580" y="110" width="14" height="14" fill="#0d9488" />
+            <rect x="490" y="170" width="14" height="14" fill="#0d9488" />
+            <rect x="550" y="190" width="14" height="14" fill="#0d9488" />
+            <!-- Support Vectors for Class B -->
+            <rect x="440" y="105" width="14" height="14" fill="#0f766e" stroke="#f59e0b" stroke-width="3" />
+            <text x="465" y="118" fill="#0f766e" font-size="11" font-weight="bold">서포트 벡터 B</text>
+          </svg>
+        </div>
+
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 국경선(DMZ)과 최전방 보초병</div>
+          <p style="margin-bottom: 6px;">
+            1. **왜 이름이 '선형(Linear)'인가?**: 구불구불한 뱀 같은 곡선이 아니라, 곧게 뻗은 직선이나 평평한 판자로만 깔끔하게 데이터를 가르기 때문입니다.<br>
+            2. **왜 그냥 선을 안 긋고 'SVM'을 쓸까?**: 두 나라 사이에 국경선을 그을 때 한쪽 나라 마을에 너무 바짝 붙여 선을 그으면 사소한 바람에도 침범 시비(오분류)가 붙습니다. SVM은 **두 집단 사이의 완충지대 폭(마진, Margin)을 양쪽으로 가장 넓게 확보하는 가장 안전한 한가운데 중앙선**을 찾습니다!<br>
+            3. **서포트 벡터(Support Vector)란?**: 국경선 바로 앞에 서 있는 **최전방 보초병 데이터들**입니다. 국경선에서 멀리 떨어진 후방 시민들은 경계선을 정하는 데 아무런 영향을 주지 않으며, 오직 이 보초병(Support Vector)들만이 경계선의 위치를 단단히 지탱(Support)합니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- Term: Offset Deep Dive -->
+      <div class="term-card" data-keywords="offset 오프셋 상대적 차이 편차 보정값 기준점 tx ty tw th">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">오프셋 (Offset)이란 도대체 무슨 뜻인가?</span>
+            <span class="term-en">Relative Displacement from a Reference Baseline</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-teal">컴퓨터 공학 기초</span>
+            <span class="tag tag-amber">질문 집중 해설</span>
+          </div>
+        </div>
+
+        <p>
+          <strong>오프셋(Offset)</strong>은 컴퓨터 공학이나 딥러닝에서 정말 자주 나오는 단어인데, 한국어로 가장 쉽게 번역하면 
+          <strong>"어떤 기준점으로부터 얼만큼 떨어져 있는가(상대적인 차이값, 어긋남, 보정값)"</strong>를 뜻합니다.
+        </p>
+
+        <div class="analogy-box">
+          <div class="analogy-label">💡 일상에서 만나는 오프셋 3가지 예시</div>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li><strong>약속 장소 찾기</strong>: 
+              친구에게 *"위도 37.4979, 경도 127.0276으로 와라(절대 좌표)"*라고 하면 찾기 너무 어렵습니다. 
+              대신 *"강남역 11번 출구(기준점)에서 **앞으로 50미터(오프셋)**만 와라!"*라고 알려주면 누구나 쉽게 찾습니다.
+            </li>
+            <li><strong>시계 오차 맞추기</strong>: 
+              내 시계가 현재 3분 늦다면, 표준 시계와의 차이인 <strong>'+3분'이 바로 오프셋</strong>입니다. 원래 시간에 +3분만 더해주면 정확한 시간이 됩니다.
+            </li>
+            <li><strong>컴퓨터 메모리 주소</strong>: 
+              배열의 시작 주소가 <code>1000번지</code>일 때, 4번째 데이터를 읽고 싶다면 <code>1000 + 4</code>를 읽습니다. 여기서 <code>4</code>가 오프셋입니다.
+            </li>
+          </ol>
+        </div>
+
+        <div class="key-box">
+          <div class="key-label">🎯 객체 검출에서 왜 '절대 좌표' 대신 '오프셋'을 예측할까?</div>
+          인공신경망에게 1000픽셀짜리 화면 전체에서 물체 좌표 $(x, y, w, h)$를 맨땅에서 찍으라고 하면 숫자의 스케일이 너무 크고 불안정합니다. 
+          하지만 <strong>미리 깔아둔 앵커 박스나 제안 영역(기준점)</strong>이 있다면, 
+          신경망은 <strong>"기준 박스에서 오른쪽으로 5픽셀, 위로 2픽셀만 옮겨라(오프셋)"</strong>라는 작은 상대적 차이만 예측하면 되기 때문에 훨씬 안정적이고 똑똑하게 학습할 수 있습니다!
         </div>
       </div>
 
@@ -768,33 +931,12 @@
           </div>
         </div>
         <p>
-          R-CNN 논문의 가장 위대한 공헌 중 하나입니다. 당시 객체 검출 데이터셋(PASCAL VOC)은 수천 장에 불과하여 수천만 개의 가중치를 가진 CNN을 바닥부터(From scratch) 학습하면 극심한 과적합(Overfitting)에 빠졌습니다.
+          R-CNN 논문의 가장 위대한 공헌입니다. 당시 객체 검출 데이터셋(VOC)은 수천 장에 불과하여 수천만 개의 가중치를 가진 CNN을 바닥부터(From scratch) 학습하면 극심한 과적합(Overfitting)에 빠졌습니다.
         </p>
         <div class="analogy-box">
           <div class="analogy-label">💡 1초 비유: 의대 본과 진학 전 기초 생물학 공부</div>
           <strong>사전 학습(Pre-training)</strong>: 100만 장의 ImageNet 이미지로 시각 세계의 일반적인 선, 모서리, 질감(기초 교양)을 배웁니다.<br>
           <strong>미세 조정(Fine-tuning)</strong>: 사전에 배운 시각 지식을 바탕으로 우리가 진짜 풀고 싶은 VOC 검출 문제(전공 특화)에 맞추어 모델을 가볍게 추가 학습합니다.
-        </div>
-      </div>
-
-      <!-- Term: Linear SVM -->
-      <div class="term-card" data-keywords="svm support vector machine 서포트 벡터 머신 linear 선형 r-cnn hinge loss 분류기">
-        <div class="term-top">
-          <div class="term-name-group">
-            <span class="term-title">선형 서포트 벡터 머신 (Linear SVM)</span>
-            <span class="term-en">Support Vector Machine</span>
-          </div>
-          <div class="term-tags">
-            <span class="tag tag-purple">고전 머신러닝</span>
-            <span class="tag tag-amber">R-CNN 사용</span>
-          </div>
-        </div>
-        <p>
-          두 클래스 사이의 <strong>여백(Margin, 마진)을 최대화하는 결정 경계면(Hyperplane)</strong>을 찾는 대표적인 전통 머신러닝 분류 알고리즘입니다.
-        </p>
-        <div class="key-box">
-          <div class="key-label">❓ R-CNN은 왜 CNN의 소프트맥스를 안 쓰고 따로 SVM을 돌렸을까?</div>
-          CNN을 미세조정할 때는 데이터 부족 때문에 IoU 0.5 이상을 모두 양성으로 쳐주는 느슨한 기준을 썼습니다. 반면 SVM을 학습시킬 때는 **"오직 진짜 정답 박스(GT)만 양성, IoU 0.3 미만만 음성"**이라는 아주 깐깐한 기준으로 학습시켜 정확도를 3.3%p 끌어올렸기 때문입니다. (이 번거로운 2중 구조는 Fast R-CNN에서 단일 Softmax로 통합되며 사라졌습니다.)
         </div>
       </div>
 
@@ -810,12 +952,9 @@
           </div>
         </div>
         <p>
-          이미지 1장 안에는 수만 개의 배경 영역이 있습니다. 하지만 하늘이나 무늬 없는 벽 같은 **"너무나 뻔한 배경(Easy Negatives)"**은 학습해 봐야 모델에 큰 도움이 되지 않습니다.
+          하늘이나 단색 벽 같은 **"너무나 뻔한 배경(Easy Negatives)"**은 100번 학습해 봐야 모델에 큰 도움이 되지 않습니다.
+          실제로는 배경인데 모델이 *"어라? 이거 사람인가?"* 하고 높은 점수를 주며 <strong>자신 있게 헷갈려 한 어려운 배경(Hard Negatives)들만 쏙쏙 골라내어(Mining)</strong> 집중적으로 재학습시키는 기법입니다.
         </p>
-        <div class="analogy-box">
-          <div class="analogy-label">💡 1초 비유: 오답 노트 만들기</div>
-          실제로는 물체가 아닌 배경인데 모델이 *"어라? 이거 사람인가?"* 하고 높은 점수를 주며 <strong>자신 있게 헷갈려 한 어려운 배경(Hard Negatives)들만 쏙쏙 골라내어(Mining)</strong> 집중적으로 재학습시키는 기법입니다.
-        </div>
       </div>
 
       <!-- Term: Truncated SVD -->
@@ -831,11 +970,8 @@
           </div>
         </div>
         <p>
-          Fast R-CNN에서 추론 시간의 절반 가까이를 잡아먹는 커다란 완전 연결 계층(FC 계층)의 가중치 행렬 $W$($u \times v$)를 작은 두 개의 행렬로 쪼개어 연산량을 30% 이상 줄이는 수학적 압축 기술입니다.
-        </p>
-        $$ W \approx U \Sigma_t V^T $$
-        <p style="font-size: 0.92rem; color: #334155;">
-          파라미터 수가 $u \times v$에서 $t(u + v)$로 대폭 축소되어 정확도 손실은 0.3% 미만이면서 속도는 비약적으로 빨라집니다.
+          Fast R-CNN에서 추론 시간의 절반 가까이를 잡아먹는 커다란 완전 연결 계층(FC 계층)의 가중치 행렬 $W$($u \times v$)를 작은 두 개의 행렬로 쪼개어 연산량을 30% 이상 줄이는 수학적 압축 기술입니다:
+          $$ W \approx U \Sigma_t V^T $$
         </p>
       </div>
     </section>
@@ -847,7 +983,7 @@
       <div class="section-header">
         <div class="section-icon" style="background: linear-gradient(135deg, #0d9488, #059669);">🏗️</div>
         <div>
-          <h2 class="section-title">3. 백본 & 신경망 아키텍처</h2>
+          <h2 class="section-title">3. 백본 & 신경망 구조</h2>
           <div class="section-subtitle">AlexNet, VGG16, ResNet, FPN, FCN 등 피처를 추출하는 중추 신경망들</div>
         </div>
       </div>
@@ -904,8 +1040,7 @@
           </div>
         </div>
         <p>
-          물체는 아주 작은 동전부터 화면을 꽉 채우는 트럭까지 크기가 제각각입니다. 
-          FPN은 깊은 층의 풍부한 의미 정보(Top-down)와 얕은 층의 선명한 위치 해상도 정보(Bottom-up)를 **측면 연결(Lateral Connection)**로 융합하여, 
+          깊은 층의 풍부한 의미 정보(Top-down)와 얕은 층의 선명한 위치 해상도 정보(Bottom-up)를 **측면 연결(Lateral Connection)**로 융합하여, 
           <strong>$P_2$부터 $P_6$까지 크기별로 여러 개의 피처맵 피라미드를 만들어 작은 물체($AP_S$)를 기가 막히게 잘 찾도록 설계된 구조</strong>입니다.
         </p>
       </div>
@@ -922,21 +1057,112 @@
           </div>
         </div>
         <p>
-          위치 정보를 잃어버리는 1차원 완전 연결(FC) 계층을 완전히 제거하고, <strong>모든 층을 $1 \times 1$ 및 $3 \times 3$ 합성곱(Conv) 계층으로만 구성</strong>한 네트워크입니다.
+          위치 정보를 잃어버리는 1차원 완전 연결(FC) 계층을 완전히 제거하고, <strong>모든 층을 합성곱(Conv) 계층으로만 구성</strong>한 네트워크입니다.
           입력의 2차원 공간 구조를 끝까지 유지하므로 <strong>픽셀 단위의 마스크 외곽선(Mask)을 예측하는 데 특화</strong>되어 있으며 Mask R-CNN의 마스크 헤드로 채택되었습니다.
         </p>
       </div>
     </section>
 
     <!-- ========================================================================= -->
-    <!-- SECTION 4: 영역 제안 & 검출 핵심 부품 -->
+    <!-- SECTION 4: 앵커 & RPN & 회귀 & NMS -->
     <!-- ========================================================================= -->
     <section class="section-card" data-category="cat-proposal">
       <div class="section-header">
         <div class="section-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">📦</div>
         <div>
-          <h2 class="section-title">4. 영역 제안 & 검출 핵심 부품</h2>
-          <div class="section-subtitle">Selective Search, Bounding Box Regression, Anchor Box, RPN, NMS</div>
+          <h2 class="section-title">4. 앵커 · RPN · 바운딩 박스 회귀 · NMS</h2>
+          <div class="section-subtitle">왜 이름이 '닻(Anchor)'이고 왜 '회귀'인지, 상세 메커니즘 집중 해설</div>
+        </div>
+      </div>
+
+      <!-- Term: Anchor Box Deep Dive -->
+      <div class="term-card" data-keywords="anchor box 앵커 박스 닻 왜 앵커인가 템플릿 종횡비 scale aspect ratio 9개 faster r-cnn rpn">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Anchor Box (앵커 박스)</span>
+            <span class="term-en">왜 이름이 '닻(Anchor)'일까?</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">Faster R-CNN 심장</span>
+            <span class="tag tag-purple">질문 집중 해설</span>
+          </div>
+        </div>
+
+        <div class="deepdive-box">
+          <div class="deepdive-label">⚓ "앵커 박스에서 앵커(Anchor)가 왜 앵커인가요?"</div>
+          <p style="margin-bottom: 8px;">
+            배가 망망대해에서 거친 물살에 휩쓸려 떠내려가지 않으려면 바닥에 <strong>닻(Anchor)을 단단히 내려놓고 정박</strong>해야 합니다.
+          </p>
+          <p style="margin-bottom: 8px;">
+            Faster R-CNN 이전의 모델들은 이미지의 수많은 픽셀 속에서 *"도대체 어디서부터 박스를 그려야 하지?"* 하고 아무 기준점도 없이 망망대해를 헤맸습니다.
+          </p>
+          <p style="margin-bottom: 0;">
+            그래서 개발진은 피처맵의 모든 격자점(Grid Point)마다 <strong>닻(Anchor)을 쿵 내려놓듯 기준 참조 박스들을 고정으로 심어두었습니다</strong>. 
+            신경망은 맨땅에 박스를 그리는 게 아니라, <strong>바닥에 내려진 닻(앵커)을 기준점으로 삼아 "닻에서 살짝 오른쪽, 닻보다 약간 크게" 닻을 기준으로 위치를 조정</strong>합니다. 
+            즉, <strong>'위치를 붙들어 매어 두는 고정 기준점'</strong> 역할을 하기 때문에 닻(Anchor)이라는 이름이 붙은 것입니다!
+          </p>
+        </div>
+
+        <div class="key-box">
+          <div class="key-label">📐 왜 9개의 앵커를 깔아둘까?</div>
+          세상 모든 물체는 비율과 크기가 제각각입니다:<br>
+          • <strong>서 있는 사람</strong>: 키가 크고 홀쭉함 (세로로 긴 $1:2$ 비율)<br>
+          • <strong>달리는 승용차</strong>: 옆으로 길쭉함 (가로로 긴 $2:1$ 비율)<br>
+          • <strong>교통 표지판, 얼굴</strong>: 네모반듯함 (정사각형 $1:1$ 비율)<br>
+          Faster R-CNN은 격자점마다 <strong>3가지 크기($128^2, 256^2, 512^2$) $\times$ 3가지 종횡비($1:1, 1:2, 2:1$) = 총 9개의 표준 규격 닻(앵커)</strong>을 미리 배치하여 어떤 물체가 나타나도 즉시 포착할 수 있게 만들었습니다.
+        </div>
+      </div>
+
+      <!-- Term: Bounding Box Regression Deep Dive -->
+      <div class="term-card" data-keywords="bounding box regression 바운딩 박스 회귀 왜 회귀인가 좌표 오프셋 tx ty tw th log scale 정제 성형수술">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Bounding Box Regression (바운딩 박스 회귀)</span>
+            <span class="term-en">왜 '회귀'이고 어떻게 계산하는가?</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-amber">좌표 정제</span>
+            <span class="tag tag-blue">필수 수식</span>
+            <span class="tag tag-purple">질문 집중 해설</span>
+          </div>
+        </div>
+
+        <div class="deepdive-box">
+          <div class="deepdive-label">❓ "왜 이름이 '회귀(Regression)'인가요?"</div>
+          <ul style="margin-left: 20px; line-height: 1.8;">
+            <li><strong>분류 (Classification)</strong>: "강아지냐, 고양이냐, 배경이냐"처럼 <strong>몇 개의 정해진 이름표(이산적인 라벨)</strong> 중 하나를 맞추는 작업입니다.</li>
+            <li><strong>회귀 (Regression)</strong>: "내일 기온이 18.5도냐, 아파트 가격이 5억 3천이냐"처럼 <strong>연속적인 숫자(실수값)</strong>를 예측하는 작업입니다.</li>
+            <li>바운딩 박스를 맞추는 것은 "오른쪽으로 3.2픽셀, 위로 1.4픽셀, 폭은 1.15배"와 같이 <strong>연속적인 수치(오프셋)를 예측해야 하므로 '회귀'</strong>라고 부릅니다!</li>
+          </ul>
+        </div>
+
+        <p style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 14px;">
+          🔢 구체적인 숫자로 보는 바운딩 박스 회귀 4단계:
+        </p>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 10px 0;">
+          <p style="font-size: 0.9rem; margin-bottom: 8px;">
+            가상의 상황을 가정해봅시다:<br>
+            • 제안 박스(앵커) $P$: 중심 $x=100, y=100$, 가로 $w=50$, 세로 $h=50$<br>
+            • 실제 정답 물체 $G$: 중심 $x=110, y=105$, 가로 $w=60$, 세로 $h=55$
+          </p>
+          <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 10px 0;">
+          
+          <p style="font-size: 0.9rem; margin-bottom: 6px;"><strong>1단계: 모델이 학습해야 할 정답 오프셋($t$) 계산</strong></p>
+          $$ t_x = \frac{G_x - P_x}{P_w} = \frac{110 - 100}{50} = \mathbf{+0.2} \quad \text{("자기 폭의 20%만큼 오른쪽으로 이동!")} $$
+          $$ t_y = \frac{G_y - P_y}{P_h} = \frac{105 - 100}{50} = \mathbf{+0.1} \quad \text{("자기 높이의 10%만큼 아래로 이동!")} $$
+          $$ t_w = \log\left(\frac{G_w}{P_w}\right) = \log\left(\frac{60}{50}\right) = \log(1.2) \approx \mathbf{+0.182} \quad \text{("폭을 1.2배로 키워라!")} $$
+          $$ t_h = \log\left(\frac{G_h}{P_h}\right) = \log\left(\frac{55}{50}\right) = \log(1.1) \approx \mathbf{+0.095} \quad \text{("높이를 1.1배로 키워라!")} $$
+
+          <p style="font-size: 0.9rem; margin: 10px 0 6px;"><strong>2단계: 모델이 오프셋 $t$를 예측한 후 최종 박스를 복원($\hat{G}$)하는 공식</strong></p>
+          $$ \hat{G}_x = P_x + P_w \cdot t_x = 100 + (50 \times 0.2) = \mathbf{110} $$
+          $$ \hat{G}_w = P_w \cdot \exp(t_w) = 50 \times \exp(\log(1.2)) = 50 \times 1.2 = \mathbf{60} $$
+
+          <div style="background: #e0f2fe; padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #0369a1; margin-top: 10px;">
+            💡 <strong>왜 크기에는 $\log$와 $\exp$를 쓸까?</strong><br>
+            바운딩 박스의 가로세로 길이는 절대 음수가 될 수 없습니다(길이가 -10픽셀은 불가능). 
+            지수 함수 $\exp(t_w)$는 $t_w$가 어떤 음수 값이 되더라도 <strong>무조건 양수($>0$)를 반환하기 때문에 박스가 뒤집히는 참사를 수학적으로 방지</strong>해 줍니다!
+          </div>
         </div>
       </div>
 
@@ -960,46 +1186,6 @@
           <div class="analogy-label">💡 치명적 단점: 거북이 알고리즘</div>
           CPU에서만 돌아가서 <strong>사진 1장당 무려 2초</strong>나 걸렸습니다. Fast R-CNN이 신경망 추론을 0.2초로 줄여놓아도 이 녀석 때문에 전체 시스템이 2초가 넘게 걸리는 심각한 병목이었으며, Faster R-CNN의 RPN에 의해 완전히 퇴출당했습니다.
         </div>
-      </div>
-
-      <!-- Term: Bounding Box Regression -->
-      <div class="term-card" data-keywords="bounding box regression 바운딩 박스 회귀 좌표 오프셋 offset tx ty tw th log scale">
-        <div class="term-top">
-          <div class="term-name-group">
-            <span class="term-title">Bounding Box Regression (바운딩 박스 회귀)</span>
-            <span class="term-en">경계 상자 위치 및 크기 정제</span>
-          </div>
-          <div class="term-tags">
-            <span class="tag tag-amber">좌표 정제</span>
-            <span class="tag tag-blue">필수 수식</span>
-          </div>
-        </div>
-        <p>
-          후보 박스 $P$의 위치와 크기가 실제 물체 $G$와 살짝 빗나갔을 때, 박스를 딱 맞게 이동 및 크기 조절해 주는 보정 회귀 모델입니다.
-        </p>
-        $$ t_x = \frac{G_x - P_x}{P_w}, \quad t_y = \frac{G_y - P_y}{P_h}, \quad t_w = \log\left(\frac{G_w}{P_w}\right), \quad t_h = \log\left(\frac{G_h}{P_h}\right) $$
-        <div class="key-box">
-          <div class="key-label">❓ 왜 픽셀 좌표 $(x, y, w, h)$를 직접 안 맞추고 오프셋 $t$를 예측할까?</div>
-          1,000픽셀짜리 고해상도 이미지에서의 10픽셀 오차와, 100픽셀짜리 작은 물체에서의 10픽셀 오차는 차원이 다릅니다. 
-          따라서 박스 자체의 가로/세로 길이에 비례하는 상대적 변화량으로 정규화(Scale-invariant)해야 신경망이 안정적으로 학습되기 때문입니다!
-        </div>
-      </div>
-
-      <!-- Term: Anchor Box -->
-      <div class="term-card" data-keywords="anchor box 앵커 박스 템플릿 종횡비 scale aspect ratio 9개 faster r-cnn rpn">
-        <div class="term-top">
-          <div class="term-name-group">
-            <span class="term-title">Anchor Box (앵커 박스)</span>
-            <span class="term-en">사전 정의된 규격 참조 틀</span>
-          </div>
-          <div class="term-tags">
-            <span class="tag tag-amber">Faster R-CNN 심장</span>
-          </div>
-        </div>
-        <p>
-          세상에는 서 있는 사람(홀쭉함), 지나가는 승용차(길쭉함), 교통 표지판(정사각형) 등 다양한 비율의 물체가 있습니다.
-          Faster R-CNN은 피처맵의 매 격자점마다 <strong>3가지 크기($128^2, 256^2, 512^2$) $\times$ 3가지 종횡비($1:1, 1:2, 2:1$) = 총 9개의 템플릿 규격 틀(Anchor)</strong>을 미리 깔아두고 물체를 탐색합니다.
-        </p>
       </div>
 
       <!-- Term: RPN -->
@@ -1045,9 +1231,10 @@
         </p>
         <div class="analogy-box">
           <div class="analogy-label">💡 NMS 3줄 요약 작동 과정</div>
-          1. 모든 박스를 신뢰도 점수 순서로 줄세운다.<br>
+          1. 모든 박스를 신뢰도 점수 순서로 내림차순 정렬한다.<br>
           2. 점수가 가장 높은 1등 박스를 최종 장바구니에 담는다.<br>
-          3. 1등 박스와 IoU가 높은(예: 0.7 이상 겹치는) 나머지 박스들은 "같은 물체를 중복 검출한 것"으로 보고 삭제한다. (반복)
+          3. 1등 박스와 IoU가 높은(예: 0.7 이상 겹치는) 나머지 박스들은 "같은 물체를 중복 검출한 것"으로 보고 삭제한다.<br>
+          4. 남은 박스들에 대해 1~3번을 반복한다!
         </div>
       </div>
     </section>
@@ -1059,13 +1246,46 @@
       <div class="section-header">
         <div class="section-icon" style="background: linear-gradient(135deg, #0284c7, #0369a1);">🔬</div>
         <div>
-          <h2 class="section-title">5. 피처 정합 (Feature Alignment)</h2>
-          <div class="section-subtitle">RoI Pooling의 양자화 오차와 Mask R-CNN을 탄생시킨 RoIAlign의 쌍선형 보간</div>
+          <h2 class="section-title">5. 피처 정합 (RoI Pooling vs RoIAlign)</h2>
+          <div class="section-subtitle">왜 이름에 'Pooling'이 붙었는지와 Mask R-CNN의 RoIAlign 쌍선형 보간</div>
+        </div>
+      </div>
+
+      <!-- Term: RoI Pooling Deep Dive -->
+      <div class="term-card" data-keywords="roi pooling 왜 pooling인가 max pooling fc layer 고정 크기 bin 양자화 quantization misalignment">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">RoI Pooling: 왜 이름이 'Pooling'인가?</span>
+            <span class="term-en">Region of Interest Pooling</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-blue">Fast / Faster R-CNN</span>
+            <span class="tag tag-purple">질문 집중 해설</span>
+          </div>
+        </div>
+
+        <div class="deepdive-box">
+          <div class="deepdive-label">🏊 "도대체 왜 이름에 'Pooling(풀링)'이 들어가나요?"</div>
+          <p style="margin-bottom: 8px;">
+            1. **'Pool'의 뜻**: 물웅덩이, 또는 여러 자원을 하나로 모으다(Pooling)라는 뜻입니다. 딥러닝 CNN에서 Pooling(Max Pooling)은 <strong>"여러 개의 픽셀 값 중 가장 큰 대표값 하나만 쏙 뽑아내어 크기를 줄이는(다운샘플링) 연산"</strong>입니다.
+          </p>
+          <p style="margin-bottom: 8px;">
+            2. **치명적인 문제 (FC 계층의 한계)**: 
+            Selective Search나 RPN이 찾아낸 RoI(관심 영역)들은 크기가 제각각입니다. 어떤 것은 $120 \times 80$픽셀이고, 어떤 것은 $40 \times 190$픽셀입니다. 
+            하지만 뒤에 연결된 **완전 연결(FC) 계층은 입력 뉴런 개수가 무조건 고정($7 \times 7 \times 512 = 25,088$개)**되어 있어서 크기가 다른 입력을 넣으면 행렬 곱셈 자체가 불가능하여 에러가 터집니다!
+          </p>
+          <p style="margin-bottom: 0;">
+            3. **해결책 (RoI Pooling)**: 
+            어떤 크기의 RoI가 들어오든 똑같이 <strong>가로 7칸 $\times$ 세로 7칸 = 총 49개의 작은 구역(Bin)</strong>으로 바둑판처럼 나눕니다. 
+            그리고 <strong>각 칸(Bin) 안에 들어있는 픽셀들 중 가장 큰 값 1개씩을 맥스 풀링(Max Pooling)으로 쏙 뽑아냅니다</strong>! 
+            그러면 어떤 크기의 RoI도 마법처럼 깔끔하게 **$7 \times 7$ 고정 크기**로 축약(Pool)됩니다. 
+            즉, <strong>"RoI 영역을 칸별로 나누어 Max Pooling을 수행하는 층"</strong>이기 때문에 <strong>RoI Pooling</strong>이라고 부르는 것입니다!
+          </p>
         </div>
       </div>
 
       <!-- RoI Pooling vs RoIAlign Detailed Comparison -->
-      <div class="term-card" data-keywords="roi pooling roialign bilnear interpolation 쌍선형 보간 양자화 quantization misalignment 마스크">
+      <div class="term-card" data-keywords="roialign roipool bilnear interpolation 쌍선형 보간 양자화 quantization misalignment 마스크">
         <div class="term-top">
           <div class="term-name-group">
             <span class="term-title">RoI Pooling vs RoIAlign 비교</span>
@@ -1348,6 +1568,377 @@ data_loader = torch.utils.data.DataLoader(
       </div>
     </section>
 
+    <!-- ========================================================================= -->
+    <!-- SECTION 8: Mask R-CNN & 인스턴스 분할 심화 (김상현 님 발표 21slides 핵심 용어) -->
+    <!-- ========================================================================= -->
+    <section class="section-card" data-category="cat-mask">
+      <div class="section-header">
+        <div class="section-icon" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">🎭</div>
+        <div>
+          <h2 class="section-title">8. Mask R-CNN & 인스턴스 분할 심화 (김상현 님 발표 21slides 핵심 용어)</h2>
+          <div class="section-subtitle">Faster R-CNN에 Mask Branch를 병렬 증설하여 픽셀 마스크·클래스·박스를 동시 예측하는 메커니즘과 실전 PyTorch 핵심 Ops</div>
+        </div>
+      </div>
+
+      <!-- Term 27: 인스턴스 분할 (Instance Segmentation) -->
+      <div class="term-card" data-keywords="인스턴스 분할 instance segmentation classification detection semantic segmentation 픽셀 마스크 pixel mask 21slides slide2">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">인스턴스 분할 (Instance Segmentation)</span>
+            <span class="term-en">Pixel-level Object Identification with Distinct Instance Boundaries</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">Mask R-CNN 핵심</span>
+            <span class="tag tag-amber">컴퓨터 비전 과업</span>
+          </div>
+        </div>
+        <p>
+          단순히 물체가 사진 속 어디에 있는지 사각형 박스로 찾는 객체 검출(Object Detection)을 넘어, 
+          <strong>동일한 클래스에 속한 여러 객체(예: 사람 A, 사람 B, 사람 C)를 개별 개체(Instance) 단위로 완벽히 분리하고 각 객체가 차지하는 픽셀 마스크를 0과 1로 정밀하게 예측</strong>하는 비전 인식 기술입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 사과 바구니 사진 판독</div>
+          <ul>
+            <li><strong>이미지 분류 (Classification)</strong>: "이 사진에 사과가 있다." (클래스 이름만)</li>
+            <li><strong>객체 검출 (Detection)</strong>: "사과 3개가 각각 이 네모 상자 좌표 안에 있다." (Class + Bounding Box)</li>
+            <li><strong>시맨틱 분할 (Semantic Segmentation)</strong>: "사과 영역을 전부 빨간 페인트로 칠한다." (사과 3개가 겹쳐 있으면 한 덩어리로 뭉개짐)</li>
+            <li><strong>인스턴스 분할 (Instance Segmentation)</strong>: "1번 사과는 파란 실루엣, 2번 사과는 노란 실루엣, 3번 사과는 초록 실루엣으로 칼로 오려내듯 개별 분리한다." (Class + Box + Pixel Mask)</li>
+          </ul>
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 Mask R-CNN의 동시 예측 3중 구조</div>
+          $$\text{Output} = \{ \text{Class Label}, \; [x_1, y_1, x_2, y_2], \; \mathbf{M}_{28 \times 28} \}$$
+          Faster R-CNN이 탐지한 RoI 후보에 <strong>Box Head(클래스/좌표)</strong>와 <strong>Mask Head(픽셀 형상)</strong>를 완전히 병렬(Parallel)로 연결하여, 탐지 속도 저하(오버헤드 단 20% 미만) 없이 고화질 픽셀 분할을 완성합니다.
+        </div>
+      </div>
+
+      <!-- Term 28: 클래스-마스크 분리 예측 (Class-Mask Decoupling) -->
+      <div class="term-card" data-keywords="클래스 마스크 분리 decoupling class mask softmax sigmoid fcn 픽셀 경쟁 배제 slide10 slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">클래스-마스크 분리 예측 (Class-Mask Decoupling)</span>
+            <span class="term-en">Decoupling Classification and Mask Prediction (Independent Binary Sigmoids)</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">Mask R-CNN 혁신</span>
+            <span class="tag tag-teal">손실 설계</span>
+          </div>
+        </div>
+        <p>
+          전통적 FCN(Fully Convolutional Network) 방식처럼 <strong>픽셀마다 전체 클래스 간 확률 합이 1이 되도록 경합시키는 다중 클래스 Softmax를 사용하지 않고</strong>, 
+          <strong>"무슨 물체인가?"는 Classification Branch(Box Head)에 일임하고, Mask Branch는 오직 "해당 물체의 픽셀 실루엣 형태가 어떻게 생겼는가?"만 독립적인 Sigmoid로 분리하여 예측</strong>하는 Mask R-CNN의 핵심 설계 원리입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 캐스팅 디렉터와 특수분장팀의 완벽한 분업</div>
+          오디션 심사위원(Box Head)이 지원자를 보고 "이 사람은 헐크 역이다"라고 판정하면, 특수분장팀(Mask Head)은 헐크 전용 초록색 바디수트 실루엣만 정밀하게 입힙니다. 
+          특수분장팀 내부에서 "이 배우가 아이언맨인가 헐크인가"를 두고 픽셀 단위로 싸우지 않으므로, 오직 헐크의 우람한 체형 윤곽선(Shape)을 살리는 데만 100% 집중할 수 있습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 Softmax 대신 Sigmoid가 결정적이었는가?</div>
+          FCN 스타일의 Softmax Cross-Entropy는 클래스 간의 상호 배제(Mutual Exclusion)를 강제하여, 경계선 픽셀에서 클래스 간 간섭(Cross-class Competition)이 발생합니다. 
+          Mask R-CNN은 클래스별로 $K$개의 독립 채널을 두고 <strong>Per-pixel Binary Cross-Entropy</strong>를 적용함으로써 클래스 간 간섭을 원천 차단했습니다. 
+          논문 절제 연구(Ablation Study)에서 Softmax 대비 <strong>mAP가 무려 +5.5%p 향상</strong>되는 결정적 차이를 증명했습니다.
+        </div>
+      </div>
+
+      <!-- Term 29: 전치 합성곱 (Transposed Convolution / Deconvolution) -->
+      <div class="term-card" data-keywords="전치 합성곱 transposed convolution deconvolution deconv convtranspose2d 업샘플링 upsampling slide10 slide11">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">전치 합성곱 (Transposed Convolution / Deconvolution)</span>
+            <span class="term-en">Learnable Fractionally-Strided Convolution for Spatial Upsampling</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">신경망 연산자</span>
+            <span class="tag tag-blue">PyTorch ConvTranspose2d</span>
+          </div>
+        </div>
+        <p>
+          특징 맵의 공간 해상도를 2배 이상 키우기 위해 사용하는 <strong>가중치 학습이 가능한 역방향 합성곱 연산</strong>입니다. 
+          Mask Head에서 RoIAlign을 통해 얻은 $14 \times 14$ 크기의 특성을 최종 마스크인 $28 \times 28$ 공간 해상도로 확장할 때 핵심으로 사용됩니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 단순 돋보기 확대 vs 복원 전문 화가의 세밀화</div>
+          일반 Bilinear Interpolation이 사진을 흐릿하게 단순 기계적으로 늘리는 '돋보기'라면, 
+          전치 합성곱은 데이터 역전파를 통해 물체의 윤곽선을 어떻게 메꿔야 선명해지는지 스스로 학습한 '전문 복원 화가'가 픽셀 간격을 메꾸는 방식입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 수학적 연산 원리 및 Checkerboard Artifact 방지</div>
+          일반 합성곱이 입력 $X$에 행렬 $C$를 곱해 저해상도 $Y = C X$를 만든다면, 전치 합성곱은 전치 행렬 $C^T$를 곱해 고해상도 $\hat{X} = C^T Y$를 복원합니다.
+          <br/>
+          <strong>실무 주의:</strong> Stride와 Kernel Size의 배수가 불일치하면 바둑판 모양의 격자 왜곡(Checkerboard Artifacts)이 발생합니다. Mask R-CNN은 <code>kernel_size=2, stride=2</code>를 정확히 2배 매칭하여 아티팩트 없이 매끄러운 2배 업샘플링($14 \rightarrow 28$)을 달성합니다.
+        </div>
+        <div class="code-box">
+<span class="code-comment"># Slide 11: MaskHead 업샘플링 계층 정의</span>
+<span class="code-kw">self</span>.deconv = nn.ConvTranspose2d(
+    in_channels=<span class="code-num">256</span>, out_channels=<span class="code-num">256</span>, 
+    kernel_size=<span class="code-num">2</span>, stride=<span class="code-num">2</span>
+)
+<span class="code-comment"># 입력 [N, 256, 14, 14] -> 출력 [N, 256, 28, 28]</span>
+        </div>
+      </div>
+
+      <!-- Term 30: 클래스별 마스크 로짓 (Class-specific Mask Logits) -->
+      <div class="term-card" data-keywords="클래스별 마스크 로짓 class specific mask logits kx28x28 coco 80 채널 분리 slide10 slide12 slide15 slide17">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">클래스별 마스크 로짓 (Class-specific Mask Logits)</span>
+            <span class="term-en">Multi-channel Tensor $[N, K, 28, 28]$ without Inter-class Competition</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">출력 텐서 형상</span>
+            <span class="tag tag-blue">PyTorch Conv2d 1x1</span>
+          </div>
+        </div>
+        <p>
+          MaskPredictor가 최종 출력하는 4차원 텐서 <code>[N, K, 28, 28]</code>입니다. 
+          여기서 $N$은 RoI 후보 개수, $K$는 전경(Foreground) 클래스 개수(COCO 데이터셋 기준 80개), $28 \times 28$은 각 클래스별 독립 마스크의 공간 해상도입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 80칸짜리 맞춤형 스텐실(Stencil) 도안 서랍장</div>
+          어떤 물체 후보가 들어오면 모델은 80개 서랍 각각에 "만약 이 물체가 사람이라면 이 실루엣, 만약 자전거라면 이 실루엣, 만약 자동차라면 이 실루엣"을 독립된 80장의 스텐실 판(28×28)으로 동시에 준비해 둡니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 단일 채널(1×28×28)이 아니라 K개 채널을 출력하는가?</div>
+          사람, 비행기, 컵은 윤곽선의 기하학적 통계(Aspect Ratio, 굴곡, 구멍 등)가 근본적으로 다릅니다. 단일 채널로 모든 클래스의 형태를 억지로 표현하려 하면 복잡한 형태 학습에 혼선이 빚어집니다. 
+          클래스마다 전용 28×28 마스크 채널을 제공하면 다음과 같은 학습/추론의 명확한 분기가 가능해집니다:
+          <ul>
+            <li><strong>학습 시 (Slide 15)</strong>: Ground Truth 라벨이 '3번(자동차)'이면 <strong>3번 채널만 선택</strong>해 손실을 계산하고, 나머지 79개 채널에는 그래디언트 역전파를 하지 않습니다.</li>
+            <li><strong>추론 시 (Slide 17)</strong>: Box Head가 분류한 최고 점수 클래스(예: 사람)의 채널 1장만 꺼내 <code>sigmoid() &gt; 0.5</code>로 최종 마스크를 결정합니다.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Term 31: MultiScaleRoIAlign (FPN 기반 멀티스케일 RoI 정합) -->
+      <div class="term-card" data-keywords="multiscaleroialign fpn 멀티스케일 roi 정합 p2 p3 p4 p5 sampling ratio slide7 slide8 slide13">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">MultiScaleRoIAlign (FPN 기반 동적 멀티스케일 RoI 정합)</span>
+            <span class="term-en">Dynamic Feature Pyramid Assignment for Variable-Sized Proposals</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">RoI 정합 Ops</span>
+            <span class="tag tag-teal">torchvision.ops</span>
+          </div>
+        </div>
+        <p>
+          Feature Pyramid Network(FPN)의 다중 해상도 특징 맵 피라미드($P_2, P_3, P_4, P_5$) 중에서, 
+          <strong>각 RoI 바운딩 박스의 물리적 면적 크기($w \times h$)에 따라 가장 적합한 단 하나의 피라미드 레벨을 동적으로 계산하여 할당한 뒤 RoIAlign을 수행</strong>하는 연산자입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 물체 크기에 맞춘 카메라 렌즈 자동 교체</div>
+          풍경 속 거대한 덤프트럭은 넓은 화각의 광각 렌즈($P_5$, 저해상도/넓은 수용영역)로 촬영하고, 
+          멀리 있는 작은 참새는 초망원 렌즈($P_2$, 1/4 고해상도/미세 텍스처 보존)로 줌인하여 촬영하는 것과 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 피라미드 레벨 할당 공식 및 Mask 경로의 14×14 해상도</div>
+          $$k = \left\lfloor k_0 + \log_2 \left( \frac{\sqrt{w \cdot h}}{224} \right) \right\rfloor \quad (k_0 = 4)$$
+          <ul>
+            <li>$\sqrt{wh} = 224$ (기준 크기) $\rightarrow k = 4$ ($P_4$ 피처 맵에 매핑)</li>
+            <li>$\sqrt{wh} &lt; 112$ (작은 물체) $\rightarrow k = 2$ or $3$ ($P_2, P_3$ 고해상도 피처 맵)</li>
+            <li>$\sqrt{wh} \ge 448$ (거대한 물체) $\rightarrow k = 5$ ($P_5$ 저해상도 피처 맵)</li>
+          </ul>
+          <strong>Box RoI vs Mask RoI 해상도 차이 (Slide 7):</strong> Box Head는 클래스와 오프셋만 맞추면 되므로 $7 \times 7$ 크기로 가볍게 풀링하지만, 
+          Mask Head는 픽셀 경계선의 정밀 보존이 필수적이므로 <strong>2배 더 큰 $14 \times 14$ 해상도</strong>로 특징을 추출합니다 (<code>output_size=14, sampling_ratio=2</code>).
+        </div>
+      </div>
+
+      <!-- Term 32: 마스크 정답 생성 (Mask Target Generation via RoIAlign) -->
+      <div class="term-card" data-keywords="마스크 정답 생성 mask target generation roi_align gt masks positive rois 28x28 slide14">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">마스크 정답 생성 기법 (Mask Target Generation via RoIAlign)</span>
+            <span class="term-en">Sub-pixel Accurate 28×28 Ground Truth Mask Extraction using roi_align</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">파이토치 고급 트릭</span>
+            <span class="tag tag-teal">학습 파이프라인</span>
+          </div>
+        </div>
+        <p>
+          전체 원본 이미지 해상도($H \times W$) 상에 그려진 실측 정답(Ground Truth) 폴리곤 마스크에서, 
+          <strong>모델이 학습 손실을 계산할 수 있도록 선별된 각 Positive RoI 영역에 딱 맞추어 28×28 크기의 고정 텐서로 크롭 및 리사이즈</strong>하는 정답 데이터셋 가공 기법입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 빵 반죽에서 쿠키 틀로 찍어내기</div>
+          식탁 전체 크기($H \times W$)의 넓은 반죽에서 쿠키 틀(Positive RoI 박스)을 올려놓고 누른 뒤, 
+          그 잘라낸 조각을 표준 규격 상자(28×28 타깃)에 정밀하게 담아 정답 쿠키로 사용하는 것입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 파이토치 내장 roi_align의 역발상 활용 (Slide 14)</div>
+          일반적으로 <code>roi_align</code>은 신경망의 특징 맵(Feature Map)에서 RoI 피처를 뽑을 때 씁니다. 
+          하지만 PyTorch 실무 구현에서는 <strong>원본 GT 마스크 이미지 자체에 <code>roi_align(spatial_scale=1.0, output_size=(28, 28))</code>을 적용</strong>합니다!
+          <br/>
+          CPU에서 OpenCV로 하나하나 <code>cv2.resize()</code> 루프를 돌리는 대신, GPU 상에서 <code>aligned=True</code> 옵션으로 서브픽셀 보간을 적용하여 수천 개의 양성 RoI 타깃을 밀리초 단위로 초고속 일괄 생성합니다.
+        </div>
+      </div>
+
+      <!-- Term 33: 포지티브 RoI 필터링 (Positive RoI Filtering) -->
+      <div class="term-card" data-keywords="포지티브 roi positive roi negative roi 샘플링 마스크 손실 제외 foreground background iou 0.5 slide14 slide15 slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">포지티브 RoI 필터링 (Positive RoI Filtering in Mask Loss)</span>
+            <span class="term-en">Restricting Mask Supervision Exclusively to Matched Foreground RoIs</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">학습 안정화</span>
+            <span class="tag tag-teal">손실 설계</span>
+          </div>
+        </div>
+        <p>
+          RPN이 제안한 수많은 후보 영역 중, <strong>실제 정답 객체(Ground Truth Box)와의 IoU가 0.5 이상으로 매칭된 양성 후보(Positive RoI)에 대해서만 Mask Loss를 계산하고, 배경(Negative RoI)은 마스크 손실 계산에서 완전히 제외</strong>하는 규칙입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 인물화 스케치 채색 시험</div>
+          캔버스에 사람을 그린 학생(Positive)에게는 "눈코입 윤곽선 채색이 얼마나 섬세한가(Mask Loss)"를 엄격히 채점하지만, 
+          빈 도화지 허공이나 바닥 배경(Negative)을 낸 학생에게 "왜 사람 윤곽선을 안 그렸냐"며 마스크 감점을 주지 않는 것과 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 왜 배경(Negative RoI)에는 마스크 손실을 주면 안 되는가?</div>
+          <ul>
+            <li><strong>Classification / RPN</strong>: 물체가 없는 빈 공간에 대해 "여기는 배경(0)이다"라는 음성 피드백을 배워야 하므로 Negative RoI 학습이 필수적입니다.</li>
+            <li><strong>Mask Branch</strong>: 마스크 브랜치는 물체의 <strong>'기하학적 실루엣(Shape)'</strong>을 학습하는 전용 모듈입니다. 배경 패치(아스팔트, 하늘 등)에는 애초에 물체의 형태가 정의되어 있지 않습니다.</li>
+            <li>배경 RoI에 대해 억지로 0(빈 마스크)을 타깃으로 주어 학습시키면, 마스크 헤드가 전경 물체 경계선에서도 0(배경)을 출력하려는 극단적 보수화 현상에 빠져 윤곽선 예측 성능이 처참하게 붕괴됩니다.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Term 34: BCEWithLogitsLoss (수치 안정성 보장 이진 교차 엔트로피) -->
+      <div class="term-card" data-keywords="bcewithlogitsloss binary cross entropy logit sigmoid 수치 안정성 log sum exp nan 방지 slide15">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">BCEWithLogitsLoss (수치 안정성 이진 교차 엔트로피)</span>
+            <span class="term-en">Numerically Stable Binary Cross-Entropy with Integrated Log-Sum-Exp Trick</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">손실 함수</span>
+            <span class="tag tag-blue">PyTorch F.binary_cross_entropy_with_logits</span>
+          </div>
+        </div>
+        <p>
+          Mask Head의 최종 로짓(Logit) 출력값에 대해 먼저 <code>torch.sigmoid()</code>를 취한 뒤 <code>BCELoss</code>를 계산하지 않고, 
+          <strong>시그모이드 활성화와 이진 교차 엔트로피 수식을 수학적으로 하나로 통합하여 부동소수점 오버플로우/언더플로우(NaN)를 원천 차단하는 최적화 손실 함수</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 환율 이중 환전 수수료 방지 직통 결제</div>
+          원화를 달러로 바꿨다가 다시 엔화로 바꾸면 환전 오차와 수수료가 누적되어 잔돈이 사라지지만, 
+          원화에서 엔화로 다이렉트 환율 공식을 적용하면 계산 오차 없이 정확한 금액이 정산되는 원리와 같습니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 수학적 안정화 공식 (Log-Sum-Exp Trick)</div>
+          기본 식: $\mathcal{L} = - [y \log \sigma(x) + (1-y) \log(1 - \sigma(x))]$
+          <br/>
+          만약 예측 로짓 $x = 88.0$과 같이 매우 크다면, 컴퓨터의 IEEE 754 부동소수점 표현 한계로 인해 $\sigma(x) = 1.0$으로 반올림되고, 
+          그 결과 $\log(1 - \sigma(x)) = \log(0) \rightarrow -\infty$가 되어 <strong>손실값에 치명적인 <code>NaN</code>(Not a Number)이 폭발</strong>합니다.
+          <br/>
+          파이토치의 <code>binary_cross_entropy_with_logits</code>는 내부적으로 다음 항등식을 사용합니다:
+          $$\mathcal{L}(x, y) = \max(x, 0) - x \cdot y + \log\left(1 + e^{-|x|}\right)$$
+          절댓값 $|x|$ 처리를 통해 $e^{-|x|}$ 항은 아무리 $x$가 커지거나 작아져도 항상 0과 1 사이로 안전하게 수렴하므로 수치 폭발 없이 완벽한 그래디언트를 역전파합니다.
+        </div>
+      </div>
+
+      <!-- Term 35: 마스크 후처리 & 원본 캔버스 복원 (Mask Post-Processing & Canvas Paste) -->
+      <div class="term-card" data-keywords="마스크 후처리 mask post processing 캔버스 복원 canvas paste interpolate bilinear 원본 복원 slide18">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">마스크 후처리 & 원본 캔버스 복원 (Mask Post-Processing & Canvas Paste)</span>
+            <span class="term-en">RoI-Space to Full Image-Space Geometric Interpolation and Canvas Insertion</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">추론 후처리</span>
+            <span class="tag tag-teal">기하학적 복원</span>
+          </div>
+        </div>
+        <p>
+          신경망 추론 완료 후, Mask Branch가 출력한 $28 \times 28$ 크기의 국소 영역 정규화 확률 마스크를 
+          <strong>원본 고화질 이미지의 실제 바운딩 박스 크기($(y_2-y_1) \times (x_2-x_1)$)로 확대하고, 원본 크기 Canvas의 정확한 좌표에 붙여넣어 최종 불리언(True/False) 인스턴스 마스크를 완성하는 기하학적 복원 알고리즘</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 미니어처 스티커를 실물 가구 크기로 확대해 붙이기</div>
+          공장에서 규격화되어 나온 가로세로 2.8cm짜리 스티커 도안($28 \times 28$)을, 
+          실제 거실 바닥에 놓인 가로 180cm, 세로 120cm짜리 소파(Bounding Box) 크기에 딱 맞게 프로젝터로 쏘아 확대한 뒤 거실 평면도(Canvas)의 해당 위치에 정확히 붙이는 작업입니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 실무 복원 4단계 파이프라인 (Slide 18 코드 핵심)</div>
+          <ol>
+            <li><strong>정수 좌표 클리핑</strong>: <code>box.round().long()</code>으로 박스 좌표 $[x_1, y_1, x_2, y_2]$를 정수화하고 이미지 경계 $[0, W], [0, H]$ 내로 클리핑.</li>
+            <li><strong>쌍선형 보간 확대</strong>: <code>F.interpolate(prob[None, None], size=(y2-y1, x2-x1), mode="bilinear")</code>로 박스 해상도로 부드럽게 보간.</li>
+            <li><strong>캔버스 삽입</strong>: 원본 크기 영행렬 <code>canvas = prob.new_zeros((H, W))</code> 생성 후 슬라이싱 영역 <code>canvas[y1:y2, x1:x2] = resized</code>에 삽입.</li>
+            <li><strong>임계값 이진화</strong>: <code>canvas &gt; 0.5</code>를 판정하여 해당 인스턴스만의 최종 2차원 불리언 마스크 텐서 완성.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Term 36: Two-Stage Detection 5중 종합 손실 함수 (L_total) -->
+      <div class="term-card" data-keywords="two stage detection 전체 손실 l_total 5중 손실 rpn obj box cls mask multitask loss slide16">
+        <div class="term-top">
+          <div class="term-name-group">
+            <span class="term-title">Two-Stage Detection 5중 종합 손실 함수 ($L_{total}$)</span>
+            <span class="term-en">End-to-End 5-Component Multi-Task Loss Formulation</span>
+          </div>
+          <div class="term-tags">
+            <span class="tag tag-purple">수식 정밀 해독</span>
+            <span class="tag tag-amber">논문 vs 실무</span>
+          </div>
+        </div>
+        <p>
+          논문 본문에서는 흔히 RoI 단계 손실만을 요약하여 $\mathcal{L}_{RoI} = \mathcal{L}_{cls} + \mathcal{L}_{box} + \mathcal{L}_{mask}$로 표기하지만, 
+          <strong>실제 딥러닝 탐지기 전체를 단일 신경망으로 엔드투엔드(End-to-End) 학습시킬 때 역전파되는 5개 손실의 종합 총합 공식</strong>입니다.
+        </p>
+        <div class="analogy-box">
+          <div class="analogy-label">💡 1초 비유: 5종 경기(펜타슬론) 종합 점수</div>
+          수영, 펜싱, 사격, 승마, 크로스컨트리 5개 종목 점수를 모두 합산해 종합 우승자를 뽑듯, 
+          신경망의 공통 척추(Backbone + FPN)는 이 5개 종목의 오차 신호를 동시에 받아 어떤 작업에서도 균형 잡힌 최강의 특징 표현력을 완성합니다.
+        </div>
+        <div class="key-box">
+          <div class="key-label">🔍 5개 손실 구성 요소 정밀 해부 (Slide 16)</div>
+          $$\mathcal{L}_{total} = \mathcal{L}_{RPN,obj} + \mathcal{L}_{RPN,box} + \mathcal{L}_{cls} + \mathcal{L}_{box} + \mathcal{L}_{mask}$$
+          <table style="width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left;">
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">손실 항</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">담당 모듈</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">학습 목표</th>
+                <th style="padding: 6px 10px; border: 1px solid var(--border);">사용 손실 함수</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{RPN,obj}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RPN Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">앵커 박스가 객체인가(1) 배경인가(0)</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Binary Cross-Entropy</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{RPN,box}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RPN Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">앵커 좌표를 객체 대략 위치로 1차 보정</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Smooth L1 Loss</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{cls}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Fast R-CNN Box Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RoI가 어떤 구체적 클래스인가 (80+배경)</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Cross-Entropy Loss (Softmax)</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code);">$\mathcal{L}_{box}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Fast R-CNN Box Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">RoI 박스를 실측 GT Box로 2차 정밀 밀착</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border);">Smooth L1 Loss</td>
+              </tr>
+              <tr style="background: #faf5ff;">
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-family: var(--font-code); color: #7c3aed; font-weight: bold;">$\mathcal{L}_{mask}$</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold; color: #7c3aed;">Mask Head</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold;">Positive RoI의 28×28 픽셀 마스크 형상 복원</td>
+                <td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: bold;">BCEWithLogitsLoss (Sigmoid)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
   </div>
 
   <button id="back-to-top" title="맨 위로 이동">↑</button>
@@ -1530,55 +2121,113 @@ data_loader = torch.utils.data.DataLoader(
     drawIoU();
 
     // ---------------------------------------------------------
-    // PR Curve Live Simulator
+    // Mathematically Rigorous Dynamic PR Curve Live Simulator
     // ---------------------------------------------------------
     const prCanvas = document.getElementById('prCanvas');
     const prCtx = prCanvas.getContext('2d');
-    const prSlider = document.getElementById('pr-conf-slider');
-    const prConfVal = document.getElementById('pr-conf-val');
-    const prPVal = document.getElementById('pr-p-val');
-    const prRVal = document.getElementById('pr-r-val');
+    const prSlider = document.getElementById('pr-slider');
+    const prSliderVal = document.getElementById('pr-slider-val');
+    const prTableBody = document.getElementById('pr-table-body');
+    const statP = document.getElementById('stat-p');
+    const statR = document.getElementById('stat-r');
+    const statAP = document.getElementById('stat-ap');
 
-    const sampleCats = [
-      { conf: 0.94, iou: 0.88, isCat: true },
-      { conf: 0.89, iou: 0.76, isCat: true },
-      { conf: 0.81, iou: 0.32, isCat: false },
-      { conf: 0.72, iou: 0.82, isCat: true },
-      { conf: 0.65, iou: 0.69, isCat: true },
-      { conf: 0.52, iou: 0.15, isCat: false },
-      { conf: 0.41, iou: 0.74, isCat: true },
-      { conf: 0.23, iou: 0.05, isCat: false }
+    // 8 Detections sorted by confidence
+    const detections = [
+      { rank: 1, conf: 0.95, iou: 0.88, isCat: true },
+      { rank: 2, conf: 0.90, iou: 0.76, isCat: true },
+      { rank: 3, conf: 0.82, iou: 0.25, isCat: false }, // FP (low IoU)
+      { rank: 4, conf: 0.75, iou: 0.82, isCat: true },
+      { rank: 5, conf: 0.68, iou: 0.69, isCat: true },
+      { rank: 6, conf: 0.55, iou: 0.12, isCat: false }, // FP (Background)
+      { rank: 7, conf: 0.42, iou: 0.74, isCat: true },
+      { rank: 8, conf: 0.20, iou: 0.05, isCat: false }  // FP (Hallucination)
     ];
-    const totalActualCats = 5;
+    const totalGT = 5; // Total true cats in the image
 
-    function updatePR() {
-      const th = parseFloat(prSlider.value);
-      prConfVal.textContent = th.toFixed(2);
+    // Precalculate cumulative points for all ranks (rank 0 to 8)
+    const curvePoints = [{ rank: 0, conf: 1.0, tp: 0, fp: 0, p: 1.0, r: 0.0 }];
+    let cumTP = 0, cumFP = 0;
+    detections.forEach(d => {
+      const isTP = d.isCat && d.iou >= 0.50;
+      if (isTP) cumTP++;
+      else cumFP++;
+      const p = cumTP / (cumTP + cumFP);
+      const r = cumTP / totalGT;
+      curvePoints.push({ rank: d.rank, conf: d.conf, tp: cumTP, fp: cumFP, p: p, r: r });
+    });
 
-      let tp = 0, fp = 0;
-      sampleCats.forEach(c => {
-        if (c.conf >= th) {
-          if (c.isCat && c.iou >= 0.5) tp++;
-          else fp++;
-        }
-      });
-
-      const p = (tp + fp) > 0 ? (tp / (tp + fp)) : 1.0;
-      const r = tp / totalActualCats;
-
-      prPVal.textContent = Math.round(p * 100) + '%';
-      prRVal.textContent = Math.round(r * 100) + '%';
-
-      renderPRGraph(p, r);
+    // Compute Interpolated curve (All-point staircase)
+    // For any r, p_interp(r) = max_{r' >= r} p(r')
+    const interpSegments = [];
+    for (let i = 0; i < curvePoints.length; i++) {
+      let maxP = 0;
+      for (let j = i; j < curvePoints.length; j++) {
+        if (curvePoints[j].p > maxP) maxP = curvePoints[j].p;
+      }
+      interpSegments.push({ r: curvePoints[i].r, p: maxP });
     }
 
-    function renderPRGraph(currP, currR) {
+    function updatePRSimulation() {
+      const cutoff = parseFloat(prSlider.value);
+      prSliderVal.textContent = cutoff.toFixed(2);
+
+      // Find active rank
+      let activeIdx = 0;
+      for (let i = detections.length - 1; i >= 0; i--) {
+        if (detections[i].conf >= cutoff) {
+          activeIdx = i + 1;
+          break;
+        }
+      }
+
+      const activePoint = curvePoints[activeIdx];
+
+      // Update table
+      prTableBody.innerHTML = '';
+      detections.forEach((d, idx) => {
+        const isAccepted = d.conf >= cutoff;
+        const isTP = d.isCat && d.iou >= 0.50;
+        const tr = document.createElement('tr');
+        if (!isAccepted) tr.style.opacity = '0.35';
+
+        tr.innerHTML = `
+          <td><strong>#${d.rank}</strong></td>
+          <td style="font-family: var(--font-code); font-weight: 700; color: #2563eb;">${d.conf.toFixed(2)}</td>
+          <td style="font-family: var(--font-code);">${d.iou.toFixed(2)}</td>
+          <td>${isTP ? '<span class="tag tag-teal">TP (고양이)</span>' : '<span class="tag tag-red">FP (오답)</span>'}</td>
+          <td>${isAccepted ? '<strong style="color: #16a34a;">채택 ✓</strong>' : '<span style="color: #94a3b8;">탈락 ✗</span>'}</td>
+        `;
+        prTableBody.appendChild(tr);
+      });
+
+      // Update stats
+      statP.innerHTML = `${Math.round(activePoint.p * 100)}% <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">(${activePoint.tp}/${activePoint.tp + activePoint.fp})</span>`;
+      statR.innerHTML = `${Math.round(activePoint.r * 100)}% <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">(${activePoint.tp}/${totalGT})</span>`;
+
+      // Render Graph
+      renderPRGraph(activePoint);
+    }
+
+    function renderPRGraph(activePoint) {
       prCtx.clearRect(0, 0, prCanvas.width, prCanvas.height);
       const pad = 36;
       const w = prCanvas.width - pad * 2;
       const h = prCanvas.height - pad * 2;
 
-      // Axes
+      // Draw Grid lines
+      prCtx.strokeStyle = '#f1f5f9';
+      prCtx.lineWidth = 1;
+      for (let g = 0.2; g <= 1.0; g += 0.2) {
+        // Horizontal
+        const gy = pad + h - g * h;
+        prCtx.beginPath(); prCtx.moveTo(pad, gy); prCtx.lineTo(pad + w, gy); prCtx.stroke();
+        // Vertical
+        const gx = pad + g * w;
+        prCtx.beginPath(); prCtx.moveTo(gx, pad); prCtx.lineTo(gx, pad + h); prCtx.stroke();
+      }
+
+      // Draw Axes
       prCtx.strokeStyle = '#94a3b8';
       prCtx.lineWidth = 1.5;
       prCtx.beginPath();
@@ -1594,23 +2243,22 @@ data_loader = torch.utils.data.DataLoader(
       prCtx.fillText('1.0', pad + w - 10, pad + h + 12);
       prCtx.fillText('1.0', pad - 20, pad + 10);
 
-      // Interpolated points
-      const pts = [
-        { r: 0.0, p: 1.0 },
-        { r: 0.4, p: 1.0 },
-        { r: 0.8, p: 0.80 },
-        { r: 1.0, p: 0.71 }
-      ];
-
-      // Fill area under curve
+      // 1. Draw Fill Area for Interpolated Curve (AP area)
       prCtx.beginPath();
       prCtx.moveTo(pad, pad + h);
-      pts.forEach((pt, i) => {
-        const x = pad + pt.r * w;
-        const y = pad + h - pt.p * h;
-        if (i === 0) prCtx.lineTo(x, y);
-        else {
-          prCtx.lineTo(x, pad + h - pts[i-1].p * h);
+      
+      // Staircase path
+      let curP = 1.0;
+      interpSegments.forEach((seg, i) => {
+        const x = pad + seg.r * w;
+        const y = pad + h - seg.p * h;
+        if (i === 0) {
+          curP = seg.p;
+          prCtx.lineTo(x, y);
+        } else {
+          // horizontal to x, then vertical to y
+          const prevY = pad + h - interpSegments[i-1].p * h;
+          prCtx.lineTo(x, prevY);
           prCtx.lineTo(x, y);
         }
       });
@@ -1619,26 +2267,56 @@ data_loader = torch.utils.data.DataLoader(
       prCtx.fillStyle = 'rgba(217, 119, 6, 0.15)';
       prCtx.fill();
 
-      // Line
+      // 2. Draw Orange Interpolated Staircase Line
       prCtx.strokeStyle = '#d97706';
-      prCtx.lineWidth = 2;
+      prCtx.lineWidth = 2.5;
       prCtx.beginPath();
-      pts.forEach((pt, i) => {
-        const x = pad + pt.r * w;
-        const y = pad + h - pt.p * h;
-        if (i === 0) prCtx.moveTo(x, y);
-        else {
-          prCtx.lineTo(x, pad + h - pts[i-1].p * h);
+      interpSegments.forEach((seg, i) => {
+        const x = pad + seg.r * w;
+        const y = pad + h - seg.p * h;
+        if (i === 0) {
+          prCtx.moveTo(x, y);
+        } else {
+          const prevY = pad + h - interpSegments[i-1].p * h;
+          prCtx.lineTo(x, prevY);
           prCtx.lineTo(x, y);
         }
       });
       prCtx.stroke();
 
-      // Current point
-      const curX = pad + currR * w;
-      const curY = pad + h - currP * h;
+      // 3. Draw Blue Dashed Line connecting raw PR points
+      prCtx.strokeStyle = '#3b82f6';
+      prCtx.lineWidth = 1.5;
+      prCtx.setLineDash([4, 3]);
       prCtx.beginPath();
-      prCtx.arc(curX, curY, 6, 0, Math.PI * 2);
+      curvePoints.forEach((pt, i) => {
+        const x = pad + pt.r * w;
+        const y = pad + h - pt.p * h;
+        if (i === 0) prCtx.moveTo(x, y);
+        else prCtx.lineTo(x, y);
+      });
+      prCtx.stroke();
+      prCtx.setLineDash([]); // Reset line dash
+
+      // Draw small circles for raw points
+      curvePoints.forEach((pt, i) => {
+        if (i === 0) return;
+        const x = pad + pt.r * w;
+        const y = pad + h - pt.p * h;
+        prCtx.beginPath();
+        prCtx.arc(x, y, 3.5, 0, Math.PI * 2);
+        prCtx.fillStyle = '#ffffff';
+        prCtx.fill();
+        prCtx.strokeStyle = '#2563eb';
+        prCtx.lineWidth = 1.5;
+        prCtx.stroke();
+      });
+
+      // 4. Draw Active Operating Point (Red Dot)
+      const curX = pad + activePoint.r * w;
+      const curY = pad + h - activePoint.p * h;
+      prCtx.beginPath();
+      prCtx.arc(curX, curY, 6.5, 0, Math.PI * 2);
       prCtx.fillStyle = '#ef4444';
       prCtx.fill();
       prCtx.strokeStyle = '#ffffff';
@@ -1647,11 +2325,11 @@ data_loader = torch.utils.data.DataLoader(
 
       prCtx.fillStyle = '#b91c1c';
       prCtx.font = 'bold 10px sans-serif';
-      prCtx.fillText(`(${currR.toFixed(2)}, ${currP.toFixed(2)})`, curX + 8, curY - 5);
+      prCtx.fillText(`(${activePoint.r.toFixed(2)}, ${activePoint.p.toFixed(2)})`, curX + 8, curY - 5);
     }
 
-    prSlider.addEventListener('input', updatePR);
-    updatePR();
+    prSlider.addEventListener('input', updatePRSimulation);
+    updatePRSimulation();
   </script>
 </body>
 </html>

@@ -31,7 +31,9 @@ parameters = [
 xgb = XGBClassifier()
 model = GridSearchCV(xgb, parameters, cv=kfold,
              verbose=1,
-             n_jobs=-1,)
+             n_jobs=-1,
+             refit=True,
+             )
 
 #3. 훈련
 start = time.perf_counter()

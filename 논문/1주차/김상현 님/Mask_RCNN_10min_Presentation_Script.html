@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mask R-CNN 10분 발표 인터랙티브 큐카드 (Timer & Script)</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --primary-dark: #3730a3;
+      --secondary: #0d9488;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-card: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --border: #475569;
+      --radius: 14px;
+      --font-code: "Fira Code", Consolas, Monaco, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Sticky Control Bar */
+    header {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .title-area h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-area p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Timer Widget */
+    .timer-widget {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #0f172a;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+    }
+    .timer-display {
+      font-family: var(--font-code);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #38bdf8;
+      min-width: 90px;
+      text-align: center;
+    }
+    .timer-btn {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .timer-btn:hover {
+      background: var(--primary);
+    }
+    .timer-btn.stop {
+      background: #991b1b;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      height: 4px;
+      background: #334155;
+      position: sticky;
+      top: 65px;
+      z-index: 999;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+      transition: width 0.3s linear;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 20px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* View Mode Controls */
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .view-toggle {
+      display: flex;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 3px;
+      border: 1px solid var(--border);
+    }
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .toggle-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .font-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .font-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .font-btn:hover { background: var(--surface-card); }
+
+    /* Single Slide Focus Card (Presenter View) */
+    .slide-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      margin-bottom: 24px;
+      transition: transform 0.2s ease;
+    }
+    .slide-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+      border-bottom: 1px solid var(--surface-card);
+      padding-bottom: 12px;
+    }
+    .slide-badge {
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 9999px;
+    }
+    .time-badge {
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .part-badge {
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .slide-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .slide-sub {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Key Message Box */
+    .key-box {
+      background: rgba(79, 70, 229, 0.15);
+      border-left: 4px solid var(--primary);
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 18px;
+    }
+    .key-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .key-text {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #e0e7ff;
+    }
+
+    /* Action Tip Box */
+    .action-box {
+      background: rgba(245, 158, 11, 0.15);
+      border-left: 4px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+      color: #fde68a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Script Speech Box */
+    .script-box {
+      background: #0f172a;
+      border: 1px solid var(--surface-card);
+      border-radius: 12px;
+      padding: 24px;
+      font-size: 1.15rem; /* Adjustable */
+      line-height: 1.85;
+      color: #f1f5f9;
+    }
+    .script-box strong {
+      color: #38bdf8;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    /* Navigation Footer for Presenter Mode */
+    .nav-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+    }
+    .nav-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Q&A Section */
+    .qa-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-top: 40px;
+    }
+    .qa-card h3 {
+      font-size: 1.15rem;
+      color: #38bdf8;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qa-item {
+      background: #0f172a;
+      border: 1px solid var(--surface-card);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .qa-q {
+      font-weight: 700;
+      color: #fde68a;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .qa-a {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    /* Keyboard Shortcut Help Pill */
+    .kb-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    kbd {
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--font-code);
+      border: 1px solid #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-area">
+      <h1>🎙️ Mask R-CNN 10분 발표 인터랙티브 큐카드</h1>
+      <p>김상현 님 발표자료 (Mask_RCNN_Balanced_Revision_21slides.pptx) 전용</p>
+    </div>
+
+    <!-- Timer Widget -->
+    <div class="timer-widget">
+      <div id="timer-display" class="timer-display">10:00</div>
+      <button id="timer-toggle-btn" class="timer-btn" onclick="toggleTimer()">시작 ▶</button>
+      <button class="timer-btn" onclick="resetTimer()">리셋 ⟲</button>
+    </div>
+  </header>
+
+  <div class="progress-container">
+    <div id="progress-bar" class="progress-bar"></div>
+  </div>
+
+  <div class="container">
+    <div class="controls-row">
+      <div class="view-toggle">
+        <button id="btn-mode-single" class="toggle-btn active" onclick="setMode('single')">단일 슬라이드 집중 모드</button>
+        <button id="btn-mode-all" class="toggle-btn" onclick="setMode('all')">전체 슬라이드 스크롤 모드</button>
+      </div>
+
+      <div class="font-controls">
+        <span class="kb-hint">단축키: <kbd>◀</kbd> <kbd>▶</kbd> <kbd>Space</kbd></span>
+        <button class="font-btn" onclick="adjustFontSize(-1)" title="글자 축소">A-</button>
+        <button class="font-btn" onclick="adjustFontSize(1)" title="글자 확대">A+</button>
+      </div>
+    </div>
+
+    <!-- Slide Cards Container -->
+    <main id="slides-wrapper"></main>
+
+    <!-- Presenter Nav Footer (Single Mode) -->
+    <div id="nav-footer" class="nav-footer">
+      <button id="prev-btn" class="nav-btn" onclick="prevSlide()">◀ 이전 슬라이드</button>
+      <span id="slide-indicator" style="font-weight: 700; color: #94a3b8;">1 / 21</span>
+      <button id="next-btn" class="nav-btn" onclick="nextSlide()">다음 슬라이드 ▶</button>
+    </div>
+
+    <!-- Q&A Anticipation Card -->
+    <div class="qa-card">
+      <h3>💬 발표 후 비상 질의응답 (단골 Q&A 대비 3선)</h3>
+      <div class="qa-item">
+        <div class="qa-q">Q1. 왜 Mask Branch는 Box Head처럼 FC Layer를 쓰지 않고 FCN(Conv)만 썼나요?</div>
+        <div class="qa-a">
+          <strong>A:</strong> FC Layer는 공간 정보를 1차원 벡터로 무너뜨려 픽셀 간의 2차원 공간적 배치(Spatial Layout)를 파괴합니다. 
+          마스크는 픽셀의 형태와 공간 위치가 가장 중요하므로 끝까지 2차원 공간성을 보존하는 FCN(합성곱) 구조를 채택했습니다.
+        </div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q2. 마스크 손실에서 왜 Softmax 대신 Sigmoid와 Decoupling을 썼나요?</div>
+        <div class="qa-a">
+          <strong>A:</strong> Softmax는 픽셀 하나를 두고 클래스 간에 제로섬 경합(Mutual Exclusion)을 일으킵니다. 
+          Mask R-CNN은 클래스 분류는 이미 Box Head가 잘하므로, Mask Head는 오직 형태(Shape)만 그리도록 Sigmoid로 분리하여 mAP를 무려 5.5%p나 끌어올렸습니다.
+        </div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q3. RoIPool과 RoIAlign의 근본적 차이는 무엇인가요?</div>
+        <div class="qa-a">
+          <strong>A:</strong> RoIPool은 정수 반올림(양자화)으로 인해 특징 맵과 실제 객체 위치 사이에 최대 1픽셀 수준의 어긋남이 발생합니다. 
+          RoIAlign은 반올림 없이 연속 실수 좌표를 유지하고 쌍선형 보간으로 4개 샘플 값을 계산하여 서브픽셀 정밀도를 달성합니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const slides = [
+  {
+    "num": 1,
+    "title": "표지 · 컴퓨터 비전 리서치 발표",
+    "sub": "MASK R-CNN: Architecture → Implementation",
+    "time_str": "00:00 - 00:25 (25초)",
+    "part": "Part 1. 인트로 & 과업 정의",
+    "key_msg": "R-CNN 계보의 핵심 변화부터 Mask R-CNN의 구조와 7대 직접 구현 코드까지 10분 완벽 정리",
+    "action": "[화면 중앙을 응시하며 차분하고 신뢰감 있는 목소리로 시작]",
+    "script": "안녕하십니까, <strong>'Mask R-CNN: Architecture에서 Implementation까지'</strong> 발표를 맡은 김상현입니다.<br/><br/>오늘 발표는 R-CNN, Fast, Faster R-CNN으로 이어지는 객체 탐지 계보의 핵심 병목 해결 과정을 짚어보고, Mask R-CNN이 이를 바탕으로 어떻게 정밀한 픽셀 단위 인스턴스 분할을 달성했는지 <strong>아키텍처 다이어그램과 7가지 파이토치 핵심 코드</strong>를 중심으로 10분간 명쾌하게 설명해 드리겠습니다."
+  },
+  {
+    "num": 2,
+    "title": "01 · PROBLEM: 객체 탐지에서 인스턴스 분할까지",
+    "sub": "Detection은 위치를 찾고, Instance Segmentation은 객체별 픽셀 영역까지 구분",
+    "time_str": "00:25 - 00:55 (30초)",
+    "part": "Part 1. 인트로 & 과업 정의",
+    "key_msg": "무엇인가(Class) + 어디인가(Box) + 어떤 픽셀인가(Mask)의 동시 예측",
+    "action": "[슬라이드 하단의 3개 비교 카드를 좌에서 우로 짚어가며]",
+    "script": "먼저 우리가 풀고자 하는 과업의 정의입니다.<br/><br/><strong>분류(Classification)</strong>가 '무엇인가', <strong>객체 탐지(Detection)</strong>가 '어디에 있는가'를 네모난 박스로 찾는다면, 오늘 다룰 <strong>인스턴스 분할(Instance Segmentation)</strong>은 '어떤 픽셀인가'까지 찾아내는 작업입니다.<br/><br/>특히 동일한 클래스의 객체라도 서로 다른 개체로 완벽히 분리해 내야 합니다. 즉, Mask R-CNN의 최종 목표는 한 객체마다 <strong>'무엇인지(Class), 어디인지(Box), 어떤 픽셀인지(Mask)'</strong>를 함께 예측하는 것입니다."
+  },
+  {
+    "num": 3,
+    "title": "02 · EVOLUTION: R-CNN (2014)",
+    "sub": "후보 영역마다 CNN을 독립 실행하는 1세대 딥러닝 탐지기",
+    "time_str": "00:55 - 01:20 (25초)",
+    "part": "Part 2. R-CNN 계보의 진화",
+    "key_msg": "Selective Search 2,000개마다 CNN 개별 실행 → 극심한 연산 중복과 분리된 학습 단계",
+    "action": "[중복 연산의 비효율성을 가볍게 짚어주며]",
+    "script": "이 목표를 달성하기 위해 4대 논문 계보의 출발점인 2014년 R-CNN부터 빠르게 살펴보겠습니다.<br/><br/>R-CNN은 Selective Search로 약 2,000개의 후보 영역(RoI)을 뽑은 뒤, <strong>후보마다 독립적으로 CNN을 2,000번 반복 실행</strong>했습니다. 딥러닝 특징 추출을 도입했다는 역사적 의의는 크지만, 연산 중복이 극심했고 CNN, SVM 분류기, 박스 회귀가 따로 노는 분리된 학습 구조라는 한계가 있었습니다."
+  },
+  {
+    "num": 4,
+    "title": "02 · EVOLUTION: Fast R-CNN (2015)",
+    "sub": "이미지 특징 공유와 RoI Pooling을 통한 1회성 피처 추출",
+    "time_str": "01:20 - 01:45 (25초)",
+    "part": "Part 2. R-CNN 계보의 진화",
+    "key_msg": "전체 이미지에 CNN 단 1회 적용(Shared Feature Map) + RoI Pooling, 그러나 여전한 외부 Selective Search",
+    "action": "[Shared Feature Map 다이어그램을 강조]",
+    "script": "이 중복을 해결한 것이 2015년 Fast R-CNN입니다.<br/><br/>CNN을 전체 이미지에 딱 한 번만 적용하여 <strong>공유 특징 맵(Shared Feature Map)</strong>을 만들고, 각 RoI 피처는 이 맵에서 <strong>RoI Pooling</strong>으로 잘라내기만 했습니다.<br/><br/>연산량이 획기적으로 줄고 멀티태스크 손실을 도입했지만, 여전히 후보 박스를 뽑는 Selective Search는 네트워크 외부의 CPU 병목으로 남아 있었습니다."
+  },
+  {
+    "num": 5,
+    "title": "02 · EVOLUTION: Faster R-CNN (2015)",
+    "sub": "RPN(Region Proposal Network)으로 Proposal 생성까지 완전 신경망 통합",
+    "time_str": "01:45 - 02:10 (25초)",
+    "part": "Part 2. R-CNN 계보의 진화",
+    "key_msg": "Anchor Box 기반 RPN 탑재 → 제안과 검출이 하나로 연결된 완전한 Two-Stage Detector 완성",
+    "action": "[RPN 모듈 블록을 손으로 가리키며]",
+    "script": "이 마지막 외부 병목을 신경망 안으로 흡수한 주인공이 바로 Faster R-CNN입니다.<br/><br/>특징 맵 위에 <strong>Anchor Box</strong> 개념을 적용한 <strong>RPN(Region Proposal Network)</strong>을 얹어 후보 영역 생성까지 GPU에서 학습 가능하게 만들었습니다. 이제 Proposal 생성과 Detection이 하나의 통합된 <strong>Two-Stage Detector</strong>로 연결되었습니다."
+  },
+  {
+    "num": 6,
+    "title": "02 · EVOLUTION: 세 논문이 해결한 병목과 Mask R-CNN의 출발점",
+    "sub": "RoI 반복 → Feature 공유 → RPN 통합 → RoIAlign + Mask Branch",
+    "time_str": "02:10 - 02:30 (20초)",
+    "part": "Part 2. R-CNN 계보의 진화",
+    "key_msg": "세 논문의 진화 결론: 완벽한 탐지기 위에 '마스크'를 어떻게 최소 오버헤드로 얹을 것인가?",
+    "action": "[슬라이드의 계보 요약 화살표를 리드미컬하게 짚으며]",
+    "script": "정리하자면, R-CNN의 연산 중복을 Fast R-CNN이 피처 공유로 풀었고, 외부 제안 병목을 Faster R-CNN이 RPN으로 풀었습니다.<br/><br/>그렇다면 Mask R-CNN의 출발점은 무엇일까요? 바로 완성된 Faster R-CNN 위에 <strong>'픽셀 단위 마스크를 어떻게 최소한의 오버헤드로 올릴 것인가'</strong>였습니다. 그 해답이 바로 <strong>RoIAlign</strong>과 <strong>Mask Branch</strong>입니다."
+  },
+  {
+    "num": 7,
+    "title": "03 · MASK R-CNN: 전체 아키텍처 (분리된 두 RoI 경로)",
+    "sub": "공통 Proposal 사용, Box 경로(7×7)와 Mask 경로(14×14)의 병렬 분기",
+    "time_str": "02:30 - 03:00 (30초)",
+    "part": "Part 3. Mask R-CNN 핵심 구조",
+    "key_msg": "위쪽 Detection 경로(7×7)와 아래쪽 Mask 경로(14×14)의 분리된 고해상도 병렬 파이프라인",
+    "action": "[화면의 위쪽 Box Path와 아래쪽 Mask Path를 번갈아 손으로 지목]",
+    "script": "Slide 7의 전체 구조를 보시겠습니다. FPN 백본과 RPN이 만든 공통 Proposal을 기반으로 두 경로가 완전히 병렬로 나뉩니다.<br/><br/>위쪽 탐지 경로는 기존대로 <strong>7×7 RoIAlign</strong> 후 FC 계층을 거쳐 클래스와 박스 오프셋을 예측합니다. 반면 아래쪽 신규 Mask 경로는 정밀한 공간 정보를 살리기 위해 <strong>2배 더 큰 14×14 RoIAlign</strong>을 수행한 뒤, Fully Convolution 계층을 거쳐 K개의 클래스별 28×28 마스크를 출력합니다."
+  },
+  {
+    "num": 8,
+    "title": "03 · MASK R-CNN: 재사용 요소 vs 신규 추가 요소",
+    "sub": "Faster R-CNN 탐지 기반 위에 Mask 전용 경로를 최소 오버헤드로 추가",
+    "time_str": "03:00 - 03:25 (25초)",
+    "part": "Part 3. Mask R-CNN 핵심 구조",
+    "key_msg": "Backbone, FPN, RPN, Box Head는 그대로 재사용하고, Mask RoIAlign과 Head만 신규 직접 구현",
+    "action": "[재사용 요소와 추가 요소를 대조하며]",
+    "script": "즉, Mask R-CNN은 바닥부터 전체를 새로 만드는 것이 아닙니다.<br/><br/>Backbone, FPN, RPN, Box Head는 기존 검출 모듈을 100% 재사용하고, 우리는 오직 <strong>14×14 Mask RoIAlign과 전용 Mask Head, 그리고 손실 함수</strong>만을 새롭게 설계하여 결합하는 매우 효율적인 확장 구조를 취합니다."
+  },
+  {
+    "num": 9,
+    "title": "03 · MASK R-CNN: RoIAlign (픽셀 위치 보존)",
+    "sub": "RoIPool의 좌표 양자화 오차 극복 → 실수 좌표 유지 및 쌍선형 보간",
+    "time_str": "03:25 - 03:55 (30초)",
+    "part": "Part 3. Mask R-CNN 핵심 구조",
+    "key_msg": "RoIPool 반올림 오차(Quantization Misalignment) 해결 → Bilinear Interpolation으로 픽셀 단위 정밀 정합 달성",
+    "action": "[양자화 오차 다이어그램을 짚으며 강조]",
+    "script": "Mask R-CNN의 핵심 기술 혁신인 <strong>RoIAlign</strong>입니다.<br/><br/>기존 RoIPool은 실수 좌표를 정수로 반올림하는 <strong>양자화(Quantization)</strong> 과정에서 최대 1픽셀 가까운 공간 오차가 누적되었습니다. 거친 박스 탐지에는 괜찮았지만, 픽셀 1개가 생명인 마스크에는 치명적이었습니다.<br/><br/>RoIAlign은 반올림을 완전히 없애고 실수 좌표를 유지한 채, 각 bin 내부의 4개 샘플 포인트를 <strong>쌍선형 보간(Bilinear Interpolation)</strong>으로 계산하여 피처 위치가 1도 어긋나지 않도록 정렬합니다."
+  },
+  {
+    "num": 10,
+    "title": "03 · MASK R-CNN: Mask Head 구조",
+    "sub": "14×14×256 RoI Feature를 28×28 Mask로 공간 해상도 변환",
+    "time_str": "03:55 - 04:30 (35초)",
+    "part": "Part 3. Mask R-CNN 핵심 구조",
+    "key_msg": "14×14 → 4 Conv → 2×2 Deconv(28×28) → 1×1 Conv(K×28×28) Fully Convolutional 구조",
+    "action": "[텐서 차원 흐름을 차분하게 설명]",
+    "script": "Mask Head의 내부 텐서 흐름입니다.<br/><br/>14×14 크기의 RoI 피처를 입력받아 4번의 3×3 Conv로 특징을 정제하고, <strong>2×2 Deconvolution(전치합성곱)</strong>을 통해 해상도를 2배인 28×28로 업샘플링합니다.<br/><br/>마지막으로 1×1 Conv를 통해 전경 클래스 개수인 <strong>K개 채널의 28×28 독립 마스크 로짓</strong>을 출력합니다. 완전 연결 계층을 배제한 Fully Convolution 구조이기 때문에 마스크의 2차원 공간 배치가 끝까지 보존됩니다."
+  },
+  {
+    "num": 11,
+    "title": "04 · IMPLEMENTATION: 코드 ① MaskHead",
+    "sub": "4단 Conv 타워와 ConvTranspose2d 업샘플링 직접 구현",
+    "time_str": "04:30 - 05:00 (30초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "nn.Sequential 4 Conv + nn.ConvTranspose2d(256, 256, 2, stride=2)로 14×14 → 28×28 업샘플링",
+    "action": "[self.deconv 코드 줄을 강조]",
+    "script": "이제 직접 구현한 코드를 차례로 보시겠습니다. 먼저 코드 ① <strong>MaskHead</strong>입니다.<br/><br/>`conv_tower`에서 3×3 Conv와 ReLU를 4회 반복하며 14×14 해상도와 256 채널을 유지합니다.<br/><br/>그리고 `self.deconv`에 주목해 주십시오. 파이토치의 `ConvTranspose2d`를 사용해 `kernel_size=2, stride=2`로 공간 해상도를 28×28로 정확히 2배 확장합니다. 단순 보간보다 윤곽선 복원 가중치를 역전파로 직접 학습할 수 있는 장점이 있습니다."
+  },
+  {
+    "num": 12,
+    "title": "04 · IMPLEMENTATION: 코드 ② MaskPredictor",
+    "sub": "1×1 Conv를 적용해 foreground 클래스마다 독립적인 Mask Logit 출력",
+    "time_str": "05:00 - 05:30 (30초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "nn.Conv2d(256, num_foreground_classes, kernel_size=1) → [N, K, 28, 28] 마스크 로짓 생성",
+    "action": "[K개 채널의 독립성 강조]",
+    "script": "코드 ② <strong>MaskPredictor</strong>입니다.<br/><br/>`nn.Conv2d`를 `kernel_size=1`로 사용하여 공간 해상도 28×28은 그대로 두고 채널만 256에서 `num_foreground_classes`, 즉 K개로 선형 사영합니다.<br/><br/>COCO 데이터셋 기준 최종 출력은 `[N, 80, 28, 28]`이 되며, 각 클래스마다 전용 28×28 도안 채널을 독립적으로 갖게 됩니다."
+  },
+  {
+    "num": 13,
+    "title": "04 · IMPLEMENTATION: 코드 ③ MaskBranch",
+    "sub": "MultiScaleRoIAlign과 Head, Predictor를 하나의 Forward로 연결",
+    "time_str": "05:30 - 06:05 (35초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "MultiScaleRoIAlign(output_size=14, sampling_ratio=2) + Head + Predictor 연결",
+    "action": "[통합 forward 메서드를 짚으며]",
+    "script": "코드 ③ <strong>MaskBranch</strong>는 이 모듈들을 하나로 엮는 통합 forward 계층입니다.<br/><br/>`torchvision.ops`의 `MultiScaleRoIAlign`을 선언하여 FPN 피처 맵 0번부터 3번까지 제안 박스의 크기에 맞게 자동 라우팅합니다.<br/><br/>`output_size=14`로 고화질 피처를 뽑고, 이를 방금 정의한 `head`와 `predictor`에 연속으로 흘려보내 최종 `[sum(Ni), K, 28, 28]` 마스크 로짓을 깔끔하게 반환합니다."
+  },
+  {
+    "num": 14,
+    "title": "04 · IMPLEMENTATION: 코드 ④ Mask Target Generation",
+    "sub": "Positive RoI에 대응하는 28×28 Ground Truth 마스크 타깃 가공",
+    "time_str": "06:05 - 06:40 (35초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "원본 GT 마스크에 roi_align(spatial_scale=1.0, aligned=True)을 역발상 적용하여 28×28 타깃 고속 생성",
+    "action": "[roi_align 파라미터 부분을 강조하며 목소리 톤 업]",
+    "script": "코드 ④는 학습 단계에서 가장 기발한 <strong>정답(Target) 마스크 생성 로직</strong>입니다.<br/><br/>Ground Truth와 매칭된 Positive RoI에 대해서만 마스크를 학습시키는데요, 놀랍게도 원본 크기의 실측 마스크 `gt_masks` 자체에 `roi_align` 연산자를 적용합니다.<br/><br/>원본 이미지 좌표계이므로 `spatial_scale=1.0`을 주고 `aligned=True`로 실행하면, CPU 루프 없이 GPU 상에서 수천 개의 양성 RoI에 딱 맞춘 28×28 정답 텐서 `[P_total, 28, 28]`이 밀리초 단위로 초고속 생성됩니다."
+  },
+  {
+    "num": 15,
+    "title": "04 · IMPLEMENTATION: 코드 ⑤ Class-Specific Mask Loss",
+    "sub": "GT 클래스 채널 선택과 Binary Cross-Entropy 손실 계산",
+    "time_str": "06:40 - 07:15 (35초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "labels-1 인덱싱으로 GT 채널만 선택 슬라이싱 + F.binary_cross_entropy_with_logits 적용",
+    "action": "[selected_logits 슬라이싱 라인을 가리키며]",
+    "script": "코드 ⑤는 Mask R-CNN의 핵심 철학인 <strong>Class-Mask Decoupling 손실</strong>입니다.<br/><br/>80개 마스크 채널 중에서 <strong>오직 해당 객체의 Ground Truth 라벨에 해당하는 단 1개 채널만</strong> `mask_logits[row_idx, class_idx]`로 쏙 뽑아냅니다.<br/><br/>나머지 79개 채널에는 그래디언트가 흐르지 않으므로 클래스 간 간섭이 원천 차단됩니다. 그리고 파이토치의 `binary_cross_entropy_with_logits`를 적용해 수치적 언더플로우나 NaN 폭발 없이 안정적인 픽셀 손실을 계산합니다."
+  },
+  {
+    "num": 16,
+    "title": "04 · IMPLEMENTATION: 학습 흐름과 전체 Loss의 범위",
+    "sub": "Two-Stage Detector 엔드투엔드 학습을 위한 5중 멀티태스크 손실",
+    "time_str": "07:15 - 07:45 (30초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "L_total = L_RPN,obj + L_RPN,box + L_cls + L_box + L_mask / Negative RoI는 Mask Loss 제외",
+    "action": "[전체 5개 손실 항을 하나씩 호명]",
+    "script": "학습 파이프라인 전체를 조망해 보면, 논문에는 RoI 손실 3가지만 적혀 있지만, 실제 End-to-End 전체 탐지기 학습에서는 <strong>RPN 손실 2개와 검출 손실 2개, 그리고 마스크 손실 1개가 더해진 총 5중 멀티태스크 손실($L_{total}$)</strong>이 공통 백본에 역전파됩니다.<br/><br/>특히 배경 영역(Negative RoI)은 마스크 손실 계산에서 완전히 제외함으로써 마스크 헤드가 불필요하게 위축되는 현상을 방지합니다."
+  },
+  {
+    "num": 17,
+    "title": "04 · IMPLEMENTATION: 코드 ⑥ 추론(Inference) 마스크 선택",
+    "sub": "Box 분류 예측 라벨을 이용해 K개 중 해당 인스턴스의 Mask 채널만 추출",
+    "time_str": "07:45 - 08:15 (30초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "Box Head 1위 예측 클래스 채널 추출 → sigmoid() → 0.5 임계값 판정으로 [D, 28, 28] 이진 마스크 완성",
+    "action": "[추론 시점의 예측 라벨 매핑 설명]",
+    "script": "추론 단계인 코드 ⑥입니다.<br/><br/>NMS까지 통과해 최종 살아남은 D개의 박스에 대해, 이번에는 <strong>Box Head가 1위로 분류한 예측 라벨 채널</strong>을 꺼냅니다.<br/><br/>그리고 `sigmoid()`를 씌워 0에서 1 사이 확률로 바꾸고, 0.5 임계값을 적용하여 `[D, 28, 28]` 크기의 깔끔한 불리언 이진 마스크를 생성합니다."
+  },
+  {
+    "num": 18,
+    "title": "04 · IMPLEMENTATION: 코드 ⑦ 캔버스 복원 (Post-Processing)",
+    "sub": "28×28 Mask를 Bilinear Interpolation으로 확대 후 원본 Canvas에 Paste",
+    "time_str": "08:15 - 08:45 (30초)",
+    "part": "Part 4. 핵심 구현 코드 7선",
+    "key_msg": "박스 크기로 F.interpolate 확대 → 원본 크기 Canvas[y1:y2, x1:x2] 페이스트 → [H, W] 마스크 완성",
+    "action": "[후처리 4단계를 손으로 짚으며]",
+    "script": "마지막 코드 ⑦는 28×28 로컬 마스크를 <strong>원본 고화질 이미지 좌표계로 복원</strong>하는 기하학적 후처리입니다.<br/><br/>검출된 박스의 실제 가로세로 크기에 맞추어 `F.interpolate` 쌍선형 보간으로 마스크 확률을 부드럽게 확대하고, 원본 크기 영행렬 캔버스(`canvas`)의 해당 박스 슬라이싱 영역에 붙여넣습니다.<br/><br/>이렇게 하면 원본 이미지와 1:1로 일치하는 최종 풀 해상도 인스턴스 마스크가 완성됩니다."
+  },
+  {
+    "num": 19,
+    "title": "05 · EXAMPLE: 실험 입력 (Highway Scene)",
+    "sub": "다양한 크기와 형태의 차량 인스턴스가 혼재된 고속도로 주행 씬",
+    "time_str": "08:45 - 09:00 (15초)",
+    "part": "Part 5. 실험 결과 & 결론",
+    "key_msg": "원거리 소형 차량, 근거리 대형 차량 등 다양한 스케일의 실제 도로 입력 데이터",
+    "action": "[입력 이미지를 편안하게 제시]",
+    "script": "Slide 19는 실제 모델에 입력된 고속도로 주행 장면입니다. 원거리의 작은 승용차부터 근거리의 대형 SUV까지 다양한 크기와 형태의 차량 인스턴스가 함께 등장합니다."
+  },
+  {
+    "num": 20,
+    "title": "05 · EXAMPLE: 추론 결과 (Bounding Box + Instance Mask)",
+    "sub": "차량별 Instance를 구분해 객체 위치와 픽셀 마스크를 동시 표현",
+    "time_str": "09:00 - 09:20 (20초)",
+    "part": "Part 5. 실험 결과 & 결론",
+    "key_msg": "겹쳐 있는 복잡한 차량 객체들이 개별 색상의 박스와 픽셀 실루엣으로 정확히 분리 검출됨",
+    "action": "[결과 이미지 속 차량 윤곽선들을 손으로 가리키며]",
+    "script": "추론 결과인 Slide 20입니다. 겹쳐 있거나 다양한 원근감을 가진 여러 대의 차량 인스턴스에 대해, 초록색, 파란색, 빨간색 등 각각 독립된 Bounding Box와 정밀한 픽셀 마스크가 오차 없이 동시에 분리 검출된 것을 확인할 수 있습니다."
+  },
+  {
+    "num": 21,
+    "title": "06 · CONCLUSION: 핵심 정리 & 마무리",
+    "sub": "R-CNN 계보에서 Mask R-CNN의 다이어그램과 코드 구현으로의 수렴",
+    "time_str": "09:20 - 09:45 (25초)",
+    "part": "Part 5. 실험 결과 & 결론",
+    "key_msg": "Two-Stage Detection 기반 위에 RoIAlign과 Mask Branch를 얹어 인스턴스 분할 완성, Q&A 개시",
+    "action": "[청중을 향해 정중히 인사하며 마무리]",
+    "script": "발표를 요약하겠습니다.<br/><br/>R-CNN에서 시작된 객체 탐지 연구는 특징 맵 공유(Fast)와 RPN 통합(Faster)을 거쳐 완벽한 Two-Stage 탐지 체계를 완성했습니다. 그리고 <strong>Mask R-CNN은 픽셀 위치를 정밀 보존하는 RoIAlign과 병렬 Mask Branch를 추가</strong>하여 탐지 속도를 거의 떨어뜨리지 않으면서도 최고 수준의 인스턴스 분할을 달성했습니다.<br/><br/>준비한 발표는 여기까지입니다. 경청해 주셔서 대단히 감사합니다. 질의응답 받겠습니다."
+  }
+];
+
+    let currentSlide = 0;
+    let viewMode = 'single'; // 'single' or 'all'
+    let currentFontSize = 1.15; // rem
+
+    // Timer Variables (10 minutes = 600 seconds)
+    const TOTAL_SECONDS = 600;
+    let remainingSeconds = TOTAL_SECONDS;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function renderSlides() {
+      const wrapper = document.getElementById('slides-wrapper');
+      wrapper.innerHTML = '';
+
+      if (viewMode === 'single') {
+        document.getElementById('nav-footer').style.display = 'flex';
+        const s = slides[currentSlide];
+        wrapper.innerHTML = createSlideHtml(s, currentSlide, true);
+        document.getElementById('slide-indicator').textContent = `${currentSlide + 1} / ${slides.length}`;
+        document.getElementById('prev-btn').disabled = (currentSlide === 0);
+        document.getElementById('next-btn').disabled = (currentSlide === slides.length - 1);
+      } else {
+        document.getElementById('nav-footer').style.display = 'none';
+        slides.forEach((s, idx) => {
+          wrapper.innerHTML += createSlideHtml(s, idx, false);
+        });
+      }
+      applyFontSize();
+    }
+
+    function createSlideHtml(s, idx, isSingle) {
+      return `
+        <div class="slide-card" id="slide-card-${idx}">
+          <div class="slide-meta">
+            <span class="slide-badge">Slide ${s.num} / 21</span>
+            <span class="part-badge">${s.part}</span>
+            <span class="time-badge">⏱️ ${s.time_str}</span>
+          </div>
+          <div class="slide-title">${s.title}</div>
+          <div class="slide-sub">${s.sub}</div>
+
+          <div class="key-box">
+            <div class="key-label">핵심 전달 메시지 (Key Message)</div>
+            <div class="key-text">${s.key_msg}</div>
+          </div>
+
+          <div class="action-box">
+            <span>🎭</span>
+            <span><strong>발표 행동 팁:</strong> ${s.action}</span>
+          </div>
+
+          <div class="script-box">
+            ${s.script}
+          </div>
+        </div>
+      `;
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        renderSlides();
+        window.scrollTo({ top: 70, behavior: 'smooth' });
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        renderSlides();
+        window.scrollTo({ top: 70, behavior: 'smooth' });
+      }
+    }
+
+    function setMode(mode) {
+      viewMode = mode;
+      document.getElementById('btn-mode-single').classList.toggle('active', mode === 'single');
+      document.getElementById('btn-mode-all').classList.toggle('active', mode === 'all');
+      renderSlides();
+    }
+
+    function adjustFontSize(delta) {
+      currentFontSize = Math.max(0.9, Math.min(1.6, currentFontSize + delta * 0.1));
+      applyFontSize();
+    }
+
+    function applyFontSize() {
+      document.querySelectorAll('.script-box').forEach(el => {
+        el.style.fontSize = `${currentFontSize}rem`;
+      });
+    }
+
+    // Timer Logic
+    function updateTimerDisplay() {
+      const mins = Math.floor(remainingSeconds / 60);
+      const secs = remainingSeconds % 60;
+      const str = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      const disp = document.getElementById('timer-display');
+      disp.textContent = str;
+
+      const progress = ((TOTAL_SECONDS - remainingSeconds) / TOTAL_SECONDS) * 100;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+
+      if (remainingSeconds <= 60) {
+        disp.style.color = '#ef4444';
+      } else if (remainingSeconds <= 180) {
+        disp.style.color = '#f59e0b';
+      } else {
+        disp.style.color = '#38bdf8';
+      }
+    }
+
+    function toggleTimer() {
+      const btn = document.getElementById('timer-toggle-btn');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.textContent = '재개 ▶';
+        btn.classList.remove('stop');
+      } else {
+        isTimerRunning = true;
+        btn.textContent = '정지 ⏸';
+        btn.classList.add('stop');
+        timerInterval = setInterval(() => {
+          if (remainingSeconds > 0) {
+            remainingSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.textContent = '종료 ✓';
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      remainingSeconds = TOTAL_SECONDS;
+      const btn = document.getElementById('timer-toggle-btn');
+      btn.textContent = '시작 ▶';
+      btn.classList.remove('stop');
+      updateTimerDisplay();
+    }
+
+    // Keyboard Navigation
+    window.addEventListener('keydown', (e) => {
+      if (viewMode === 'single') {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevSlide();
+        }
+      }
+    });
+
+    // Initial render
+    renderSlides();
+    updateTimerDisplay();
+  </script>
+</body>
+</html>

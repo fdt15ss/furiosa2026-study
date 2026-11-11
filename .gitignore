@@ -202,4 +202,9 @@ _data/rag_data/**
 /_data/attention is all you needs.pdf
 /Projects/**
 *.pdf
+*.pptx
 *.zip
+/논문/1주차/Photos/data
+/논문/1주차/Photos/scratch
+/논문/1주차/Photos/saved_models
+/논문/1주차/Photos/maskrcnn_preview
