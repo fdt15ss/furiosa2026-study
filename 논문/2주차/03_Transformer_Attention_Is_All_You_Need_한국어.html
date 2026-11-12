@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어텐션만 있으면 된다 (Attention Is All You Need) | 한국어 완역 논문</title>
+  
+  <!-- MathJax for LaTeX Formulas -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <style>
+    :root {
+      --primary: #7c3aed; /* Purple theme for Transformer */
+      --primary-dark: #6d28d9;
+      --primary-light: #f5f3ff;
+      --accent: #2563eb;
+      --dark: #0f172a;
+      --gray-dark: #334155;
+      --gray: #64748b;
+      --gray-light: #f8fafc;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --radius: 10px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Pretendard, sans-serif;
+      background-color: var(--gray-light);
+      color: var(--dark);
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Global Nav */
+    header.global-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .nav-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+    }
+
+    .nav-brand {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #2563eb;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.75rem;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      color: var(--gray-dark);
+      transition: all 0.2s ease;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--primary-dark);
+      background-color: var(--primary-light);
+    }
+
+    /* Page Layout */
+    .page-layout {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 2.5rem;
+      align-items: flex-start;
+    }
+
+    /* Sidebar TOC */
+    aside.toc-sidebar {
+      width: 280px;
+      position: sticky;
+      top: 5rem;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 6.5rem);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .toc-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toc-list { list-style: none; font-size: 0.88rem; }
+    .toc-list li { margin-bottom: 0.4rem; }
+    .toc-list a {
+      color: var(--gray-dark);
+      text-decoration: none;
+      display: block;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .toc-list a:hover {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+    .toc-list .toc-sub {
+      padding-left: 1.2rem;
+      font-size: 0.82rem;
+      color: var(--gray);
+    }
+
+    /* Main Article */
+    main.article-content {
+      flex: 1;
+      min-width: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* Paper Header */
+    .paper-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .paper-badge {
+      display: inline-block;
+      background: #ede9fe;
+      color: #5b21b6;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .paper-title-ko {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .paper-title-en {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--gray);
+      margin-bottom: 1.25rem;
+    }
+
+    .authors-info {
+      font-size: 0.95rem;
+      color: var(--gray-dark);
+      line-height: 1.6;
+    }
+
+    .authors-info strong { color: var(--dark); }
+
+    /* Abstract Box */
+    .abstract-box {
+      background: #faf5ff;
+      border: 1px solid #e9d5ff;
+      border-left: 5px solid var(--primary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .abstract-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .abstract-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #4c1d95;
+    }
+
+    /* Headings */
+    h2.section-heading {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin: 2.5rem 0 1.25rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3.sub-heading {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-dark);
+      margin: 1.75rem 0 0.85rem 0;
+    }
+
+    p { margin-bottom: 1.25rem; font-size: 1.02rem; color: #334155; }
+
+    /* Callouts */
+    .callout {
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.75rem 0;
+      font-size: 0.98rem;
+      line-height: 1.75;
+    }
+
+    .callout-insight {
+      background: #faf5ff;
+      border-left: 5px solid var(--primary);
+      color: #4c1d95;
+    }
+    .callout-insight strong { color: #6d28d9; }
+
+    .callout-math {
+      background: #eff6ff;
+      border-left: 5px solid #3b82f6;
+      color: #1e3a8a;
+    }
+    .callout-math strong { color: #1d4ed8; }
+
+    .callout-highlight {
+      background: #ecfdf5;
+      border-left: 5px solid #10b981;
+      color: #064e3b;
+    }
+
+    /* Figures */
+    .figure-container {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 2.5rem 0;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .figure-image-wrapper {
+      padding: 1.5rem;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .figure-image-wrapper img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
+    .figure-caption-box {
+      padding: 1.25rem 1.5rem;
+      background: #f8fafc;
+      text-align: left;
+      font-size: 0.92rem;
+      color: var(--gray-dark);
+      line-height: 1.65;
+    }
+
+    .figure-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 2rem 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      text-align: left;
+      background: white;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: var(--dark);
+      font-weight: 700;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    table.data-table td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+    }
+
+    table.data-table tr:hover { background: #f8fafc; }
+
+    /* Glossary Ref */
+    a.glossary-ref {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px dashed var(--primary);
+      transition: all 0.15s;
+    }
+    a.glossary-ref:hover {
+      background: var(--primary-light);
+      border-bottom-style: solid;
+    }
+
+    .formula-block {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    /* Nav Footer */
+    .paper-nav-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 3.5rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--border);
+    }
+
+    .nav-paper-card {
+      text-decoration: none;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: white;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+      max-width: 48%;
+    }
+
+    .nav-paper-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+
+    .nav-direction { font-size: 0.8rem; font-weight: 700; color: var(--gray); text-transform: uppercase; }
+    .nav-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-top: 0.2rem; }
+
+    @media (max-width: 900px) {
+      .page-layout { flex-direction: column; }
+      aside.toc-sidebar { display: none; }
+      main.article-content { padding: 1.5rem; }
+      .paper-title-ko { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Global Sticky Nav -->
+  <header class="global-nav">
+    <div class="nav-container">
+      <a href="00_딥러닝_핵심_용어사전.html" class="nav-brand">
+        <span>🧠 딥러닝 2주차 연구 허브</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="00_딥러닝_핵심_용어사전.html">📚 용어사전</a></li>
+        <li><a href="01_Seq2Seq_신경망_시퀀스학습_한국어.html">📄 1편: Seq2Seq</a></li>
+        <li><a href="02_Bahdanau_어텐션_신경망_기계번역_한국어.html">📄 2편: Bahdanau Attention</a></li>
+        <li><a href="03_Transformer_Attention_Is_All_You_Need_한국어.html" class="active">📄 3편: Transformer</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Page Layout -->
+  <div class="page-layout">
+    
+    <!-- Sidebar Table of Contents -->
+    <aside class="toc-sidebar">
+      <div class="toc-title">
+        <span>목차 (Contents)</span>
+        <span>📑</span>
+      </div>
+      <ul class="toc-list">
+        <li><a href="#sec-abstract">초록 (Abstract)</a></li>
+        <li><a href="#sec-intro">1. 서론 (Introduction)</a></li>
+        <li><a href="#sec-bg">2. 배경 (Background)</a></li>
+        <li>
+          <a href="#sec-arch">3. 모델 아키텍처 (Architecture)</a>
+          <ul class="toc-list toc-sub">
+            <li><a href="#sec-fig1">그림 1: 트랜스포머 전체 구조</a></li>
+            <li><a href="#sec-enc-dec">3.1 인코더 및 디코더 스택</a></li>
+            <li><a href="#sec-attention">3.2 어텐션 메커니즘</a></li>
+            <li><a href="#sec-fig2">그림 2: Scaled Dot & Multi-Head</a></li>
+            <li><a href="#sec-ffn">3.3 피드포워드 네트워크 (FFN)</a></li>
+            <li><a href="#sec-pos-enc">3.5 포지셔널 인코딩</a></li>
+          </ul>
+        </li>
+        <li><a href="#sec-why-self-att">4. 왜 셀프 어텐션인가?</a></li>
+        <li><a href="#sec-training">5. 모델 학습 (Training)</a></li>
+        <li>
+          <a href="#sec-results">6. 실험 결과 (Results)</a>
+          <ul class="toc-list toc-sub">
+            <li><a href="#sec-translation">6.1 기계 번역 SOTA (BLEU)</a></li>
+            <li><a href="#sec-heads">6.3 어텐션 헤드 시각화 (그림 3~5)</a></li>
+          </ul>
+        </li>
+        <li><a href="#sec-conclusion">7. 결론 (Conclusion)</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Article Content -->
+    <main class="article-content">
+      
+      <!-- Paper Header -->
+      <header class="paper-header">
+        <span class="paper-badge">NeurIPS 2017 구두 발표 · 현대 생성형 AI / LLM의 기원 · 인용수 130,000+</span>
+        <h1 class="paper-title-ko">어텐션만 있으면 된다</h1>
+        <div class="paper-title-en">Attention Is All You Need</div>
+        <div class="authors-info">
+          <strong>저자:</strong> Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin<br>
+          <strong>소속:</strong> Google Brain, Google Research, University of Toronto<br>
+          <strong>원문 링크:</strong> arXiv:1706.03762 [cs.CL]
+        </div>
+      </header>
+
+      <!-- Abstract Box -->
+      <section class="abstract-box" id="sec-abstract">
+        <div class="abstract-title">
+          <span>📌 초록 (Abstract)</span>
+        </div>
+        <div class="abstract-text">
+          <p>
+            기존의 우수한 시퀀스 변환 모델들은 주로 인코더와 디코더를 포함하는 복잡한 순환 신경망(RNN)이나 합성곱 신경망(CNN)을 기반으로 구축되었으며, 가장 뛰어난 성능을 내는 모델들 역시 어텐션 메커니즘을 통해 인코더와 디코더를 연결해 왔다.
+          </p>
+          <p>
+            본 논문은 <strong>순환(Recurrence)과 합성곱(Convolution)을 완전히 배제</strong>하고, 전적으로 <strong>어텐션 메커니즘에만 의존</strong>하는 새로운 단순 신경망 아키텍처인 <strong>트랜스포머(Transformer)</strong>를 제안한다.
+          </p>
+          <p>
+            두 가지 기계번역 과제에 대한 실험 결과, 트랜스포머는 질적으로 훨씬 우수할 뿐만 아니라 <strong>병렬 처리가 극대화되어 학습 시간을 획기적으로 단축</strong>시켰다.
+          </p>
+          <p>
+            WMT 2014 영어-독일어 번역 과제에서 기존 최고 기록(앙상블 포함)보다 2.0점 이상 높은 <strong>BLEU 28.4점</strong>을 달성했다. WMT 2014 영어-프랑스어 과제에서는 8개의 GPU로 단 3.5일 동안 학습하여 단일 모델 최고 기록인 <strong>BLEU 41.8점</strong>을 수립했으며, 이는 문헌상 기존 최고 모델들의 학습 비용에 비하면 극히 일부에 불과하다. 나아가 트랜스포머는 대규모 훈련 데이터와 제한된 데이터 모두에서 영어 구문 분석(Parsing) 과제에도 성공적으로 일반화됨을 입증했다.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 1: Introduction -->
+      <section id="sec-intro">
+        <h2 class="section-heading">1. 서론 (Introduction)</h2>
+        <p>
+          순환 신경망(RNN), 특히 <a href="00_딥러닝_핵심_용어사전.html#term-lstm" class="glossary-ref">LSTM</a>과 <a href="00_딥러닝_핵심_용어사전.html#term-gru" class="glossary-ref">GRU</a>는 언어 모델링과 기계번역 등 시퀀스 변환 과제에서 오랫동안 최첨단 기술의 확고한 표준으로 자리 잡아 왔다.
+        </p>
+        <p>
+          그러나 순환 모델은 본질적으로 <strong>순차적인 연산 특성(Inherent Sequential Nature)</strong>을 지닌다. 즉, 현재 시점 $t$의 은닉 상태 $h_t$를 계산하려면 반드시 바로 직전 시점 $t-1$의 상태 $h_{t-1}$이 먼저 완성되어야만 한다.
+        </p>
+
+        <div class="callout callout-insight">
+          <strong>💡 순환 신경망의 근본적 병목: 병렬 처리의 부재!</strong><br>
+          컴퓨팅 하드웨어(GPU, TPU)는 수천 개의 코어로 대규모 행렬 연산을 동시에 병렬 처리할 때 최고의 효율을 발휘합니다. 하지만 RNN은 문장 길이가 길어질수록 한 글자씩 차례대로 줄을 서서 계산해야 하므로 <strong>훈련 시 시퀀스 내부 병렬화가 원천적으로 불가능</strong>합니다. 이는 대규모 데이터셋과 초거대 모델로의 확장을 가로막는 치명적인 장벽이었습니다.
+        </div>
+
+        <p>
+          <a href="00_딥러닝_핵심_용어사전.html#term-bahdanau-att" class="glossary-ref">어텐션 메커니즘</a>은 시퀀스 내의 거리와 상관없이 입출력 간의 의존성을 직접 모델링함으로써 눈부신 성공을 거두었으나, 지금까지는 항상 RNN 구조의 부속물로서 결합되어 사용되었다.
+        </p>
+        <p>
+          본 연구에서는 순환 연결을 과감히 던져버리고, 오직 <strong><a href="00_딥러닝_핵심_용어사전.html#term-self-attention" class="glossary-ref">셀프 어텐션(Self-Attention)</a>만으로 입력과 출력 사이의 전역적 의존성을 완벽하게 포착하는 아키텍처인 트랜스포머(Transformer)</strong>를 선보인다.
+        </p>
+      </section>
+
+      <!-- Section 2: Background -->
+      <section id="sec-bg">
+        <h2 class="section-heading">2. 배경 (Background)</h2>
+        <p>
+          순차적 연산을 줄이려는 시도는 합성곱 신경망을 기반으로 한 Extended Neural GPU, ByteNet, ConvS2S 등으로 이어져 왔다. 그러나 합성곱 기반 모델은 입력과 출력의 임의의 두 위치 사이의 신호를 연결하는 데 필요한 연산 횟수가 거리에 따라 선형($O(n)$) 혹은 로그 스케일($O(\log n)$)로 증가한다는 구조적 한계를 안고 있었다.
+        </p>
+        <p>
+          반면 <strong>트랜스포머는 임의의 두 단어 간 신호 전달에 필요한 연산 횟수를 상수 $O(1)$로 단축</strong>시켰다. 이로써 문장 내 단어 간의 거리가 아무리 멀어도 신호가 감쇠 없이 즉각적으로 전달된다.
+        </p>
+      </section>
+
+      <!-- Section 3: Model Architecture -->
+      <section id="sec-arch">
+        <h2 class="section-heading">3. 모델 아키텍처 (Model Architecture)</h2>
+        <p>
+          트랜스포머는 대다수의 경쟁력 있는 신경망 시퀀스 모델과 마찬가지로 <strong>인코더-디코더(Encoder-Decoder) 구조</strong>를 따른다.
+        </p>
+
+        <!-- Figure 1 Container -->
+        <div class="figure-container" id="sec-fig1">
+          <div class="figure-image-wrapper">
+            <img src="images/paper3/fig1_transformer_architecture.png" alt="트랜스포머 모델 전체 아키텍처 다이어그램">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 1 (Figure 1)</span>
+            <strong>트랜스포머(Transformer)의 전체 모델 아키텍처:</strong><br>
+            <strong>좌측(인코더):</strong> 입력 단어 임베딩에 포지셔널 인코딩을 더한 뒤, $N=6$개의 동일한 레이어 스택을 통과한다. 각 레이어는 멀티-헤드 셀프 어텐션과 위치별 피드포워드 신경망(FFN)으로 구성되며 잔차 연결(Add)과 레이어 정규화(Norm)가 적용된다.<br>
+            <strong>우측(디코더):</strong> 출력 임베딩에 포지셔널 인코딩을 더한 뒤 $N=6$개의 레이어를 통과한다. 미래 단어를 가리는 마스크드 셀프 어텐션, 인코더 출력을 참조하는 크로스 어텐션, 그리고 FFN의 3단계 서브레이어로 구성된다.
+          </div>
+        </div>
+
+        <h3 class="sub-heading" id="sec-enc-dec">3.1 인코더 및 디코더 스택 (Encoder & Decoder Stacks)</h3>
+        
+        <p><strong>인코더 (Encoder):</strong></p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+          <li>$N=6$개의 동일한 층(Layer)이 직렬로 적층된다.</li>
+          <li>각 층은 2개의 서브레이어를 갖는다: (1) <strong>멀티-헤드 셀프 어텐션</strong>, (2) <strong>위치별 피드포워드 신경망(FFN)</strong>.</li>
+          <li>각 서브레이어마다 잔차 연결(Residual Connection)과 <a href="00_딥러닝_핵심_용어사전.html#term-residual-layernorm" class="glossary-ref">레이어 정규화(Layer Normalization)</a>를 적용한다:
+            <div class="formula-block">$$\text{Output} = \text{LayerNorm}(x + \text{Sublayer}(x))$$</div>
+          </li>
+          <li>모델의 모든 서브레이어 및 임베딩 출력 차원은 일관되게 <strong>$d_{\text{model}} = 512$</strong>로 통일된다.</li>
+        </ul>
+
+        <p><strong>디코더 (Decoder):</strong></p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+          <li>인코더와 마찬가지로 $N=6$개의 동일한 층으로 구성된다.</li>
+          <li>인코더의 2개 서브레이어 외에, 인코더 스택의 출력을 키(K)와 밸류(V)로 받는 <strong>크로스 어텐션(Cross-Attention) 서브레이어</strong>가 추가되어 층마다 총 3개의 서브레이어를 갖는다.</li>
+          <li>디코더의 셀프 어텐션 서브레이어는 <strong><a href="00_딥러닝_핵심_용어사전.html#term-masked-attention" class="glossary-ref">마스킹(Masking)</a></strong>을 적용하여 현재 위치 $i$의 단어가 미래 위치($j > i$)의 단어를 엿보지 못하게 차단한다. 이는 자기회귀적(Autoregressive) 생성 특성을 엄격히 유지하기 위함이다.</li>
+        </ul>
+
+        <!-- Section 3.2 Attention -->
+        <h3 class="sub-heading" id="sec-attention">3.2 어텐션 메커니즘 (Attention)</h3>
+        <p>
+          어텐션 함수는 <strong>쿼리(Query)</strong>와 일련의 <strong>키-밸류(Key-Value)</strong> 쌍을 출력에 매핑하는 과정으로 정의할 수 있다. 여기서 Query, Key, Value 및 출력은 모두 벡터이다.
+        </p>
+
+        <!-- Figure 2 Container -->
+        <div class="figure-container" id="sec-fig2">
+          <div class="figure-image-wrapper">
+            <img src="images/paper3/fig2_scaled_dot_and_multihead.png" alt="Scaled Dot-Product Attention 및 Multi-Head Attention 구조 다이어그램">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 2 (Figure 2)</span>
+            <strong>(좌측) 스케일드 닷-프로덕트 어텐션 (Scaled Dot-Product Attention):</strong> $Q$와 $K^\top$을 곱한 후 $\sqrt{d_k}$로 스케일링하고 마스크(옵션) 후 소프트맥스를 거쳐 $V$와 행렬 곱한다.<br>
+            <strong>(우측) 멀티-헤드 어텐션 (Multi-Head Attention):</strong> $Q, K, V$를 각각 $h$개의 서로 다른 선형 투영($W_i^Q, W_i^K, W_i^V$)을 통해 저차원으로 변환한 뒤 독립적인 어텐션을 병렬 수행하고, 결과를 연결(Concat)하여 최종 선형 변환 $W^O$를 통과시킨다.
+          </div>
+        </div>
+
+        <div class="callout callout-math">
+          <strong>📐 스케일드 닷-프로덕트 어텐션의 핵심 수식:</strong><br>
+          실제 계산에서는 여러 쿼리를 묶어 행렬 $Q$로 만들고, 키와 밸류 역시 행렬 $K$와 $V$로 묶어 일괄 연산한다:
+          $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+          <br>
+          <strong>💡 왜 $\sqrt{d_k}$로 나누어 주는가? (Scaling Factor)</strong><br>
+          차원 $d_k$가 작을 때는 내적(Dot-product) 어텐션과 바다나우의 가산(Additive) 어텐션이 비슷한 성능을 냅니다. 하지만 $d_k$가 커지면(예: 64차원), 두 독립 벡터의 성분 곱들의 합인 내적 값의 크기가 지나치게 커지며 분산이 $d_k$로 증가합니다. 내적 값이 너무 커지면 $\text{softmax}$ 함수의 기울기가 거의 0에 수렴하는 포화 영역으로 빠져버려 <strong>역전파 기울기 소실(Gradient Vanishing)</strong>이 발생합니다. 이를 방지하기 위해 $\frac{1}{\sqrt{d_k}}$로 스케일링하여 분산을 1로 유지합니다.
+        </div>
+
+        <div class="callout callout-insight">
+          <strong>🌟 멀티-헤드 어텐션 (Multi-Head Attention)의 위력:</strong><br>
+          하나의 어텐션만 쓰면 문장 전체에서 단 하나의 지배적인 관계만 포착하게 됩니다. 트랜스포머는 $d_{\text{model}}=512$차원을 $h=8$개의 헤드로 쪼개어 각각 $d_k = d_v = 512/8 = 64$차원에서 어텐션을 병렬 수행합니다.
+          이를 통해 모델은 <strong>"문법적 주어-동사 관계", "대명사 지칭 관계", "문맥적 수식 관계"</strong> 등 서로 다른 부분 공간에서 다양한 의미적 연결 고리를 동시에 풍부하게 학습할 수 있습니다.
+          $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h)W^O$$
+          $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
+        </div>
+
+        <h3 class="sub-heading" id="sec-ffn">3.3 위치별 피드포워드 신경망 (Position-wise FFN)</h3>
+        <p>
+          인코더와 디코더의 각 레이어에는 어텐션 서브레이어에 이어 완전히 연결된 피드포워드 신경망이 포함되어 있다. 각 위치의 단어마다 독립적이고 동일하게 적용된다:
+        </p>
+
+        <div class="formula-block">
+          $$\text{FFN}(x) = \max(0, xW_1 + b_1)W_2 + b_2$$
+        </div>
+
+        <p>
+          입출력 차원은 $d_{\text{model}} = 512$이며, 내부 은닉층 차원은 4배 확장된 <strong>$d_{ff} = 2048$</strong>이다.
+        </p>
+
+        <h3 class="sub-heading" id="sec-pos-enc">3.5 포지셔널 인코딩 (Positional Encoding)</h3>
+        <p>
+          트랜스포머는 순환(RNN)도, 합성곱(CNN)도 사용하지 않기 때문에, 모든 단어가 한꺼번에 병렬로 입력되면 <strong>단어의 순서(Order) 정보가 완전히 소실</strong>된다. 따라서 시퀀스 내 각 토큰의 상대적 혹은 절대적 위치 정보를 주입해야만 한다.
+        </p>
+        <p>
+          본 논문에서는 서로 다른 주파수를 갖는 사인(Sine) 및 코사인(Cosine) 삼각함수를 활용한 고정 포지셔널 인코딩을 고안했다:
+        </p>
+
+        <div class="formula-block">
+          $$PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
+          $$PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)$$
+        </div>
+
+        <p>
+          이 삼각함수 방식의 탁월한 장점은 임의의 고정 오프셋 $k$에 대해 $PE_{pos+k}$가 $PE_{pos}$의 선형 함수로 쉽게 표현된다는 점이다. 따라서 모델이 상대적 위치에 의한 주목을 쉽게 학습할 수 있으며, <strong>훈련 중에 보지 못했던 훨씬 더 긴 문장으로도 손쉽게 외삽(Extrapolation)</strong>할 수 있다.
+        </p>
+      </section>
+
+      <!-- Section 4: Why Self-Attention -->
+      <section id="sec-why-self-att">
+        <h2 class="section-heading">4. 왜 셀프 어텐션인가? (Why Self-Attention)</h2>
+        <p>
+          저자들은 시퀀스 모델링에서 셀프 어텐션 계층이 순환 계층 및 합성곱 계층보다 우월한 이유를 세 가지 측면에서 비교 분석했다:
+        </p>
+
+        <!-- Table 1 Container -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>계층 유형 (Layer Type)</th>
+                <th>레이어당 계산 복잡도</th>
+                <th>순차적 연산 횟수</th>
+                <th>최대 경로 길이 (Path Length)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>셀프 어텐션 (Self-Attention)</strong></td>
+                <td>$O(n^2 \cdot d)$</td>
+                <td><strong>$O(1)$</strong></td>
+                <td><strong>$O(1)$</strong></td>
+              </tr>
+              <tr>
+                <td>순환 신경망 (Recurrent / LSTM)</td>
+                <td>$O(n \cdot d^2)$</td>
+                <td>$O(n)$</td>
+                <td>$O(n)$</td>
+              </tr>
+              <tr>
+                <td>합성곱 신경망 (Convolutional)</td>
+                <td>$O(k \cdot n \cdot d^2)$</td>
+                <td>$O(1)$</td>
+                <td>$O(\log_k(n))$</td>
+              </tr>
+              <tr>
+                <td>제한적 셀프 어텐션 (Restricted)</td>
+                <td>$O(r \cdot n \cdot d)$</td>
+                <td>$O(1)$</td>
+                <td>$O(n/r)$</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          문장 길이 $n$이 단어 임베딩 차원 $d$보다 작은 일반적인 자연어 처리 상황($n < d$, 예: $n=50, d=512$)에서 셀프 어텐션은 RNN보다 연산량이 훨씬 적다. 무엇보다 <strong>순차적 연산 횟수와 최대 신호 전달 경로가 모두 $O(1)$</strong>이므로, 장거리 의존성(Long-range dependency)을 단 한 번의 연산으로 완벽히 학습할 수 있다.
+        </p>
+      </section>
+
+      <!-- Section 5: Training -->
+      <section id="sec-training">
+        <h2 class="section-heading">5. 모델 학습 (Training)</h2>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+          <li><strong>학습 데이터:</strong>
+            <ul>
+              <li>WMT 2014 영어-독일어: 약 450만 쌍 문장, 37,000개 공유 토큰의 BPE 어휘집.</li>
+              <li>WMT 2014 영어-프랑스어: 약 3,600만 쌍 문장, 32,000개 WordPiece 어휘집.</li>
+            </ul>
+          </li>
+          <li><strong>하드웨어 및 소요 시간:</strong>
+            <ul>
+              <li>8개의 NVIDIA P100 GPU 사용.</li>
+              <li>기본 모델(Transformer-base): 100,000 스텝 (스텝당 0.4초, 총 12시간 소요).</li>
+              <li>대형 모델(Transformer-big): 300,000 스텝 (스텝당 1.0초, 총 3.5일 소요).</li>
+            </ul>
+          </li>
+          <li><strong>옵티마이저 및 웜업 학습률:</strong> Adam 옵티마이저 ($\beta_1=0.9, \beta_2=0.98, \epsilon=10^{-9}$). 초기 4,000 스텝 동안 학습률을 선형 증가시키고 이후 스텝의 역제곱근에 비례하여 감쇠.</li>
+          <li><strong>정규화 기법:</strong> 서브레이어 드롭아웃 ($P_{drop}=0.1$) 및 라벨 스무딩 ($\epsilon_{ls} = 0.1$). 라벨 스무딩은 퍼플렉시티는 다소 손해를 보지만 실제 번역 정확도(BLEU)를 크게 향상시켰다.</li>
+        </ul>
+      </section>
+
+      <!-- Section 6: Results -->
+      <section id="sec-results">
+        <h2 class="section-heading">6. 실험 결과 및 분석 (Results)</h2>
+        
+        <h3 class="sub-heading" id="sec-translation">6.1 기계 번역 SOTA 달성 (Table 2)</h3>
+        <p>
+          WMT 2014 영어-독일어 및 영어-프랑스어 벤치마크 테스트 결과는 다음과 같다:
+        </p>
+
+        <!-- Table 2 Container -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>모델 (Model)</th>
+                <th>EN-DE BLEU</th>
+                <th>EN-FR BLEU</th>
+                <th>학습 비용 (FLOPs)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ByteNet (Kalchbrenner et al., 2016)</td>
+                <td>23.75</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>MoE (Shazeer et al., 2017)</td>
+                <td>26.03</td>
+                <td>40.56</td>
+                <td>$9.0 \times 10^{19}$</td>
+              </tr>
+              <tr>
+                <td>GNMT + RL 앙상블 (Wu et al., 2016)</td>
+                <td>26.30</td>
+                <td>41.16</td>
+                <td>$1.1 \times 10^{20}$</td>
+              </tr>
+              <tr>
+                <td>ConvS2S 앙상블 (Gehring et al., 2017)</td>
+                <td>26.36</td>
+                <td>41.29</td>
+                <td>$1.2 \times 10^{20}$</td>
+              </tr>
+              <tr>
+                <td><strong>Transformer (base 단일 모델)</strong></td>
+                <td><strong>27.3</strong></td>
+                <td><strong>38.1</strong></td>
+                <td><strong>$3.3 \times 10^{18}$</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Transformer (big 단일 모델)</strong></td>
+                <td><strong>28.4</strong></td>
+                <td><strong>41.8</strong></td>
+                <td><strong>$2.3 \times 10^{19}$</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-highlight">
+          <strong>🏆 역사적인 결과 (Groundbreaking Achievement):</strong><br>
+          트랜스포머 빅 모델은 영어-독일어에서 <strong>기존 앙상블 최고 모델들보다 무려 +2.0 BLEU 이상 높은 28.4점</strong>을 단일 모델로 갈아치웠습니다.
+          더욱 충격적인 사실은 학습 비용입니다. 기존 최고 모델들이 $10^{20}$ FLOPs 이상의 엄청난 자원을 쏟아부었던 반면, 트랜스포머는 <strong>그 1/5~1/30 수준의 훈련 비용($2.3 \times 10^{19}$)만으로 세계 최고 신기록을 경신</strong>했습니다.
+        </div>
+
+        <!-- Section 6.3: Visualizing Attention Heads -->
+        <h3 class="sub-heading" id="sec-heads">6.3 어텐션 헤드의 놀라운 해석 가능성 (그림 3, 4, 5)</h3>
+        <p>
+          트랜스포머 내부의 멀티-헤드 셀프 어텐션들이 실제로 무엇을 학습했는지 시각적으로 분석했다.
+        </p>
+
+        <!-- Figure 3 Container -->
+        <div class="figure-container">
+          <div class="figure-image-wrapper">
+            <img src="images/paper3/fig3_attention_long_distance.png" alt="장거리 의존성을 포착하는 어텐션 시각화">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 3 (Figure 3)</span>
+            <strong>장거리 의존성(Long-distance Dependency)을 포착하는 5번째 레이어 어텐션 헤드:</strong><br>
+            문장 끝의 동사구 <em>'making ... more difficult'</em>가 수많은 수식어구를 뛰어넘어 문장 앞쪽의 주어 <em>'The Law'</em>와 완벽하게 연결되어 주목하고 있음을 보여준다.
+          </div>
+        </div>
+
+        <!-- Figure 4 Container -->
+        <div class="figure-container">
+          <div class="figure-image-wrapper">
+            <img src="images/paper3/fig4_attention_anaphora.png" alt="대명사 조응 해소 어텐션 헤드 시각화">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 4 (Figure 4)</span>
+            <strong>대명사 조응 해소(Anaphora Resolution)를 완벽히 수행하는 두 개의 어텐션 헤드:</strong><br>
+            <em>"The animal didn't cross the street because <strong>it</strong> was too tired"</em>라는 복잡한 문장에서, 대명사 <strong>'it'</strong>이 'street'이 아닌 피곤한 주체인 <strong>'The animal'</strong>을 정확하게 지칭하고 있음을 두 헤드가 분담하여 명확히 포착해냈다.
+          </div>
+        </div>
+
+        <!-- Figure 5 Container -->
+        <div class="figure-container">
+          <div class="figure-image-wrapper">
+            <img src="images/paper3/fig5_attention_heads_structure.png" alt="문장의 구조적 동작을 보여주는 다양한 어텐션 헤드 시각화">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 5 (Figure 5)</span>
+            <strong>문장의 구문 구조를 분담 학습한 다양한 어텐션 헤드들:</strong><br>
+            서로 다른 헤드들이 각각 주어-술어 분리, 수식어구 연결 등 인간 언어의 정교한 문법 구조를 자율적으로 분업하여 학습하고 있음을 시각적으로 증명한다.
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Section 7: Conclusion -->
+      <section id="sec-conclusion">
+        <h2 class="section-heading">7. 결론 (Conclusion)</h2>
+        <p>
+          본 논문은 순환 계층을 완전히 제거하고 오로지 <strong>멀티-헤드 셀프 어텐션(Multi-Head Self-Attention)</strong>으로만 구성된 최초의 시퀀스 변환 모델인 <strong>트랜스포머(Transformer)</strong>를 제시했다.
+        </p>
+        <p>
+          트랜스포머는 번역 과제에서 기존 순환 및 합성곱 모델보다 훨씬 빠른 학습 속도와 압도적인 번역 품질을 입증했으며, 기계번역을 넘어 구문 파싱 등 다양한 자연어 처리 문제로 성공적으로 확장될 수 있음을 증명했다.
+        </p>
+        <p>
+          이 논문이 탄생시킨 트랜스포머 아키텍처는 이후 <strong>BERT, GPT, T5, LLaMA, 그리고 오늘날의 모든 대규모 언어 모델(LLM)과 멀티모달 AI(Vision Transformer)</strong>의 불멸의 기반이 되었다.
+        </p>
+      </section>
+
+      <!-- Bottom Nav -->
+      <div class="paper-nav-footer">
+        <a href="02_Bahdanau_어텐션_신경망_기계번역_한국어.html" class="nav-paper-card">
+          <div class="nav-direction">← 이전 논문 읽기</div>
+          <div class="nav-title">📄 2편: Bahdanau Attention 완역</div>
+        </a>
+        <a href="00_딥러닝_핵심_용어사전.html" class="nav-paper-card" style="text-align: right;">
+          <div class="nav-direction">용어 복습하기 →</div>
+          <div class="nav-title">📚 딥러닝 & NLP 핵심 용어 사전</div>
+        </a>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

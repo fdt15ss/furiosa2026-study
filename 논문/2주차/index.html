@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>딥러닝 2주차 필수 논문 한국어 완역 & 핵심 용어사전 허브</title>
+  
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #7c3aed;
+      --accent: #d97706;
+      --dark: #0f172a;
+      --gray-dark: #334155;
+      --gray: #64748b;
+      --gray-light: #f8fafc;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Pretendard, sans-serif;
+      background-color: #f1f5f9;
+      color: var(--dark);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #4338ca 100%);
+      color: white;
+      padding: 4.5rem 1.5rem 3.5rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #93c5fd;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.05em;
+    }
+
+    .hero h1 {
+      font-size: 2.7rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      max-width: 800px;
+      margin: 0 auto;
+      opacity: 0.92;
+      line-height: 1.7;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1240px;
+      margin: -2rem auto 3rem auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Glossary Highlight Banner */
+    .glossary-banner {
+      background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+      border: 2px solid #bfdbfe;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 2rem 2.5rem;
+      margin-bottom: 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .glossary-banner-text h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .glossary-banner-text p {
+      color: #334155;
+      font-size: 1.02rem;
+      max-width: 720px;
+    }
+
+    .btn-glossary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 50px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s;
+    }
+
+    .btn-glossary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+    }
+
+    /* Papers Grid */
+    .section-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .papers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .paper-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .paper-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-top {
+      padding: 1.5rem 1.75rem 1rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .badge-p1 { background: #dbeafe; color: #1e40af; }
+    .badge-p2 { background: #fef3c7; color: #92400e; }
+    .badge-p3 { background: #ede9fe; color: #5b21b6; }
+
+    .card-badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.2rem 0.65rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .card-title-ko {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1.4;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-title-en {
+      font-size: 0.88rem;
+      color: var(--gray);
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-meta {
+      font-size: 0.82rem;
+      color: var(--gray-dark);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .card-body {
+      padding: 1.5rem 1.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-thumb {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-thumb img {
+      max-width: 100%;
+      max-height: 110px;
+      object-fit: contain;
+    }
+
+    .card-desc {
+      font-size: 0.95rem;
+      color: var(--gray-dark);
+      margin-bottom: 1.5rem;
+      line-height: 1.65;
+    }
+
+    .card-highlights {
+      list-style: none;
+      font-size: 0.88rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-highlights li {
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+
+    .card-btn {
+      margin-top: auto;
+      display: block;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-p1 { background: #2563eb; color: white; }
+    .btn-p1:hover { background: #1d4ed8; }
+
+    .btn-p2 { background: #d97706; color: white; }
+    .btn-p2:hover { background: #b45309; }
+
+    .btn-p3 { background: #7c3aed; color: white; }
+    .btn-p3:hover { background: #6d28d9; }
+
+    /* Comparison Matrix */
+    .matrix-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 2.5rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .matrix-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 1.25rem;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    .matrix-table th {
+      background: #f8fafc;
+      color: var(--dark);
+      font-weight: 700;
+      padding: 0.85rem 1rem;
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+    }
+
+    .matrix-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+      vertical-align: top;
+    }
+
+    .matrix-table tr:hover { background: #f8fafc; }
+
+    /* Footer */
+    footer {
+      background: white;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-badge">AI / NLP 핵심 논문 스터디 · 2주차 통합 포털</div>
+    <h1>자연어 처리의 패러다임 전환<br>Seq2Seq부터 Transformer까지</h1>
+    <p>
+      순환 신경망을 이용한 시퀀스 변환의 시작부터, 고정 벡터의 병목을 부순 바다나우 어텐션, 그리고 순환을 완전히 지우고 현대 LLM의 기원이 된 트랜스포머까지! 세 편의 원문 논문 한국어 완역본과 핵심 용어 사전을 한눈에 확인하세요.
+    </p>
+  </header>
+
+  <div class="container">
+
+    <!-- Glossary Master Banner -->
+    <section class="glossary-banner">
+      <div class="glossary-banner-text">
+        <h2>📚 딥러닝 & NLP 핵심 용어 사전</h2>
+        <p>
+          "셀프 어텐션과 크로스 어텐션의 차이는?", "왜 $\sqrt{d_k}$로 나눌까?", "Q, K, V의 쉬운 비유는?", "소프트 정렬이란?"<br>
+          세 논문에 등장하는 49가지 핵심 (수학/통계 기초 포함) 딥러닝 개념을 <strong>쉬운 일상 비유, 기술적 원리, 핵심 수식</strong>으로 완벽 해설했습니다.
+        </p>
+      </div>
+      <div>
+        <a href="00_딥러닝_핵심_용어사전.html" class="btn-glossary">
+          <span>용어사전 바로가기</span>
+          <span>→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Papers Grid -->
+    <h2 class="section-title">📄 2주차 핵심 논문 한국어 완역본 (3편)</h2>
+    <div class="papers-grid">
+
+      <!-- Paper 1: Seq2Seq -->
+      <article class="paper-card">
+        <div class="card-top">
+          <span class="card-badge badge-p1">NeurIPS 2014 · 구글 브레인</span>
+          <h3 class="card-title-ko">1. 시퀀스-투-시퀀스 학습</h3>
+          <div class="card-title-en">Sequence to Sequence Learning with Neural Networks</div>
+          <div class="card-meta">
+            <span>👤 Ilya Sutskever 외</span>
+            <span>⭐ 인용 25,000+</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-thumb">
+            <img src="images/paper1/fig1_seq2seq_arch.png" alt="Seq2Seq 구조">
+          </div>
+          <p class="card-desc">
+            가변 길이의 시퀀스를 고정 벡터로 압축하고 다시 가변 길이로 풀어내는 혁신적 인코더-디코더 프레임워크를 정립한 기념비적 논문.
+          </p>
+          <ul class="card-highlights">
+            <li>✨ <strong>핵심 기여:</strong> 4층 심층 LSTM + 입력 문장 역순(Reverse) 트릭</li>
+            <li>📊 <strong>성능:</strong> WMT'14 En-Fr 단일 34.8 BLEU (SMT 능가)</li>
+            <li>🖼️ <strong>포함 이미지:</strong> 인코더-디코더 구조도, PCA 임베딩 군집도 등</li>
+          </ul>
+          <a href="01_Seq2Seq_신경망_시퀀스학습_한국어.html" class="card-btn btn-p1">1편 완역본 읽기 →</a>
+        </div>
+      </article>
+
+      <!-- Paper 2: Bahdanau Attention -->
+      <article class="paper-card">
+        <div class="card-top">
+          <span class="card-badge badge-p2">ICLR 2015 · 몬트리올대 / Bengio Lab</span>
+          <h3 class="card-title-ko">2. 바다나우 어텐션 기계번역</h3>
+          <div class="card-title-en">Neural Machine Translation by Jointly Learning to Align and Translate</div>
+          <div class="card-meta">
+            <span>👤 Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio</span>
+            <span>⭐ 인용 35,000+</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-thumb">
+            <img src="images/paper2/fig1_attention_arch.png" alt="Bahdanau Attention 구조">
+          </div>
+          <p class="card-desc">
+            단일 고정 벡터의 '정보 병목'을 지목하고, 디코더가 매 단어를 생성할 때마다 원문의 연관 단어를 동적으로 탐색하는 '어텐션'을 최초로 제안.
+          </p>
+          <ul class="card-highlights">
+            <li>✨ <strong>핵심 기여:</strong> 양방향 RNN(BiRNN) + 바다나우 가산 어텐션</li>
+            <li>📊 <strong>성능:</strong> 긴 문장에서 성능 급락 차단, +10.6 BLEU 향상</li>
+            <li>🖼️ <strong>포함 이미지:</strong> 어텐션 모델 구조도, 4개 단어 정렬 히트맵 등</li>
+          </ul>
+          <a href="02_Bahdanau_어텐션_신경망_기계번역_한국어.html" class="card-btn btn-p2">2편 완역본 읽기 →</a>
+        </div>
+      </article>
+
+      <!-- Paper 3: Transformer -->
+      <article class="paper-card">
+        <div class="card-top">
+          <span class="card-badge badge-p3">NeurIPS 2017 · 구글 리서치</span>
+          <h3 class="card-title-ko">3. 어텐션만 있으면 된다</h3>
+          <div class="card-title-en">Attention Is All You Need (Transformer)</div>
+          <div class="card-meta">
+            <span>👤 Ashish Vaswani 외 (구글 브레인)</span>
+            <span>⭐ 인용 130,000+</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-thumb">
+            <img src="images/paper3/fig1_transformer_architecture.png" alt="Transformer 구조">
+          </div>
+          <p class="card-desc">
+            순환(RNN)과 합성곱(CNN)을 완전히 은퇴시키고, 오직 셀프 어텐션만으로 시퀀스를 처리하여 오늘날 GPT, BERT, LLM의 토대가 된 인공지능 역사상 가장 위대한 논문.
+          </p>
+          <ul class="card-highlights">
+            <li>✨ <strong>핵심 기여:</strong> Scaled Dot-Product & Multi-Head Self-Attention</li>
+            <li>📊 <strong>성능:</strong> En-De 28.4 BLEU 신기록 달성 및 학습 비용 1/30 절감</li>
+            <li>🖼️ <strong>포함 이미지:</strong> 트랜스포머 아키텍처, 어텐션 헤드 시각화 등 5종</li>
+          </ul>
+          <a href="03_Transformer_Attention_Is_All_You_Need_한국어.html" class="card-btn btn-p3">3편 완역본 읽기 →</a>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Comparison Matrix -->
+    <section class="matrix-section">
+      <h2 class="matrix-title">📊 3대 핵심 논문 기술 비교 매트릭스</h2>
+      <div style="overflow-x: auto;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>1편: Seq2Seq (2014)</th>
+              <th>2편: Bahdanau Attention (2014/15)</th>
+              <th>3편: Transformer (2017)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>기본 구조</strong></td>
+              <td>4층 심층 LSTM 인코더-디코더</td>
+              <td>양방향 GRU(BiRNN) + GRU 디코더</td>
+              <td>순환 없는 완전한 Self-Attention 스택</td>
+            </tr>
+            <tr>
+              <td><strong>어텐션 방식</strong></td>
+              <td>없음 (단일 고정 크기 벡터 압축)</td>
+              <td>가산 어텐션 (Additive / Bahdanau)</td>
+              <td>스케일드 닷-프로덕트 & 멀티-헤드</td>
+            </tr>
+            <tr>
+              <td><strong>병렬 학습 여부</strong></td>
+              <td>불가 (시간축 순차 처리)</td>
+              <td>불가 (디코더 순차 스텝 처리)</td>
+              <td><strong>완전 병렬화 가능 ($O(1)$)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>장기 기억 한계 해결</strong></td>
+              <td>소스 문장 역순(Reverse) 입력 트릭</td>
+              <td>동적 컨텍스트 벡터 $c_i$ 실시간 합성</td>
+              <td>임의의 위치 간 신호 경로가 $O(1)$로 단축</td>
+            </tr>
+            <tr>
+              <td><strong>위치 정보 처리</strong></td>
+              <td>RNN의 시간 순서 자체가 위치 정보</td>
+              <td>양방향 RNN의 순차 상태 자체가 위치 정보</td>
+              <td>삼각함수 기반 포지셔널 인코딩 주입</td>
+            </tr>
+            <tr>
+              <td><strong>역사적 의의</strong></td>
+              <td>신경망 기계번역의 가능성 최초 입증</td>
+              <td>'어텐션(Attention)' 개념의 역사적 탄생</td>
+              <td>현대 모든 초거대 생성형 AI(LLM)의 기원</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <p><strong>딥러닝 논문 심화 스터디 (2주차)</strong></p>
+    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #94a3b8;">
+      모든 논문은 원문의 전문적인 수식과 구조적 맥락을 철저히 보존하며, 고해상도 시각 자료 및 MathJax 렌더링을 적용하여 완역되었습니다.
+    </p>
+  </footer>
+
+</body>
+</html>

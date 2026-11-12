@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>신경망을 이용한 시퀀스-투-시퀀스 학습 | 한국어 완역 논문</title>
+  
+  <!-- MathJax for LaTeX Formulas -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --accent: #f59e0b;
+      --dark: #0f172a;
+      --gray-dark: #334155;
+      --gray: #64748b;
+      --gray-light: #f8fafc;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --radius: 10px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Pretendard, sans-serif;
+      background-color: var(--gray-light);
+      color: var(--dark);
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Global Nav */
+    header.global-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .nav-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+    }
+
+    .nav-brand {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.75rem;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      color: var(--gray-dark);
+      transition: all 0.2s ease;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    /* Page Layout */
+    .page-layout {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 2.5rem;
+      align-items: flex-start;
+    }
+
+    /* Sidebar TOC */
+    aside.toc-sidebar {
+      width: 280px;
+      position: sticky;
+      top: 5rem;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 6.5rem);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .toc-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toc-list {
+      list-style: none;
+      font-size: 0.88rem;
+    }
+
+    .toc-list li { margin-bottom: 0.4rem; }
+
+    .toc-list a {
+      color: var(--gray-dark);
+      text-decoration: none;
+      display: block;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .toc-list a:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .toc-list .toc-sub {
+      padding-left: 1.2rem;
+      font-size: 0.82rem;
+      color: var(--gray);
+    }
+
+    /* Main Article */
+    main.article-content {
+      flex: 1;
+      min-width: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem;
+      box-shadow: var(--shadow);
+    }
+
+    /* Paper Header */
+    .paper-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .paper-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .paper-title-ko {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .paper-title-en {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--gray);
+      margin-bottom: 1.25rem;
+    }
+
+    .authors-info {
+      font-size: 0.95rem;
+      color: var(--gray-dark);
+      line-height: 1.6;
+    }
+
+    .authors-info strong { color: var(--dark); }
+
+    /* Abstract Box */
+    .abstract-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 5px solid var(--primary);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .abstract-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .abstract-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--gray-dark);
+    }
+
+    /* Headings */
+    h2.section-heading {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin: 2.5rem 0 1.25rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3.sub-heading {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-dark);
+      margin: 1.75rem 0 0.85rem 0;
+    }
+
+    p {
+      margin-bottom: 1.25rem;
+      font-size: 1.02rem;
+      color: #334155;
+    }
+
+    /* Callout Boxes */
+    .callout {
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.75rem 0;
+      font-size: 0.98rem;
+      line-height: 1.75;
+    }
+
+    .callout-insight {
+      background: #eff6ff;
+      border-left: 5px solid var(--primary);
+      color: #1e3a8a;
+    }
+
+    .callout-insight strong { color: #1d4ed8; }
+
+    .callout-math {
+      background: #fdf4ff;
+      border-left: 5px solid #a855f7;
+      color: #581c87;
+    }
+
+    .callout-math strong { color: #7e22ce; }
+
+    .callout-highlight {
+      background: #ecfdf5;
+      border-left: 5px solid #10b981;
+      color: #064e3b;
+    }
+
+    /* Figures */
+    .figure-container {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 2.5rem 0;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .figure-image-wrapper {
+      padding: 1.5rem;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .figure-image-wrapper img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      transition: transform 0.2s;
+    }
+
+    .figure-caption-box {
+      padding: 1.25rem 1.5rem;
+      background: #f8fafc;
+      text-align: left;
+      font-size: 0.92rem;
+      color: var(--gray-dark);
+      line-height: 1.65;
+    }
+
+    .figure-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 2rem 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      text-align: left;
+      background: white;
+    }
+
+    table.data-table th {
+      background: #f1f5f9;
+      color: var(--dark);
+      font-weight: 700;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    table.data-table td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+    }
+
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover { background: #f8fafc; }
+
+    /* Glossary Term Tooltip/Link */
+    a.glossary-ref {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px dashed var(--primary);
+      transition: all 0.15s;
+    }
+
+    a.glossary-ref:hover {
+      background: var(--primary-light);
+      border-bottom-style: solid;
+    }
+
+    /* Math display */
+    .formula-block {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    /* Next / Prev Navigation */
+    .paper-nav-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 3.5rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--border);
+    }
+
+    .nav-paper-card {
+      text-decoration: none;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: white;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+      max-width: 48%;
+    }
+
+    .nav-paper-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+
+    .nav-direction { font-size: 0.8rem; font-weight: 700; color: var(--gray); text-transform: uppercase; }
+    .nav-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-top: 0.2rem; }
+
+    @media (max-width: 900px) {
+      .page-layout { flex-direction: column; }
+      aside.toc-sidebar { display: none; }
+      main.article-content { padding: 1.5rem; }
+      .paper-title-ko { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Global Sticky Nav -->
+  <header class="global-nav">
+    <div class="nav-container">
+      <a href="00_딥러닝_핵심_용어사전.html" class="nav-brand">
+        <span>🧠 딥러닝 2주차 연구 허브</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="00_딥러닝_핵심_용어사전.html">📚 용어사전</a></li>
+        <li><a href="01_Seq2Seq_신경망_시퀀스학습_한국어.html" class="active">📄 1편: Seq2Seq</a></li>
+        <li><a href="02_Bahdanau_어텐션_신경망_기계번역_한국어.html">📄 2편: Bahdanau Attention</a></li>
+        <li><a href="03_Transformer_Attention_Is_All_You_Need_한국어.html">📄 3편: Transformer</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Page Layout -->
+  <div class="page-layout">
+    
+    <!-- Sidebar Table of Contents -->
+    <aside class="toc-sidebar">
+      <div class="toc-title">
+        <span>목차 (Contents)</span>
+        <span>📑</span>
+      </div>
+      <ul class="toc-list">
+        <li><a href="#sec-abstract">초록 (Abstract)</a></li>
+        <li><a href="#sec-intro">1. 서론 (Introduction)</a></li>
+        <li>
+          <a href="#sec-model">2. 모델 아키텍처 (The Model)</a>
+          <ul class="toc-list toc-sub">
+            <li><a href="#sec-reverse">입력 문장 역순 트릭</a></li>
+            <li><a href="#sec-fig1">그림 1: Seq2Seq 구조</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#sec-experiments">3. 실험 (Experiments)</a>
+          <ul class="toc-list toc-sub">
+            <li><a href="#sec-dataset">3.1 데이터셋 상세</a></li>
+            <li><a href="#sec-decoding">3.2 디코딩 및 재채점</a></li>
+            <li><a href="#sec-training">3.4 학습 세부사항</a></li>
+            <li><a href="#sec-results">3.6 실험 결과 (BLEU)</a></li>
+            <li><a href="#sec-long-sentences">3.7 긴 문장 성능 분석</a></li>
+            <li><a href="#sec-model-analysis">3.8 은닉 상태 분석 (PCA)</a></li>
+          </ul>
+        </li>
+        <li><a href="#sec-related">4. 관련 연구 (Related Work)</a></li>
+        <li><a href="#sec-conclusion">5. 결론 (Conclusion)</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Article Content -->
+    <main class="article-content">
+      
+      <!-- Paper Header -->
+      <header class="paper-header">
+        <span class="paper-badge">NeurIPS 2014 구두 발표 (Oral) · 인용수 25,000+</span>
+        <h1 class="paper-title-ko">신경망을 이용한 시퀀스-투-시퀀스 학습</h1>
+        <div class="paper-title-en">Sequence to Sequence Learning with Neural Networks</div>
+        <div class="authors-info">
+          <strong>저자:</strong> Ilya Sutskever, Oriol Vinyals, Quoc V. Le<br>
+          <strong>소속:</strong> Google (구글 브레인)<br>
+          <strong>원문 링크:</strong> arXiv:1409.3215 [cs.CL]
+        </div>
+      </header>
+
+      <!-- Abstract Box -->
+      <section class="abstract-box" id="sec-abstract">
+        <div class="abstract-title">
+          <span>📌 초록 (Abstract)</span>
+        </div>
+        <div class="abstract-text">
+          <p>
+            심층 신경망(Deep Neural Networks, DNN)은 매우 어려운 다양한 머신러닝 과제에서 뛰어난 성능을 입증해 온 강력한 모델이다. 그러나 뛰어난 유연성에도 불구하고 DNN은 <strong>입력과 출력의 길이가 가변적이며 서로 다른 차원을 갖는 시퀀스 매핑 문제</strong>에는 직접 적용하기 어렵다는 한계가 있었다.
+          </p>
+          <p>
+            본 논문은 시퀀스 구조에 대한 사전 가정을 최소화하는 일반적인 종단 간(End-to-End) 시퀀스 학습 접근법을 제안한다. 우리의 아이디어는 <strong>다층 순환 신경망(LSTM)을 사용하여 가변 길이의 입력 시퀀스를 고정된 차원의 벡터 표현으로 매핑</strong>하고, 또 다른 <strong>심층 LSTM을 사용하여 이 벡터 표현으로부터 가변 길이의 목표 출력 시퀀스를 디코딩(생성)</strong>하는 것이다.
+          </p>
+          <p>
+            WMT'14 영어-프랑스어 번역 과제에서, 우리의 다층 LSTM 단일 모델은 전체 테스트 세트에서 <strong>BLEU 34.81점</strong>을 기록하여 기존 구문 기반 통계적 기계번역(SMT) 베이스라인(33.30점)을 크게 앞질렀다. 또한 기존 SMT 시스템의 1,000-best 번역 후보들을 LSTM으로 재채점(Rescoring)했을 때 <strong>BLEU 36.5점</strong>을 달성하여 이전 최고 기록에 근접했다.
+          </p>
+          <p>
+            나아가 우리가 제안한 LSTM은 <strong>매우 긴 문장에서도 번역 품질이 거의 저하되지 않았다.</strong> 이는 <strong>원문(소스) 문장의 단어 순서를 뒤집어(Reverse) 입력</strong>함으로써 학습 과정에서 수많은 단기 의존성(Short-term dependencies)을 유도해 최적화를 극적으로 단순화했기 때문이다.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 1: Introduction -->
+      <section id="sec-intro">
+        <h2 class="section-heading">1. 서론 (Introduction)</h2>
+        <p>
+          심층 신경망(DNN)은 음성 인식, 시각 객체 인식 등 복잡한 패턴 매핑 분야에서 놀라운 성과를 거두었다. DNN이 강력한 이유는 역전파 알고리즘을 통해 파라미터를 임의의 병렬 연산 그래프로 최적화할 수 있기 때문이다. 그러나 DNN의 가장 치명적인 제약은 <strong>입력과 출력의 크기가 미리 고정된 벡터여야 한다</strong>는 점이다.
+        </p>
+        <p>
+          기계번역, 음성 인식, 질의응답과 같은 자연어 처리 과제는 본질적으로 길이가 제각각인 시퀀스 데이터를 다룬다. 예를 들어 영어 문장의 단어 수와 이를 프랑스어로 번역한 문장의 단어 수는 전혀 다르며, 단어 간의 일대일 대응 관계도 비선형적이고 복잡하다. 따라서 도메인에 구애받지 않고 임의의 시퀀스를 또 다른 시퀀스로 자유롭게 매핑할 수 있는 범용 모델이 절실했다.
+        </p>
+
+        <div class="callout callout-insight">
+          <strong>💡 논문의 핵심 발상 (Core Insight):</strong><br>
+          "아무리 긴 문장이라도 하나의 압축된 의미 벡터로 변환할 수 있다면, 그 벡터에서 다시 새로운 언어의 문장을 풀어낼 수 있지 않을까?" 이것이 바로 인코더-디코더 기반 <a href="00_딥러닝_핵심_용어사전.html#term-seq2seq" class="glossary-ref">시퀀스-투-시퀀스(Seq2Seq)</a>의 출발점입니다.
+        </div>
+
+        <p>
+          본 논문에서는 장기 의존성(Long-term dependency) 학습에 능한 <a href="00_딥러닝_핵심_용어사전.html#term-lstm" class="glossary-ref">LSTM(Long Short-Term Memory)</a> 신경망을 채택한다. 하나의 LSTM으로 소스 시퀀스를 한 단어씩 읽어 마지막 단어를 처리했을 때의 <a href="00_딥러닝_핵심_용어사전.html#term-hidden-state" class="glossary-ref">은닉 상태(Hidden State)</a>를 문장 전체의 요약 벡터로 삼고, 두 번째 LSTM이 이 벡터를 시작점으로 삼아 타깃 시퀀스를 순차 생성한다.
+        </p>
+      </section>
+
+      <!-- Section 2: The Model -->
+      <section id="sec-model">
+        <h2 class="section-heading">2. 모델 아키텍처 (The Model)</h2>
+        <p>
+          표준적인 순환 신경망(RNN)은 입력 시퀀스 $(x_1, \dots, x_T)$가 주어졌을 때 다음 반복 수식을 통해 은닉 상태 $h_t$와 출력 시퀀스 $(y_1, \dots, y_T)$를 계산한다:
+        </p>
+        
+        <div class="formula-block">
+          $$h_t = \text{sigmoid}(W^{hx} x_t + W^{hh} h_{t-1})$$
+          $$y_t = W^{yh} h_t$$
+        </div>
+
+        <p>
+          표준 RNN은 입력과 출력의 길이가 같고 둘 사이의 시간적 정렬(Alignment)이 미리 알려진 경우에는 쉽게 적용할 수 있다. 하지만 기계번역처럼 입력 길이 $T$와 출력 길이 $T'$가 다르고 어순이 뒤바뀌는 비단조적(Non-monotonic) 관계에서는 적용이 불가능하다.
+        </p>
+
+        <p>
+          우리가 해결하고자 하는 목표는 소스 시퀀스 $(x_1, \dots, x_T)$가 주어졌을 때 길이가 다른 타깃 시퀀스 $(y_1, \dots, y_{T'})$가 생성될 조건부 확률 $p(y_1, \dots, y_{T'} \mid x_1, \dots, x_T)$을 모델링하는 것이다:
+        </p>
+
+        <div class="formula-block">
+          $$p(y_1, \dots, y_{T'} \mid x_1, \dots, x_T) = \prod_{t=1}^{T'} p(y_t \mid v, y_1, \dots, y_{t-1})$$
+        </div>
+
+        <p>
+          여기서 $v$는 소스 시퀀스를 모두 읽은 후 인코더 LSTM의 마지막 은닉 상태로 주어지는 고정 차원의 <a href="00_딥러닝_핵심_용어사전.html#term-context-vector" class="glossary-ref">컨텍스트 벡터</a>이다. 디코더는 표준 LSTM 언어 모델(Language Model) 형태를 취하며, 매 스텝마다 소프트맥스(Softmax)를 통해 어휘 사전 전체에 대한 단어 확률 분포를 출력한다. 각 문장의 끝에는 특수 토큰 <strong><code>&lt;EOS&gt;</code> (End of Sentence)</strong>를 붙여 모델이 언제 생성을 멈춰야 할지를 스스로 결정하게 한다.
+        </p>
+
+        <!-- Figure 1 Container -->
+        <div class="figure-container" id="sec-fig1">
+          <div class="figure-image-wrapper">
+            <img src="images/paper1/fig1_seq2seq_arch.png" alt="Seq2Seq 모델 아키텍처 다이어그램">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 1 (Figure 1)</span>
+            <strong>Seq2Seq 모델의 입력-출력 시퀀스 처리 과정:</strong><br>
+            인코더 LSTM이 소스 문장 "A", "B", "C", "&lt;EOS&gt;"를 차례대로 읽어 고정 차원의 은닉 표현 벡터로 압축한다. 그 후 디코더 LSTM이 이 표현을 넘겨받아 타깃 문장 "W", "X", "Y", "Z", "&lt;EOS&gt;"를 순차적으로 예측한다. 모델은 특수 토큰 &lt;EOS&gt;를 출력할 때 비로소 생성을 종료한다.
+          </div>
+        </div>
+
+        <h3 class="sub-heading" id="sec-reverse">🌟 성공을 이끈 3가지 핵심 설계 및 역순 입력 트릭</h3>
+        <p>
+          논문에서 제안한 실제 구현 모델은 기본 설명과 비교해 세 가지 결정적인 차이점을 가진다:
+        </p>
+
+        <div class="callout callout-highlight">
+          <ol style="margin-left: 1.25rem;">
+            <li style="margin-bottom: 0.75rem;">
+              <strong>인코더와 디코더의 분리:</strong> 입력 시퀀스를 처리하는 LSTM과 출력 시퀀스를 생성하는 LSTM으로 두 개의 독립된 파라미터 세트를 두었다. 연산 비용은 거의 늘어나지 않으면서 모델 파라미터 용량을 배가시킬 수 있다.
+            </li>
+            <li style="margin-bottom: 0.75rem;">
+              <strong>4층 심층 LSTM (Deep LSTMs):</strong> 단층 LSTM보다 층을 깊게 쌓은 4-Layer LSTM이 얕은 신경망보다 압도적으로 뛰어난 성능을 보였다.
+            </li>
+            <li>
+              <strong>⭐️ 소스 문장 역순 입력 (Reversing the Source Sentences):</strong><br>
+              소스 문장의 단어 순서를 완전히 거꾸로 뒤집어 입력했다. 즉, $(A, B, C) \to (X, Y, Z)$ 대신 <strong>$(C, B, A) \to (X, Y, Z)$</strong>로 학습시킨 것이다!
+            </li>
+          </ol>
+        </div>
+
+        <div class="callout callout-insight">
+          <strong>💡 왜 역순 입력이 기적적인 성능 향상을 가져왔는가? (Short-term Dependencies)</strong><br>
+          원래 순서대로라면 첫 번째 단어 $A$와 그에 대응하는 번역 단어 $X$ 사이의 거리는 입력 문장의 전체 길이만큼 떨어져 있어 역전파 시 기울기가 전달되기 매우 어렵습니다. 하지만 문장을 뒤집으면 $A$ 바로 다음에 디코더의 첫 번째 예측 단어 $X$가 위치하게 되므로 <strong>두 단어 사이의 최소 시간 지연(Minimal Time Lag)이 0에 가깝게 단축</strong>됩니다. 따라서 첫 단어의 기울기가 즉각적으로 인코더에 도달하여 신경망 전체의 가중치가 훨씬 수월하게 최적화됩니다.
+        </div>
+      </section>
+
+      <!-- Section 3: Experiments -->
+      <section id="sec-experiments">
+        <h2 class="section-heading">3. 실험 및 결과 (Experiments)</h2>
+        
+        <h3 class="sub-heading" id="sec-dataset">3.1 데이터셋 상세 (Dataset Details)</h3>
+        <p>
+          WMT'14 영어-프랑스어 기계번역 벤치마크 데이터를 사용했다. 전체 데이터 중 선별된 1,200만 쌍의 병렬 문장(프랑스어 3억 4,800만 단어, 영어 3억 400만 단어)으로 학습을 진행했다.
+        </p>
+        <p>
+          신경망의 계산 효율을 위해 소스 언어(영어)는 가장 빈번한 160,000개 단어, 타깃 언어(프랑스어)는 80,000개 단어로 어휘 사전을 제한했다. 사전에 포함되지 않은 모든 미등록 단어는 특수 토큰 <strong><code>&lt;UNK&gt;</code></strong>로 대체했다.
+        </p>
+
+        <h3 class="sub-heading" id="sec-decoding">3.2 디코딩 및 재채점 (Decoding and Rescoring)</h3>
+        <p>
+          디코딩 시에는 최적의 번역 문장 $\hat{T} = \arg\max_T p(T \mid S)$를 찾기 위해 좌에서 우로 탐색하는 <a href="00_딥러닝_핵심_용어사전.html#term-beam-search" class="glossary-ref">빔 서치(Beam Search)</a>를 적용했다. 빔 크기(Beam Size) $B=1$(Greedy)만으로도 33.0점 이상의 훌륭한 점수가 나왔으며, $B=2$일 때 점수가 급상승했고, $B=12$에서 거의 최적의 성능에 수렴했다.
+        </p>
+
+        <h3 class="sub-heading" id="sec-training">3.4 학습 세부사항 (Training Details)</h3>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+          <li><strong>층 수 및 은닉 노드:</strong> 4개의 층을 적층한 LSTM, 각 층마다 1,000개의 셀(Unit) 및 1,000차원 단어 임베딩 (총 3억 8,400만 파라미터).</li>
+          <li><strong>파라미터 초기화:</strong> $[-0.08, 0.08]$ 범위의 균등 분포(Uniform Distribution)로 초기화.</li>
+          <li><strong>최적화 알고리즘:</strong> 순수 확률적 경사하강법(SGD), 모멘텀 없이 기본 학습률 0.7 적용. 5 에포크 후 매 반 에포크마다 학습률을 절반으로 감쇠 (총 7.5 에포크 학습).</li>
+          <li><strong>미니배치 크기:</strong> 128개 문장 쌍. 긴 문장들의 패딩 낭비를 줄이기 위해 문장 길이가 비슷한 것들끼리 묶어 배치화.</li>
+          <li><strong>기울기 클리핑(Gradient Clipping):</strong> 기울기 폭발을 방지하기 위해 전체 기울기 노름 $\|g\|_2 > 5$일 때 스케일을 5로 강제 조정.</li>
+        </ul>
+
+        <h3 class="sub-heading" id="sec-results">3.6 실험 결과 (Quantitative Results)</h3>
+        <p>
+          WMT'14 영어-프랑스어 공식 테스트 세트(ntst14)에서의 번역 성능 결과는 다음과 같다.
+        </p>
+
+        <!-- Table 1 Container -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>모델 (Method)</th>
+                <th>테스트 BLEU 점수 (ntst14)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Bahdanau et al. (ICLR 2015 어텐션 모델)</td>
+                <td>28.4</td>
+              </tr>
+              <tr>
+                <td>기존 구문 기반 SMT 베이스라인 (Moses)</td>
+                <td>33.30</td>
+              </tr>
+              <tr>
+                <td><strong>LSTM 단일 모델 (앙상블 이전, Beam=12)</strong></td>
+                <td><strong>34.81</strong></td>
+              </tr>
+              <tr>
+                <td><strong>LSTM 5개 모델 앙상블 (Ensemble)</strong></td>
+                <td><strong>34.81</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          또한 SMT 시스템이 뽑아낸 1,000개의 번역 후보 목록을 LSTM으로 재채점(Rescoring)했을 때 성능이 더욱 비약적으로 상승했다:
+        </p>
+
+        <!-- Table 2 Container -->
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>재채점 방식 (Rescoring Method)</th>
+                <th>테스트 BLEU 점수</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SMT 베이스라인 단독</td>
+                <td>33.3</td>
+              </tr>
+              <tr>
+                <td>SMT 베이스라인 + LSTM 5개 앙상블 재채점</td>
+                <td><strong>36.5 (+3.2 상승)</strong></td>
+              </tr>
+              <tr>
+                <td>당시 역대 최고 대회 1위 기록 (Durrani et al.)</td>
+                <td>37.0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 3.7: Long Sentences -->
+        <h3 class="sub-heading" id="sec-long-sentences">3.7 긴 문장에서의 놀라운 번역 유지력 (Performance on Long Sentences)</h3>
+        <p>
+          당시 연구자들의 가장 큰 우려는 "고정 크기 벡터에 문장을 우겨넣으면 문장이 길어질 때 기억을 잃어버리지 않겠는가?"였다. 그러나 우리의 LSTM은 문장이 길어져도 번역 성능이 거의 떨어지지 않았다!
+        </p>
+
+        <!-- Figure 3 Container -->
+        <div class="figure-container" id="sec-fig3">
+          <div class="figure-image-wrapper">
+            <img src="images/paper1/fig3_length_frequency_perf.png" alt="문장 길이 및 단어 희귀도에 따른 BLEU 성능 그래프">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 3 (Figure 3)</span>
+            <strong>문장 길이(좌) 및 단어 희소성(우)에 따른 번역 품질:</strong><br>
+            <strong>왼쪽 그래프:</strong> 테스트 문장을 길이 순으로 정렬했을 때의 BLEU 점수 변화. 35단어 이하의 문장에서는 성능 저하가 전혀 없었으며, 60~70단어가 넘어가는 초장문에서도 베이스라인(33.3점)을 훨씬 웃도는 매우 안정적인 번역 품질을 유지했다.<br>
+            <strong>오른쪽 그래프:</strong> 희귀 단어(Rare words)가 포함된 문장들에 대한 성능 추이. 어휘 사전 외의 희귀 단어가 많아질수록 성능이 점진적으로 완만하게 감소한다.
+          </div>
+        </div>
+
+        <!-- Section 3.8: PCA Analysis -->
+        <h3 class="sub-heading" id="sec-model-analysis">3.8 모델 은닉 상태 표현 분석 (Model Analysis)</h3>
+        <p>
+          LSTM이 학습한 문장 표현의 성질을 시각화하기 위해, 여러 문장들을 인코딩한 마지막 은닉 상태를 주성분 분석(PCA)으로 2차원 투영했다.
+        </p>
+
+        <!-- Figure 2 Container -->
+        <div class="figure-container" id="sec-fig2">
+          <div class="figure-image-wrapper">
+            <img src="images/paper1/fig2_pca_embeddings.png" alt="LSTM 은닉 상태의 2차원 PCA 투영 시각화">
+          </div>
+          <div class="figure-caption-box">
+            <span class="figure-badge">그림 2 (Figure 2)</span>
+            <strong>LSTM 은닉 상태의 2차원 PCA 투영 결과:</strong><br>
+            문장들이 단순한 단어의 집합(Bag-of-words)이 아니라 문맥과 의미 구조에 따라 클러스터링됨을 명확히 보여준다.
+            "Mary respects John"과 "John respects Mary"는 단어 구성은 같지만 주어와 목적어의 순서(어순)가 바뀌자 공간상에서 서로 멀리 떨어져 위치한다.
+            반면 능동태 "I gave her a card in the garden"과 수동태 "She was given a card by me in the garden"은 의미가 같기 때문에 공간상에서 서로 매우 가깝게 군집을 형성한다.
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Section 4: Related Work -->
+      <section id="sec-related">
+        <h2 class="section-heading">4. 관련 연구 (Related Work)</h2>
+        <p>
+          신경망을 기계번역에 적용하려는 시도는 지속되어 왔다. Schwenk et al., Devlin et al. 등은 통계적 번역 시스템(SMT)의 n-best 후보를 신경망 언어 모델로 재채점하는 연구를 진행했다.
+        </p>
+        <p>
+          종단 간 시퀀스 변환 모델과 관련하여, Kalchbrenner & Blunsom(2013)은 합성곱 신경망(CNN)으로 문장을 인코딩하고 RNN으로 디코딩하는 방식을 제안했으나 CNN 특성상 어순 정보가 손실되는 한계가 있었다.
+        </p>
+        <p>
+          또한 우리 연구와 거의 동시에 Cho et al.(2014)은 GRU 기반의 RNN 인코더-디코더 모델을 제안했으나 주로 SMT 시스템의 구문 점수 보조용으로 사용했다. Bahdanau et al.(2014)은 긴 문장에서의 기억력 문제를 극복하기 위해 어텐션(Attention) 메커니즘을 최초로 시도했다. 우리는 별도의 어텐션 없이도 <strong>소스 문장 역순 입력</strong>과 <strong>4층 심층 LSTM</strong>만으로 긴 문장 문제를 충분히 극복할 수 있음을 입증했다.
+        </p>
+      </section>
+
+      <!-- Section 5: Conclusion -->
+      <section id="sec-conclusion">
+        <h2 class="section-heading">5. 결론 (Conclusion)</h2>
+        <p>
+          본 논문에서는 복잡한 도메인 지식이나 어휘 구조에 대한 강한 가정 없이, 충분한 용량을 지닌 <strong>심층 다층 LSTM</strong>만으로 대규모 기계번역 과제에서 기존 구문 기반 SMT 시스템을 능가할 수 있음을 증명했다.
+        </p>
+        <p>
+          특히 <strong>입력 문장의 단어 순서를 뒤집는 단순한 데이터 변환</strong>이 최적화 난이도를 획기적으로 낮추어 준다는 점을 발견한 것은 본 연구의 가장 독창적인 기술적 기여이다.
+        </p>
+        <p>
+          이 연구는 현대 자연어 처리의 패러다임이 복잡한 수작업 통계 파이프라인에서 <strong>단일 신경망 기반의 종단 간 시퀀스-투-시퀀스 학습</strong>으로 대전환하는 역사적 기폭제가 되었다.
+        </p>
+      </section>
+
+      <!-- Bottom Nav -->
+      <div class="paper-nav-footer">
+        <a href="00_딥러닝_핵심_용어사전.html" class="nav-paper-card">
+          <div class="nav-direction">← 핵심 개념 사전</div>
+          <div class="nav-title">📚 딥러닝 & NLP 핵심 용어 사전</div>
+        </a>
+        <a href="02_Bahdanau_어텐션_신경망_기계번역_한국어.html" class="nav-paper-card" style="text-align: right;">
+          <div class="nav-direction">다음 논문 읽기 →</div>
+          <div class="nav-title">📄 2편: Bahdanau Attention 완역</div>
+        </a>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

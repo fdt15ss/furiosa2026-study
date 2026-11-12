@@ -1,0 +1,177 @@
+================================================================================
+Mask R-CNN 네이티브 구현 코드 한 줄씩 상세 해설
+슬라이드 11 ~ 16 (코드 ① ~ ⑥)
+================================================================================
+
+제공된 PPT의 "03 · NATIVE IMPLEMENTATION" 섹션에 있는 6개 코드 블록을
+한 줄씩 상세하게 설명한 자료입니다.
+
+
+--------------------------------------------------------------------------------
+① roi_align()  (슬라이드 11)
+--------------------------------------------------------------------------------
+
+def roi_align(feat, rois, out_size, spatial_scale=1.0, sampling_ratio=2):
+    - feat          : 백본/FPN이 뽑은 특징맵 [B, C, H, W]
+    - rois          : 관심 영역 [K, 5] → (batch_idx, x1, y1, x2, y2)
+    - out_size      : 출력 크기 (보통 14 또는 7)
+    - spatial_scale : 이미지 좌표 → 특징맵 좌표로 변환하는 배율 (예: 1/4, 1/8)
+    - sampling_ratio: 각 bin 안에서 몇 개의 샘플 포인트를 뽑을지 (기본 2 → 2×2=4개)
+
+K, (C, H, W), s, n = rois.shape[0], feat.shape[1:], sampling_ratio, out_size
+    - K = RoI 개수
+    - C, H, W = 특징맵 채널·높이·너비
+    - s = sampling_ratio, n = out_size
+
+b = rois[:, 0].long()
+    - 각 RoI가 어느 배치(이미지)에 속하는지 정수 인덱스로 추출
+
+x1, y1, x2, y2 = (rois[:, 1:] * spatial_scale - 0.5).unbind(1)
+    - 이미지 좌표를 특징맵 좌표로 바꾸고, 0.5를 빼서 픽셀 중심 기준으로 정렬
+      (aligned=True와 동일한 효과)
+
+bin_w, bin_h = (x2 - x1) / n, (y2 - y1) / n
+    - RoI를 n×n개의 bin으로 나눈다.
+    - 정수로 반올림하지 않고 실수 크기를 그대로 유지하는 것이 RoIAlign의 핵심
+
+t = (torch.arange(n * s, device=feat.device) + 0.5) / s
+    - 각 bin 안에서 sampling_ratio개 샘플 위치를 균등하게 생성
+    - 0.5를 더해 중심 정렬
+
+xs = x1[:, None] + t[None] * bin_w[:, None]
+ys = y1[:, None] + t[None] * bin_h[:, None]
+    - 모든 RoI의 모든 샘플 포인트 x, y 좌표를 실수로 계산
+
+gx = (2 * xs / (W - 1) - 1)[:, None, :].expand(K, n * s, n * s)
+gy = (2 * ys / (H - 1) - 1)[:, :, None].expand(K, n * s, n * s)
+    - grid_sample이 요구하는 [-1, 1] 정규화 좌표로 변환하고, 2D 그리드로 확장
+
+grid = torch.stack([gx, gy], dim=-1)
+    - 최종 샘플링 그리드 [K, n*s, n*s, 2]
+
+out = F.grid_sample(feat[b], grid, mode="bilinear",
+                    padding_mode="border", align_corners=True)
+    - bilinear 보간으로 주변 4픽셀을 가중합
+    - 좌표 양자화 없이 부드러운 특징 추출
+
+return F.avg_pool2d(out, s)
+    - 각 bin 안의 샘플들을 평균 풀링해서 최종 [K, C, n, n] 출력
+
+
+--------------------------------------------------------------------------------
+② MaskHead  (슬라이드 12)
+--------------------------------------------------------------------------------
+
+class MaskHead(nn.Module):
+    def __init__(self, in_channels=256):
+        super().__init__()
+        layers = []
+        for i in range(4):
+            layers += [nn.Conv2d(in_channels if i == 0 else 256, 256,
+                                kernel_size=3, padding=1),
+                       nn.ReLU(inplace=True)]
+        self.conv_tower = nn.Sequential(*layers)
+        self.deconv = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2)
+
+    - 3×3 Conv + ReLU를 4번 쌓아서 14×14 특징을 정제
+    - 마지막에 2×2 transposed conv로 28×28로 업샘플링 (마스크 해상도 확보)
+
+    def forward(self, roi_features):          # [N,256,14,14]
+        x = self.conv_tower(roi_features)     # [N,256,14,14]
+        return F.relu(self.deconv(x))         # [N,256,28,28]
+
+    - 입력은 RoIAlign 출력
+    - 출력은 마스크 예측에 바로 쓸 수 있는 28×28 특징
+
+
+--------------------------------------------------------------------------------
+③ MaskPredictor + MaskBranch  (슬라이드 13)
+--------------------------------------------------------------------------------
+
+class MaskPredictor(nn.Module):
+    def __init__(self, num_classes, in_channels=256):
+        super().__init__()
+        self.logits = nn.Conv2d(in_channels, num_classes, kernel_size=1)
+
+    def forward(self, x):                     # [N,256,28,28]
+        return self.logits(x)                 # [N,K,28,28]
+
+    - 1×1 Conv로 클래스마다 독립적인 28×28 마스크 로짓 생성
+    - Softmax가 아니라 각 채널이 독립적으로 동작 (나중에 BCE 사용)
+
+class MaskBranch(nn.Module):
+    def __init__(self, num_classes, spatial_scale=1 / 4):
+        super().__init__()
+        self.scale = spatial_scale
+        self.head = MaskHead(256)
+        self.predictor = MaskPredictor(num_classes)
+
+    def forward(self, feat, rois):
+        x = roi_align(feat, rois, 14, self.scale)   # [P,256,14,14]
+        return self.predictor(self.head(x))         # [P,K,28,28]
+
+    - RoIAlign → MaskHead → MaskPredictor를 하나의 forward로 연결
+    - spatial_scale은 FPN 레벨에 따라 달라질 수 있음 (예제에서는 1/4)
+
+
+--------------------------------------------------------------------------------
+④ Mask Target 생성  (슬라이드 14)
+--------------------------------------------------------------------------------
+
+mask_targets = []
+for boxes_i, gt_masks_i in zip(positive_boxes, matched_gt_masks):
+    ids = torch.arange(boxes_i.shape[0], device=boxes_i.device)[:, None]
+    rois = torch.cat([ids, boxes_i], dim=1)            # [batch_idx, x1,y1,x2,y2]
+    t = roi_align(gt_masks_i[:, None].float(), rois,
+                  out_size=28, spatial_scale=1.0)[:, 0]
+    mask_targets.append((t >= 0.5).float())
+targets = torch.cat(mask_targets)
+
+    - Positive RoI만 사용 (Negative는 마스크 손실에서 제외)
+    - GT 마스크에도 동일한 roi_align을 적용해 28×28로 crop + resize
+    - 0.5를 기준으로 이진화해서 최종 타깃 [P, 28, 28] 생성
+
+
+--------------------------------------------------------------------------------
+⑤ mask_loss()  (슬라이드 15)
+--------------------------------------------------------------------------------
+
+def mask_loss(logits, labels, targets):
+    # logits: [P,K,28,28]   labels: [P]   targets: [P,28,28]
+    idx = torch.arange(logits.shape[0], device=logits.device)
+    pred = logits[idx, labels]       # GT 클래스 채널만 선택
+    return F.binary_cross_entropy_with_logits(pred, targets)
+
+    - logits[idx, labels]로 정답 클래스 채널만 골라냄
+    - Softmax를 쓰지 않고 픽셀별 sigmoid + BCE → 클래스 간 경쟁이 없음
+    - 총 손실은 L = L_cls + L_box + L_mask 형태로 병렬 학습
+
+
+--------------------------------------------------------------------------------
+⑥ paste_masks()  (슬라이드 16)
+--------------------------------------------------------------------------------
+
+def paste_masks(logits, labels, boxes, h, w):
+    idx = torch.arange(len(labels), device=logits.device)
+    probs = logits[idx, labels].sigmoid()            # 예측 클래스 채널 → 확률
+    out = []
+    for p, box in zip(probs, boxes):
+        x1, y1, x2, y2 = box.round().long().tolist()
+        x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
+        canvas = torch.zeros((h, w), dtype=torch.bool, device=p.device)
+        if x2 > x1 and y2 > y1:
+            m = F.interpolate(p[None, None], size=(y2 - y1, x2 - x1),
+                              mode="bilinear", align_corners=False)[0, 0]
+            canvas[y1:y2, x1:x2] = m > 0.5
+        out.append(canvas)
+    return torch.stack(out)                          # [D,H,W]
+
+    - 예측된 클래스 채널의 28×28 확률맵만 선택
+    - Bounding Box 크기로 bilinear 업샘플링
+    - 원본 이미지 크기의 캔버스에 붙이고 0.5로 이진화
+    - 최종 결과: 각 인스턴스별 이진 마스크 [D, H, W]
+
+
+================================================================================
+끝
+================================================================================
