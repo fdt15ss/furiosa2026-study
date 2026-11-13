@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q·K·V와 멀티헤드 어텐션</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1220; --surface:#171C2E; --line:#3A4259; --text:#F2F4F8; --muted:#8F99B0; --ink:#1A1D29;
+    --q:#FFB547; --k:#3DD6C6; --v:#A78BFA; --hot:#5AB0FF;
+    --matmul:#C9C3F2; --scale:#F5E9A6; --mask:#F6C6D3; --softmax:#BFE6C8; --linear:#E3E5EA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#05070D;overflow:hidden}
+  body{font-family:'IBM Plex Sans KR',sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1920px;height:1080px;background:var(--bg);transform-origin:center center;overflow:hidden;flex:none}
+  .slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .45s ease}
+  .slide.on{opacity:1;pointer-events:auto}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .kicker{position:absolute;left:120px;top:72px;font:500 20px 'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.06em}
+  .title{position:absolute;left:120px;top:106px;font-weight:700;font-size:54px;letter-spacing:-.01em}
+  .footer{position:absolute;left:120px;top:1018px;font-size:18px;color:var(--muted)}
+  .hint{position:absolute;right:120px;top:1018px;font-size:18px;color:var(--muted);font-weight:500}
+  .dots{position:absolute;right:120px;top:72px;display:flex;gap:8px}
+  .dots i{width:10px;height:10px;border-radius:5px;background:var(--line);transition:all .3s}
+  .dots i.on{width:28px;background:var(--text)}
+  svg text{font-family:'IBM Plex Sans KR',sans-serif}
+
+  /* ---------- slide 1 cards ---------- */
+  .card{position:absolute;left:120px;width:640px;display:flex;gap:24px;padding:26px 28px;border-radius:24px;
+        background:var(--surface);border:2px solid var(--line);opacity:.4;transition:opacity .45s, border-color .45s, transform .45s}
+  .card .chip{flex:none;width:88px;height:88px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+        font:700 48px 'JetBrains Mono',monospace;color:var(--ink)}
+  .card .name{font-weight:700;font-size:30px;line-height:1.3}
+  .card .role,.card .ex{opacity:0;transform:translateY(10px);transition:opacity .45s .1s, transform .45s .1s}
+  .card .role{font-weight:600;font-size:26px;line-height:1.4;margin-top:4px}
+  .card .ex{font-size:20px;line-height:1.5;color:var(--muted);margin-top:6px}
+  .card.active{opacity:1;transform:translateX(8px)}
+  .card.past{opacity:.6}
+  .card.active .role,.card.active .ex,.card.past .role,.card.past .ex{opacity:1;transform:none}
+  #card-Q{top:300px} #card-K{top:515px} #card-V{top:730px}
+  #card-Q .chip{background:var(--q)} #card-Q .role{color:var(--q)} #card-Q.active{border-color:var(--q)}
+  #card-K .chip{background:var(--k)} #card-K .role{color:var(--k)} #card-K.active{border-color:var(--k)}
+  #card-V .chip{background:var(--v)} #card-V .role{color:var(--v)} #card-V.active{border-color:var(--v)}
+
+  .ring{opacity:0;transition:opacity .4s}
+  .ring.on{opacity:1;animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{stroke-width:2.5}50%{stroke-width:5}}
+
+  /* pointer */
+  #pointer{position:absolute;top:956px;left:935px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;
+           opacity:0;transition:left .55s cubic-bezier(.65,0,.35,1), opacity .35s;--c:var(--q)}
+  #pointer.on{opacity:1}
+  #pointer svg{animation:bob 1.1s ease-in-out infinite}
+  #pointer svg path{stroke:var(--c);transition:stroke .45s}
+  #pointer .bubble{background:var(--c);color:var(--ink);font-weight:700;font-size:24px;padding:9px 22px;border-radius:999px;white-space:nowrap;transition:background .45s}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* ---------- slide 2 hotspots ---------- */
+  .hs{position:absolute;left:880px;width:56px;height:56px}
+  .hs .dot{width:56px;height:56px;border-radius:50%;border:2.5px solid var(--hot);background:var(--bg);color:var(--hot);
+           font:700 24px 'JetBrains Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;
+           transition:background .25s,color .25s, transform .2s;position:relative}
+  .hs .dot::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--hot);opacity:.0;animation:ping 2.2s ease-out infinite}
+  .hs .dot:hover{transform:scale(1.08)}
+  .hs.open .dot{background:var(--hot);color:var(--ink)}
+  .hs.open .dot::after{animation:none}
+  @keyframes ping{0%{opacity:.6;transform:scale(.9)}80%,100%{opacity:0;transform:scale(1.35)}}
+  .hs .link{position:absolute;left:56px;top:27px;width:56px;height:2px;background:var(--hot);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+  .hs.open .link{transform:scaleX(1)}
+  .hs .cap{position:absolute;left:112px;top:-12px;width:700px;padding:16px 22px;border-radius:18px;background:var(--surface);
+           border:1.5px solid var(--hot);opacity:0;transform:translateY(22px);pointer-events:none;
+           transition:opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1)}
+  .hs.open .cap{opacity:1;transform:none;pointer-events:auto}
+  .hs[data-hs="5"] .cap{top:-22px} .hs[data-hs="4"] .cap{top:-4px}
+  .hs .cap b{display:block;font-weight:600;font-size:24px;line-height:1.25}
+  .hs .cap p{font-size:19px;line-height:1.5;color:var(--muted);margin-top:6px}
+  .hs .cap code{font-family:'JetBrains Mono',monospace;color:var(--text);font-size:18px}
+  .part{cursor:pointer}
+  .part rect.main{transition:stroke .25s, stroke-width .25s}
+  .part.hl rect.main{stroke:var(--hot);stroke-width:4}
+  .gh1,.gh2{transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+  .fan .gh1{transform:translate(10px,-10px)} .fan .gh2{transform:translate(22px,-22px)}
+  .leader{stroke:var(--hot);stroke-width:2;stroke-dasharray:4 7;opacity:.45}
+
+  /* ---------- slide 3 : I am a teacher ---------- */
+  .sub{position:absolute;left:120px;top:190px;font-size:26px;font-weight:500;color:#C9D0DE}
+  .sub b{color:var(--text)}
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .45s ease, transform .5s cubic-bezier(.2,.8,.2,1)}
+  .reveal.vis{opacity:1;transform:none}
+  .rowlab{position:absolute;left:120px;font-weight:600;font-size:22px;color:var(--muted);line-height:1.3}
+  .rowlab .L{font:700 22px 'JetBrains Mono',monospace;margin-right:6px}
+  .rowlab .op{display:block;font:700 20px 'JetBrains Mono',monospace;color:var(--hot);margin-top:4px;min-height:26px}
+  .tok{position:absolute;width:180px;height:72px;margin-left:-90px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+       font-weight:600;font-size:32px;background:var(--surface);border:2px solid var(--line);transition:border-color .4s, background .4s, color .4s}
+  .tok.sent.isq{border-color:var(--q);color:var(--q)}
+  .tok.query{background:var(--q);color:var(--ink);border-color:var(--q)}
+  .tok.key{border-color:var(--k);color:var(--k)}
+  .tok.val{border-color:var(--v);height:78px;flex-direction:column;gap:0;font:700 22px 'JetBrains Mono',monospace;color:var(--v)}
+  .tok.val small{font:700 18px 'JetBrains Mono',monospace;color:var(--q);opacity:0;transition:opacity .4s .25s}
+  .tok.val.w small{opacity:1}
+  .score{position:absolute;width:180px;margin-left:-90px;text-align:center;font:700 30px 'JetBrains Mono',monospace;top:688px}
+  .bar{position:absolute;top:738px;width:160px;margin-left:-80px;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--k);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .ql{stroke:var(--k);stroke-opacity:.55;transition:stroke-width .6s, stroke-opacity .6s}
+  #result{position:absolute;left:270px;top:900px;width:870px;padding:14px 24px;border-radius:16px;text-align:center;
+          background:linear-gradient(90deg,rgba(255,181,71,.16),rgba(167,139,250,.2));border:1.5px solid var(--v);font-size:24px}
+  #result{white-space:nowrap;padding:14px 16px}
+  #result .mono{font-size:18px;letter-spacing:-.02em}
+  .blk rect{transition:stroke .3s, stroke-width .3s}
+  .blk.hl rect{stroke:var(--hot);stroke-width:4.5}
+  .blk.hl2 rect{stroke:var(--hot);stroke-width:3;stroke-dasharray:8 6}
+  .badge{opacity:.22;transition:opacity .3s}
+  .badge.on{opacity:1}
+
+  /* ---------- slide 4 ---------- */
+  .panel{position:absolute;top:400px;width:440px;height:400px;padding:30px 32px;border-radius:24px;background:var(--surface);border:2px solid var(--line)}
+  #enc{left:120px} #dec{left:1360px}
+  .ptitle{font-weight:700;font-size:34px}
+  .pdesc{font-size:20px;color:var(--muted);margin-top:6px}
+  .plab{font-size:18px;color:var(--muted);margin-top:150px;margin-bottom:10px;font-weight:600}
+  .chips{display:flex;gap:10px}
+  .chips span{flex:1;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px;border:2px solid;white-space:nowrap}
+  .chips .c-enc:last-child{flex:1.7}
+  .c-enc{border-color:var(--k);color:var(--text);background:linear-gradient(135deg,rgba(61,214,198,.18),rgba(167,139,250,.18))}
+  .c-done{border-color:var(--line);color:var(--muted)}
+  .c-now{border-color:var(--q);background:var(--q);color:var(--ink)}
+  .c-next{border-color:var(--line);border-style:dashed !important;color:var(--line)}
+  .ask{position:absolute;left:1360px;top:268px;width:440px;padding:14px 22px;border-radius:18px 18px 18px 4px;background:rgba(255,181,71,.12);
+       border:1.5px solid var(--q);font-size:20px;color:var(--muted);line-height:1.45}
+  .ask b{color:var(--text);font-size:26px}
+  #teaser{position:absolute;left:360px;top:950px;width:1200px;text-align:center;font-size:24px;color:var(--muted)}
+  #teaser .mono{color:var(--text);font-size:24px}
+
+  /* ---------- scenes 09-13 ---------- */
+  .fx{position:absolute;left:0;width:1920px;text-align:center;font:700 52px 'JetBrains Mono',monospace;letter-spacing:-.01em}
+  .fx.sm{font-size:36px}
+  .fp{padding:2px 8px;border-radius:12px;transition:background .35s, box-shadow .35s}
+  .fp.hl{background:rgba(90,176,255,.18);box-shadow:0 0 0 2px var(--hot)}
+  .w{color:var(--hot)}
+  .note{position:absolute;left:120px;width:900px;padding:20px 26px;border-left:5px solid var(--hot);background:var(--surface);
+        border-radius:0 16px 16px 0;font-size:25px;line-height:1.55;color:#D5DBE7}
+  .note b{color:var(--text)}
+  .op{position:absolute;font:700 40px 'JetBrains Mono',monospace;color:var(--muted)}
+  .mcap{position:absolute;font:600 18px 'IBM Plex Sans KR',sans-serif;color:var(--muted);text-align:center}
+  .mx{position:absolute;display:grid;gap:3px;align-items:center}
+  .mx i{display:flex;align-items:center;justify-content:center;border-radius:6px;font:600 15px 'JetBrains Mono',monospace;color:var(--text);font-style:normal}
+  .mx i.neg{color:#FF8A8A}
+  .mx .rl{font:600 17px 'IBM Plex Sans KR',sans-serif;color:var(--muted);padding-right:10px;text-align:right}
+  .mx .cl{font:600 14px 'IBM Plex Sans KR',sans-serif;color:var(--muted);text-align:center;padding-bottom:2px}
+  .colh{position:absolute;font:600 18px 'JetBrains Mono',monospace;color:var(--hot);text-align:center;width:140px}
+  .val{position:absolute;font:700 28px 'JetBrains Mono',monospace;text-align:center;width:140px}
+  .pbar{position:absolute;width:120px;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+  .pbar i{display:block;height:100%;background:var(--k)}
+  .acard{position:absolute;top:290px;width:520px;height:540px;padding:28px;border-radius:24px;background:var(--surface);border:2px solid var(--line)}
+  .acard h3{font-size:28px;font-weight:700}
+  .acard .src{font-size:20px;font-weight:600;margin-top:8px}
+  .acard svg{position:absolute;left:30px;bottom:24px}
+  .heatrow{position:absolute;left:120px;top:870px;display:flex;align-items:center;gap:10px;font-size:20px;color:var(--muted)}
+  .heatrow span{padding:10px 16px;border-radius:12px;font:600 24px 'IBM Plex Sans KR',sans-serif;color:var(--text);border:1.5px solid var(--line)}
+  .prog{position:absolute;right:120px;top:70px;display:flex;align-items:center;gap:14px;font:500 16px 'JetBrains Mono',monospace;color:var(--muted)}
+  .prog .track{width:220px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+  .prog .track i{display:block;height:100%;background:var(--text);transition:width .4s}
+
+  /* ---------- scenes 01-07 ---------- */
+  .tlline{position:absolute;left:160px;top:640px;width:1600px;height:3px;background:var(--line)}
+  .tln{position:absolute;top:626px;width:230px;margin-left:-115px;text-align:center}
+  .tln .dot{width:30px;height:30px;border-radius:50%;margin:0 auto;background:var(--bg);border:3px solid var(--muted)}
+  .tln .yr{font:700 22px 'JetBrains Mono',monospace;color:var(--muted);margin-top:14px}
+  .tln .nm{font-weight:700;font-size:28px;margin-top:2px}
+  .tln .ds{font-size:18px;color:var(--muted);margin-top:6px;line-height:1.4}
+  .tln.key .dot{border-color:var(--hot);background:var(--hot)} .tln.key .nm{color:var(--hot)}
+  .tln.bad .ds{color:#FF8A8A}
+  .mx.rot .cl{writing-mode:vertical-rl;transform:rotate(180deg);text-align:left;height:118px;justify-self:center;font-size:15px}
+  .svhl rect, .svhl path{transition:stroke .3s, stroke-width .3s}
+  .svhl.hl rect{stroke:var(--hot);stroke-width:4.5}
+  .svhl.hl path{stroke:var(--hot) !important;stroke-width:5}
+  .dpanel{position:absolute;left:1460px;top:360px;width:340px;padding:22px;border-radius:20px;background:var(--surface);border:2px solid var(--line)}
+  .dpanel h4{font-size:22px;font-weight:700;margin-bottom:14px}
+  .dpanel div{padding:12px 14px;border-radius:12px;background:#0E1220;border:1.5px solid var(--line);margin-top:10px;font-size:19px;font-weight:600}
+  .dpanel div small{display:block;font-size:16px;font-weight:500;color:var(--muted);margin-top:2px}
+  .dpanel div.on{border-color:var(--hot)}
+
+  #fs{position:fixed;right:14px;bottom:12px;background:rgba(255,255,255,.08);color:#9aa3b8;border:0;border-radius:8px;
+      padding:6px 10px;font:500 12px 'IBM Plex Sans KR',sans-serif;cursor:pointer;z-index:5}
+  #fs:hover{background:rgba(255,255,255,.16)}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <!-- ================= SCENE 01 ================= -->
+  <section class="slide gen" id="p1">
+    <div class="kicker">장면 01 · 기계 번역의 발전</div>
+    <div class="title">Attention Is All You Need — 트랜스포머</div>
+    <div class="sub"></div>
+    <div class="acard reveal" data-show="0" style="left:120px;top:290px;height:200px;width:560px"><h3 style="font-size:44px">GPT</h3><div class="src" style="color:var(--q);font-size:24px">트랜스포머의 디코더 아키텍처 활용</div></div>
+    <div class="acard reveal" data-show="0" style="left:720px;top:290px;height:200px;width:560px"><h3 style="font-size:44px">BERT</h3><div class="src" style="color:var(--k);font-size:24px">트랜스포머의 인코더 아키텍처 활용</div></div>
+    <div class="note reveal" data-only="0" style="left:1320px;top:290px;width:480px;font-size:22px">제목 그대로 — <b>어텐션 메커니즘</b>을 전적으로 활용하는 아키텍처. 최신 자연어 처리 모델의 기반.</div>
+    <div class="tlline reveal" data-show="1"></div>
+    <div class="tln reveal" data-show="1" style="left:230px"><div class="dot"></div><div class="yr">1986</div><div class="nm">RNN</div><div class="ds">순서대로 읽으며<br>히든 스테이트 갱신</div></div>
+    <div class="tln reveal" data-show="1" style="left:530px"><div class="dot"></div><div class="yr">1997</div><div class="nm">LSTM</div><div class="ds">다양한 시퀀스 모델링<br>(주가 · 주기 함수 예측)</div></div>
+    <div class="tln bad reveal" data-show="2" style="left:830px"><div class="dot"></div><div class="yr">2014</div><div class="nm">Seq2Seq</div><div class="ds">고정 크기 컨텍스트 벡터<br>→ 성능의 병목</div></div>
+    <div class="tln reveal" data-show="3" style="left:1130px"><div class="dot"></div><div class="yr">2015</div><div class="nm">+ Attention</div><div class="ds">Seq2Seq에 어텐션 적용<br>→ 성능 향상</div></div>
+    <div class="tln key reveal" data-show="4" style="left:1430px"><div class="dot"></div><div class="yr">2017</div><div class="nm">Transformer</div><div class="ds">RNN 없이<br>어텐션만으로</div></div>
+    <div class="tln reveal" data-show="4" style="left:1690px"><div class="dot"></div><div class="yr">이후</div><div class="nm">GPT · BERT</div><div class="ds">트랜스포머 기반<br>고성능 모델</div></div>
+    <div class="note reveal" data-show="4" style="top:880px;width:1100px;font-size:22px">이후 연구는 <b>입력 시퀀스 전체에서 정보를 추출</b>하는 방향으로 발전했다.</div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 02 ================= -->
+  <section class="slide gen" id="p2">
+    <div class="kicker">장면 02 · SEQ2SEQ</div>
+    <div class="title">Seq2Seq의 동작과 고정 컨텍스트 병목</div>
+    <div class="sub"></div>
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g class="svhl" data-hl="5" stroke="#1A1D29" stroke-width="2">
+        <rect x="160" y="500" width="120" height="80" rx="14" fill="#BFE6C8"/><rect x="330" y="500" width="120" height="80" rx="14" fill="#BFE6C8"/><rect x="500" y="500" width="120" height="80" rx="14" fill="#BFE6C8"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="24" font-weight="700" fill="#1A1D29" text-anchor="middle"><text x="220" y="548">h1</text><text x="390" y="548">h2</text><text x="560" y="548">h3</text></g>
+      <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"><path d="M282 540H326"/><path d="M452 540H496"/><path d="M220 632V586"/><path d="M390 632V586"/><path d="M560 632V586"/></g>
+      <g font-size="26" font-weight="600" fill="#F2F4F8" text-anchor="middle"><text x="220" y="664">ich</text><text x="390" y="664">liebe</text><text x="560" y="664">dich</text></g>
+      <text x="390" y="470" font-size="20" fill="#8F99B0" text-anchor="middle">인코더 (독일어 입력)</text>
+      <g class="reveal" data-show="1">
+        <path d="M622 540H676" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"/>
+        <rect x="680" y="490" width="110" height="100" rx="14" fill="#FFB547" stroke="#1A1D29" stroke-width="2"/>
+        <text x="735" y="548" font-family="JetBrains Mono" font-size="26" font-weight="700" fill="#1A1D29" text-anchor="middle">v</text>
+        <text x="735" y="628" font-size="20" fill="#FFB547" text-anchor="middle">컨텍스트 벡터</text>
+      </g>
+      <rect class="reveal" data-only="3" x="668" y="478" width="134" height="124" rx="18" fill="none" stroke="#FF8A8A" stroke-width="4" stroke-dasharray="10 6"/>
+      <g class="reveal" data-show="2">
+        <path d="M792 540H896" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"/>
+        <g stroke="#1A1D29" stroke-width="2" fill="#C9C3F2"><rect x="900" y="500" width="120" height="80" rx="14"/><rect x="1060" y="500" width="120" height="80" rx="14"/><rect x="1220" y="500" width="120" height="80" rx="14"/><rect x="1380" y="500" width="120" height="80" rx="14"/></g>
+        <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"><path d="M1022 540H1056"/><path d="M1182 540H1216"/><path d="M1342 540H1376"/>
+          <path d="M960 632V586"/><path d="M1120 632V586"/><path d="M1280 632V586"/><path d="M1440 632V586"/>
+          <path d="M960 496V456"/><path d="M1120 496V456"/><path d="M1280 496V456"/><path d="M1440 496V456"/></g>
+        <g font-size="24" font-weight="600" text-anchor="middle"><text x="960" y="664" fill="#8F99B0">&lt;sos&gt;</text><text x="1120" y="664" fill="#FFB547">I</text><text x="1280" y="664" fill="#3DD6C6">love</text><text x="1440" y="664" fill="#A78BFA">you</text>
+          <text x="960" y="440" fill="#FFB547">I</text><text x="1120" y="440" fill="#3DD6C6">love</text><text x="1280" y="440" fill="#A78BFA">you</text><text x="1440" y="440" fill="#8F99B0">&lt;eos&gt;</text></g>
+        <text x="1200" y="710" font-size="18" fill="#8F99B0" text-anchor="middle">같은 색 = 이전 출력이 다음 입력으로</text>
+        <text x="1200" y="745" font-size="20" fill="#8F99B0" text-anchor="middle">디코더 (영어 출력)</text>
+      </g>
+      <g class="reveal" data-show="4" fill="none" stroke="#FFB547" stroke-width="2.5" stroke-dasharray="7 6">
+        <path d="M720 488C720 380 920 380 920 498"/><path d="M730 488C730 350 1080 350 1080 498"/><path d="M740 488C740 320 1240 320 1240 498"/><path d="M750 488C750 290 1400 290 1400 498"/>
+      </g>
+    </svg>
+    <div class="note reveal" data-only="0" style="top:800px;width:1100px">단어가 들어올 때마다 <b>히든 스테이트를 갱신</b> → 이전 단어들의 정보가 누적된다.</div>
+    <div class="note reveal" data-only="1" style="top:800px;width:1100px">마지막 단어에서의 히든 스테이트 = 소스 문장 전체를 대표하는 <b>컨텍스트 벡터</b>.</div>
+    <div class="note reveal" data-only="2" style="top:800px;width:1100px">디코더는 컨텍스트에서 출발해 이전 출력을 다시 입력으로 받으며 <b>EOS가 나올 때까지</b> 반복.</div>
+    <div class="note reveal" data-only="3" style="top:800px;width:1100px">문장이 짧든 길든 <b>고정된 크기 하나</b>에 소스 문장 전체를 압축 → <b>병목</b> → 성능 하락.</div>
+    <div class="note reveal" data-only="4" style="top:800px;width:1100px">컨텍스트를 매 디코더 셀에 넣어 정보 손실을 줄인다 — 그래도 <b>하나의 벡터에 압축</b>해야 하는 건 그대로.</div>
+    <div class="note reveal" data-only="5" style="top:800px;width:1100px">그렇다면 출력할 때마다 <b>소스 문장의 출력값 전부</b>를 참고하면? → <b>어텐션</b></div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 03 ================= -->
+  <section class="slide gen" id="p3">
+    <div class="kicker">장면 03 · SEQ2SEQ + ATTENTION</div>
+    <div class="title">모든 인코더 출력을 참고하는 어텐션</div>
+    <div class="sub"></div>
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g class="reveal" data-only="1,2" fill="none" stroke="#3DD6C6" stroke-opacity=".6" stroke-width="2.5">
+        <path d="M1240 656C1240 380 220 380 220 538"/><path d="M1240 656C1240 400 400 400 400 538"/><path d="M1240 656C1240 420 580 420 580 538"/>
+      </g>
+      <text class="reveal" data-only="1" x="900" y="380" font-size="22" font-weight="600" fill="#3DD6C6" text-anchor="middle">비교 → 에너지 e</text>
+      <g class="reveal" data-show="3" fill="none" stroke="#A78BFA" stroke-width="2.5">
+        <path d="M220 538C220 330 700 330 796 330" stroke-width="2"/><path d="M400 538C400 340 700 330 796 330" stroke-width="6"/><path d="M580 538C580 350 700 330 796 330" stroke-width="2.5" marker-end="url(#hv)"/>
+        <path d="M962 330C1340 330 1460 480 1460 654" marker-end="url(#hv)"/>
+      </g>
+      <g class="reveal" data-show="3"><rect x="800" y="300" width="160" height="60" rx="12" fill="#A78BFA" stroke="#1A1D29" stroke-width="2"/>
+        <text x="880" y="338" font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#1A1D29" text-anchor="middle">c = Σ α·h</text></g>
+      <g stroke="#1A1D29" stroke-width="2"><rect x="160" y="660" width="120" height="80" rx="14" fill="#BFE6C8"/><rect x="340" y="660" width="120" height="80" rx="14" fill="#BFE6C8"/><rect x="520" y="660" width="120" height="80" rx="14" fill="#BFE6C8"/>
+        <rect x="1180" y="660" width="120" height="80" rx="14" fill="#C9C3F2"/><rect x="1400" y="660" width="120" height="80" rx="14" fill="#C9C3F2"/></g>
+      <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"><path d="M282 700H336"/><path d="M462 700H516"/><path d="M220 792V744"/><path d="M400 792V744"/><path d="M580 792V744"/><path d="M1302 700H1396"/><path d="M1460 656V614"/>
+        <path d="M220 656V596"/><path d="M400 656V596"/><path d="M580 656V596"/></g>
+      <g class="svhl" data-hl="0" stroke="#1A1D29" stroke-width="2" fill="#F5E9A6"><rect x="175" y="540" width="90" height="52" rx="10"/><rect x="355" y="540" width="90" height="52" rx="10"/><rect x="535" y="540" width="90" height="52" rx="10"/></g>
+      <g font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#1A1D29" text-anchor="middle"><text x="220" y="574">h1</text><text x="400" y="574">h2</text><text x="580" y="574">h3</text><text x="1240" y="708">s(i−1)</text><text x="1460" y="708">s(i)</text></g>
+      <g font-size="26" font-weight="600" fill="#F2F4F8" text-anchor="middle"><text x="220" y="824">ich</text><text x="400" y="824">liebe</text><text x="580" y="824">dich</text><text x="1460" y="600" fill="#3DD6C6">love</text></g>
+      <text x="400" y="866" font-size="18" fill="#8F99B0" text-anchor="middle">↑ 매 단어의 히든 스테이트를 전부 기록</text>
+      <g class="reveal" data-show="2" font-family="JetBrains Mono" font-size="24" font-weight="700" fill="#3DD6C6" text-anchor="middle"><text x="220" y="478">10%</text><text x="400" y="478">75%</text><text x="580" y="478">15%</text></g>
+      <g class="reveal" data-show="2"><rect x="170" y="490" width="100" height="10" rx="5" fill="#3A4259"/><rect x="350" y="490" width="100" height="10" rx="5" fill="#3A4259"/><rect x="530" y="490" width="100" height="10" rx="5" fill="#3A4259"/>
+        <rect x="170" y="490" width="10" height="10" rx="5" fill="#3DD6C6"/><rect x="350" y="490" width="75" height="10" rx="5" fill="#3DD6C6"/><rect x="530" y="490" width="15" height="10" rx="5" fill="#3DD6C6"/></g>
+    </svg>
+    <div class="note reveal" data-only="0" style="top:905px;width:1100px;font-size:22px">히든 스테이트 값을 <b>별도의 배열에 전부 기록</b> → 출력할 때마다 소스 문장 전체를 반영할 수 있다.</div>
+    <div class="note reveal" data-only="1" style="top:905px;width:1100px;font-size:22px">‘love’를 만들 때: 디코더의 이전 상태 s와 각 h를 묶어 <b>에너지</b> = 어떤 단어에 초점을 둘지 수치화.</div>
+    <div class="note reveal" data-only="2" style="top:905px;width:1100px;font-size:22px">에너지에 <b>소프트맥스</b> → 각 h를 얼마나 참고할지 비율 (‘liebe’ 75%).</div>
+    <div class="note reveal" data-only="3" style="top:905px;width:1100px;font-size:22px">비율만큼 곱해 더한 <b>가중합 c</b>를 디코더에 함께 넣는다 — 압축된 하나가 아니라 모두를 고려.</div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 04 ================= -->
+  <section class="slide gen" id="p4">
+    <div class="kicker">장면 04 · ENERGY · SOFTMAX · WEIGHTED SUM</div>
+    <div class="title">에너지 · 소프트맥스 · 가중합과 시각화</div>
+    <div class="sub"></div>
+    <div class="fx sm" style="top:282px"><span class="fp" data-hl="0">e<sub>ij</sub> = a(s<sub>i−1</sub>, h<sub>j</sub>)</span></div>
+    <div class="fx sm" style="top:346px"><span class="fp" data-hl="1,3">α<sub>ij</sub> = exp(e<sub>ij</sub>) / Σ<sub>k</sub> exp(e<sub>ik</sub>)</span></div>
+    <div class="fx sm" style="top:410px"><span class="fp" data-hl="2">c<sub>i</sub> = Σ<sub>j</sub> α<sub>ij</sub> h<sub>j</sub></span></div>
+    <div class="note reveal" data-only="0" style="top:540px;width:1100px"><b>i</b> = 디코더가 지금 만드는 단어의 번호, <b>j</b> = 인코더 출력의 번호.<br>이전에 출력한 정보 s와 인코더의 <b>모든 출력 h</b>를 비교해 에너지를 구한다.</div>
+    <div class="note reveal" data-only="1" style="top:540px;width:1100px">에너지에 소프트맥스 → 각 h 중 어떤 값과 가장 연관 있는지 <b>상대적 확률</b>.</div>
+    <div class="note reveal" data-only="2" style="top:540px;width:1100px">가중치를 각 h에 곱해 <b>모두 더한 값 c</b>를 디코더 입력으로 함께 넣는다.</div>
+    <div class="reveal" data-only="3">
+      <div class="tok key" style="left:560px;top:540px">I</div><div class="tok key" style="left:790px;top:540px">am</div><div class="tok key" style="left:1020px;top:540px">a</div><div class="tok key" style="left:1250px;top:540px">teacher</div>
+      <div class="val" style="left:490px;top:632px;color:var(--k)">70%</div><div class="val" style="left:720px;top:632px;color:var(--k)">20%</div><div class="val" style="left:950px;top:632px;color:var(--k)">5%</div><div class="val" style="left:1180px;top:632px;color:var(--k)">5%</div>
+      <div class="pbar" style="left:500px;top:676px"><i style="width:70%"></i></div><div class="pbar" style="left:730px;top:676px"><i style="width:20%"></i></div><div class="pbar" style="left:960px;top:676px"><i style="width:5%"></i></div><div class="pbar" style="left:1190px;top:676px"><i style="width:5%"></i></div>
+      <div class="note" style="top:760px;width:1100px">예) 입력 ‘I am a teacher’ — 합이 100%가 되는 비율만큼 h를 곱해 더한 값을 <b>컨텍스트 벡터처럼</b> 사용.</div>
+    </div>
+    <div class="reveal" data-show="4">
+      <div class="mx rot" data-r="8" data-c="8" data-cs="40" data-color="#F2F4F8" data-rl="L',accord,sur,la,zone,économique,européenne,." data-cl="The,agreement,on,the,European,Economic,Area,." data-heat=".9,.06,.03,.05,.02,.02,.03,.02,.05,.9,.04,.03,.02,.02,.03,.02,.02,.05,.88,.06,.02,.02,.02,.02,.04,.02,.06,.85,.05,.03,.04,.02,.02,.03,.02,.06,.1,.12,.9,.02,.02,.02,.02,.03,.12,.85,.1,.02,.02,.02,.02,.03,.9,.12,.06,.02,.02,.02,.02,.02,.03,.03,.05,.95" style="left:1060px;top:480px"></div>
+    </div>
+    <div class="note reveal" data-only="4" style="top:560px;width:820px">영어 → 불어 번역 예시. 밝을수록 확률이 높다 — 출력 단어마다 입력의 <b>어떤 단어에 집중</b>했는지 보인다. (zone ↔ Area처럼 순서가 바뀌어도 찾아낸다)</div>
+    <div class="note reveal" data-only="5" style="top:560px;width:820px">파라미터를 일일이 분석하긴 어렵지만, 어텐션은 딥러닝이 <b>어디에 초점을 뒀는지</b> 분석할 때 유용하다.<br><span style="font-size:20px;color:var(--muted)">단, 어텐션 가중치는 참고 패턴이지 판단의 완전한 인과 설명은 아니다.</span></div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 05 ================= -->
+  <section class="slide gen" id="p5">
+    <div class="kicker">장면 05 · ARCHITECTURE · EMBEDDING</div>
+    <div class="title">Transformer 전체 구조와 단어 임베딩</div>
+    <div class="sub"></div>
+    <svg class="reveal" data-only="0,1" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g transform="translate(0,40)">
+        <rect x="560" y="330" width="340" height="380" rx="20" fill="none" stroke="#3A4259" stroke-width="2"/>
+        <rect x="1020" y="290" width="340" height="420" rx="20" fill="none" stroke="#3A4259" stroke-width="2"/>
+        <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"><path d="M730 758V714"/><path d="M1190 758V714"/><path d="M730 558V508"/><path d="M1190 598V568"/><path d="M1190 498V468"/><path d="M1190 288V270"/><path d="M902 470C960 470 980 532 1046 532"/></g>
+        <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="600" text-anchor="middle" fill="#1A1D29">
+          <rect x="590" y="560" width="280" height="64" rx="12" fill="#C9C3F2"/><text x="730" y="600" stroke="none">Multi-Head Attention</text>
+          <rect x="590" y="440" width="280" height="64" rx="12" fill="#BFE6C8"/><text x="730" y="480" stroke="none">Feed Forward</text>
+          <rect x="1050" y="600" width="280" height="64" rx="12" fill="#C9C3F2"/><text x="1190" y="640" stroke="none">Masked Multi-Head</text>
+          <rect x="1050" y="500" width="280" height="64" rx="12" fill="#C9C3F2"/><text x="1190" y="540" stroke="none">Multi-Head Attention</text>
+          <rect x="1050" y="400" width="280" height="64" rx="12" fill="#BFE6C8"/><text x="1190" y="440" stroke="none">Feed Forward</text>
+          <rect x="1020" y="210" width="340" height="56" rx="12" fill="#E3E5EA"/><text x="1190" y="246" stroke="none">Linear · Softmax</text>
+          <g class="svhl" data-hl="1"><rect x="560" y="760" width="340" height="56" rx="12" fill="#F6C6D3"/><rect x="1020" y="760" width="340" height="56" rx="12" fill="#F6C6D3"/></g>
+          <text x="730" y="796" stroke="none" font-size="20">입력 임베딩 + 위치 인코딩</text><text x="1190" y="796" stroke="none" font-size="20">출력 임베딩 + 위치 인코딩</text>
+        </g>
+        <g font-size="22" font-weight="700" fill="#F2F4F8" text-anchor="middle"><text x="730" y="316">인코더</text><text x="1190" y="196" fill="none"> </text></g>
+        <text x="1440" y="510" font-size="24" fill="#8F99B0" font-family="JetBrains Mono" font-weight="700">디코더 × N</text>
+        <text x="420" y="530" font-size="24" fill="#8F99B0" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">× N</text>
+      </g>
+    </svg>
+    <div class="note reveal" data-only="0" style="top:420px;width:340px;font-size:22px">RNN · CNN을 <b>전혀 사용하지 않는다</b>. 인코더와 디코더 구조는 그대로, 어텐션을 여러 레이어로 반복.</div>
+    <div class="note reveal" data-only="1" style="top:420px;width:340px;font-size:22px">RNN이 없으니 단어 순서를 따로 알려 줘야 한다 → <b>위치 인코딩</b>.</div>
+    <div class="reveal" data-only="2">
+      <div class="mx" data-r="1" data-c="14" data-cs="34" data-color="var(--hot)" data-rl="teacher" data-heat="0,0,0,0,0,0,0,0,0,1,0,0,0,0" style="left:140px;top:500px"></div>
+      <div class="mcap" style="left:230px;top:556px;width:510px">원-핫 인코딩 · 언어의 단어 수만큼 차원</div>
+      <div class="op" style="left:790px;top:490px;font-size:26px">→ 임베딩 →</div>
+      <div class="mx" data-r="1" data-c="6" data-cs="54" data-color="var(--k)" style="left:1000px;top:490px"></div>
+      <div class="mcap" style="left:990px;top:556px;width:360px">더 적은 차원의 실수(continuous) 값</div>
+      <div class="note" style="top:700px;width:1100px">입력 차원 = 단어의 개수이고 원-핫 형태라서, 네트워크에 넣기 전에 <b>임베딩</b>으로 압축한다.</div>
+    </div>
+    <div class="reveal" data-only="3">
+      <div class="mx" data-r="4" data-c="10" data-cs="40" data-color="var(--k)" data-rl="I,am,a,teacher" style="left:200px;top:440px"></div>
+      <div class="op" style="left:740px;top:500px">…</div>
+      <div class="mcap" style="left:260px;top:630px;width:460px">입력 임베딩 행렬 · 4 × d<sub>model</sub></div>
+      <div class="note" style="top:460px;left:900px;width:900px">행 = 단어의 개수, 열 = <b>임베딩 차원</b>.<br>차원은 설계자가 정하며 원 논문은 <b>512</b>.</div>
+    </div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 06 ================= -->
+  <section class="slide gen" id="p6">
+    <div class="kicker">장면 06 · POSITION · ENCODER LAYER</div>
+    <div class="title">위치 정보와 인코더 레이어</div>
+    <div class="sub"></div>
+    <div class="reveal" data-only="0">
+      <div class="mx" data-r="4" data-c="8" data-cs="40" data-color="var(--k)" data-rl="I,am,a,teacher" style="left:130px;top:440px"></div>
+      <div class="mcap" style="left:200px;top:620px;width:340px">입력 임베딩</div>
+      <div class="op" style="left:590px;top:500px">+</div>
+      <div class="mx" data-r="4" data-c="8" data-cs="40" data-color="#F6C6D3" style="left:650px;top:440px"></div>
+      <div class="mcap" style="left:650px;top:620px;width:340px">위치 인코딩 (같은 크기)</div>
+      <div class="op" style="left:1035px;top:500px">=</div>
+      <div class="mx" data-r="4" data-c="8" data-cs="40" data-color="#E3E5EA" style="left:1090px;top:440px"></div>
+      <div class="mcap" style="left:1090px;top:620px;width:340px">어텐션의 입력</div>
+      <div class="note" style="top:720px;width:1100px">같은 차원의 위치 인코딩을 <b>원소별로 더해</b> → 단어가 어떤 순서인지 네트워크가 알 수 있다.</div>
+    </div>
+    <div class="reveal" data-only="1">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+        <g fill="none" stroke="#3DD6C6" stroke-opacity=".55" stroke-width="3">
+          <path d="M500 640Q650 520 800 640"/><path d="M500 640Q800 400 1100 640"/><path d="M500 640Q950 300 1400 640"/><path d="M800 640Q950 520 1100 640"/><path d="M800 640Q1100 400 1400 640"/><path d="M1100 640Q1250 520 1400 640"/>
+        </g>
+        <g font-size="40" font-weight="700" fill="#F2F4F8" text-anchor="middle"><text x="500" y="700">I</text><text x="800" y="700">am</text><text x="1100" y="700">a</text><text x="1400" y="700">teacher</text></g>
+      </svg>
+      <div class="note" style="top:780px;width:1100px">인코더의 <b>셀프 어텐션</b>: 각 단어가 서로에게 어텐션 스코어를 구해 → 입력 문장의 <b>문맥</b>을 학습한다.</div>
+    </div>
+    <svg class="reveal" data-show="2" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)"><path d="M700 880V824"/><path d="M700 758V714"/><path d="M700 658V604"/><path d="M700 538V494"/><path d="M700 438V390"/></g>
+      <g class="svhl" data-hl="3" fill="none" stroke="#FFB547" stroke-width="3"><path d="M700 852H520V685H552" marker-end="url(#hq)"/><path d="M700 632H880V465H848" marker-end="url(#hq)"/></g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="600" text-anchor="middle" fill="#1A1D29">
+        <rect x="560" y="760" width="280" height="60" rx="12" fill="#C9C3F2"/><text x="700" y="798" stroke="none">Multi-Head Attention</text>
+        <rect x="560" y="660" width="280" height="50" rx="12" fill="#F5E9A6"/><text x="700" y="693" stroke="none">Add &amp; Norm</text>
+        <rect x="560" y="540" width="280" height="60" rx="12" fill="#BFE6C8"/><text x="700" y="578" stroke="none">Feed Forward</text>
+        <rect x="560" y="440" width="280" height="50" rx="12" fill="#F5E9A6"/><text x="700" y="473" stroke="none">Add &amp; Norm</text>
+      </g>
+      <text x="700" y="914" font-size="20" fill="#8F99B0" text-anchor="middle">입력 (임베딩 + 위치)</text><text x="700" y="372" font-size="20" fill="#8F99B0" text-anchor="middle">출력 (같은 차원)</text>
+      <text x="470" y="770" font-size="18" fill="#FFB547" text-anchor="middle">잔차</text><text x="930" y="550" font-size="18" fill="#FFB547" text-anchor="middle">잔차</text>
+      <g class="reveal" data-show="4"><rect x="500" y="420" width="440" height="420" rx="22" fill="none" stroke="#5AB0FF" stroke-width="2.5" stroke-dasharray="10 7"/>
+        <text x="990" y="650" font-family="JetBrains Mono" font-size="40" font-weight="700" fill="#5AB0FF">× N</text></g>
+    </svg>
+    <div class="note reveal" data-only="2" style="top:480px;left:1100px;width:700px">어텐션 → 잔차 연결 + 정규화 → 피드 포워드 → 잔차 연결 + 정규화 = <b>인코더 레이어 하나</b>.</div>
+    <div class="note reveal" data-only="3" style="top:480px;left:1100px;width:700px"><b>레지듀얼 연결</b> — 레이어를 건너뛴 입력을 그대로 더한다. 남은(residual) 부분만 학습하니 <b>학습이 쉬워지고 수렴이 빠르다</b> (ResNet의 아이디어).</div>
+    <div class="note reveal" data-only="4" style="top:480px;left:1100px;width:700px">레이어를 <b>N번 중첩</b>. 레이어마다 파라미터는 서로 다르고, <b>입력과 출력의 차원은 같다</b>.</div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 07 ================= -->
+  <section class="slide gen" id="p7">
+    <div class="kicker">장면 07 · DECODER · ENCODER-DECODER</div>
+    <div class="title">디코더와 인코더-디코더 연결</div>
+    <div class="sub"></div>
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)">
+        <path d="M430 816V784"/><path d="M430 696V674"/><path d="M430 586V564"/><path d="M430 476V454"/>
+        <path d="M1230 816V784"/><path d="M1230 696V674"/><path d="M1230 586V564"/><path d="M1230 476V454"/><path d="M1230 366V340"/>
+      </g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="600" text-anchor="middle" fill="#1A1D29">
+        <rect x="300" y="700" width="260" height="80" rx="14" fill="#BFE6C8"/><rect x="300" y="590" width="260" height="80" rx="14" fill="#BFE6C8"/><rect x="300" y="480" width="260" height="80" rx="14" fill="#BFE6C8"/><rect x="300" y="370" width="260" height="80" rx="14" fill="#BFE6C8"/>
+        <rect x="1100" y="700" width="260" height="80" rx="14" fill="#C9C3F2"/><rect x="1100" y="590" width="260" height="80" rx="14" fill="#C9C3F2"/><rect x="1100" y="480" width="260" height="80" rx="14" fill="#C9C3F2"/><rect x="1100" y="370" width="260" height="80" rx="14" fill="#C9C3F2"/>
+        <text x="430" y="748" stroke="none">인코더 1</text><text x="430" y="638" stroke="none">인코더 2</text><text x="430" y="528" stroke="none">인코더 3</text><text x="430" y="418" stroke="none">인코더 4</text>
+        <text x="1230" y="748" stroke="none">디코더 1</text><text x="1230" y="638" stroke="none">디코더 2</text><text x="1230" y="528" stroke="none">디코더 3</text><text x="1230" y="418" stroke="none">디코더 4</text>
+      </g>
+      <g fill="none" stroke="#5AB0FF" stroke-width="2.5" marker-end="url(#hm)">
+        <path d="M562 410C800 410 860 410 1096 410"/><path d="M562 410C800 410 860 520 1096 520"/><path d="M562 410C800 410 860 630 1096 630"/><path d="M562 410C800 410 860 740 1096 740"/>
+      </g>
+      <g font-size="20" fill="#8F99B0" text-anchor="middle"><text x="430" y="846">입력 문장 (한 번에)</text><text x="1230" y="846">출력 문장 (이전 단어들)</text><text x="1230" y="326">다음 단어</text></g>
+      <text x="830" y="380" font-size="18" fill="#5AB0FF" text-anchor="middle">마지막 인코더 출력 → 모든 디코더 레이어</text>
+    </svg>
+    <div class="dpanel reveal" data-show="1"><h4>디코더 레이어 하나</h4>
+      <div>① 마스크드 셀프 어텐션<small>출력 문장 내부의 관계</small></div>
+      <div class="on">② 인코더-디코더 어텐션<small>인코더 출력에서 정보를 가져옴</small></div>
+      <div>③ 피드 포워드<small>입력 · 출력 차원 동일</small></div></div>
+    <div class="note reveal" data-only="0" style="top:880px;width:1100px;font-size:22px">인코더와 디코더는 보통 <b>같은 개수</b>의 레이어로 맞춘다 (논문 6개, 그림은 4개 예시).</div>
+    <div class="note reveal" data-only="1" style="top:880px;width:1100px;font-size:22px">첫 번째 어텐션은 셀프 어텐션, 두 번째 어텐션은 <b>인코더의 출력</b>을 어텐션한다.</div>
+    <div class="note reveal" data-only="2" style="top:880px;width:1300px;font-size:22px">예) ‘I am a teacher’ → ‘나는 선생님이다’ : ‘선생님’을 만들 때 인코더 출력 중 <b>‘teacher’</b>와의 연관도가 가장 높다.</div>
+    <div class="note reveal" data-only="3" style="top:880px;width:760px;font-size:22px"><b>학습</b>: 문장 전체를 한꺼번에 넣어 <b>병렬로</b> 계산 — 단어 수만큼 반복할 필요가 없다.</div>
+    <div class="note reveal" data-only="3" style="top:880px;left:940px;width:860px;font-size:22px"><b>생성(추론)</b>: 디코더를 반복해 <b>EOS</b>가 나올 때까지 한 단어씩 출력한다.</div>
+    <div class="note reveal" data-only="4" style="top:880px;width:1300px;font-size:22px">중간에 컨텍스트 벡터로 압축하는 과정이 없다 → 그럼 <b>멀티헤드 어텐션</b>은 어떻게 생겼을까? (장면 08)</div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SLIDE 1 : Q K V ================= -->
+  <section class="slide" id="s1">
+    <div class="kicker">장면 08 · 트랜스포머의 동작 원리 · ATTENTION</div>
+    <div class="title">어텐션을 위한 세 가지 입력: Q · K · V</div>
+
+    <div class="card" id="card-Q"><div class="chip">Q</div><div>
+      <div class="name">쿼리 · Query</div><div class="role">물어보는 주체</div>
+      <div class="ex">예) ‘I’라는 단어가 문장 속 다른 단어들과 얼마나 연관 있는지 묻는다</div></div></div>
+    <div class="card" id="card-K"><div class="chip">K</div><div>
+      <div class="name">키 · Key</div><div class="role">물어보는 대상</div>
+      <div class="ex">예) I · am · a · teacher 각각이 키가 되어 쿼리와 곱해진다 → 연관도 점수</div></div></div>
+    <div class="card" id="card-V"><div class="chip">V</div><div>
+      <div class="name">값 · Value</div><div class="role">실제로 가져올 정보</div>
+      <div class="ex">예) 소프트맥스로 구한 비율만큼 밸류를 곱해 더한다 → 어텐션 값</div></div></div>
+
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <defs>
+        <marker id="hm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#8F99B0" stroke-width="1.6"/></marker>
+        <marker id="hq" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#FFB547" stroke-width="1.6"/></marker>
+        <marker id="hk" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#3DD6C6" stroke-width="1.6"/></marker>
+        <marker id="hv" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#A78BFA" stroke-width="1.6"/></marker>
+      </defs>
+      <g fill="none" stroke-width="2.5" stroke-linecap="round">
+        <!-- SDPA arrows -->
+        <g stroke="#8F99B0" marker-end="url(#hm)">
+          <path d="M1050 328V288"/><path d="M980 448V392"/><path d="M980 558V510"/><path d="M980 668V620"/><path d="M980 778V730"/>
+          <path d="M1600 328V288"/><path d="M1600 448V392"/><path d="M1600 578V510"/>
+          <path d="M1480 758V686"/><path d="M1600 758V686"/><path d="M1720 758V686"/>
+          <path d="M1292 630H1346"/>
+        </g>
+        <path d="M935 896V842" stroke="#FFB547" marker-end="url(#hq)"/>
+        <path d="M1025 896V842" stroke="#3DD6C6" marker-end="url(#hk)"/>
+        <path d="M1160 896V392" stroke="#A78BFA" marker-end="url(#hv)"/>
+        <path d="M1480 896V816" stroke="#A78BFA" marker-end="url(#hv)"/>
+        <path d="M1600 896V816" stroke="#3DD6C6" marker-end="url(#hk)"/>
+        <path d="M1720 896V816" stroke="#FFB547" marker-end="url(#hq)"/>
+      </g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="500" text-anchor="middle" fill="#1A1D29">
+        <rect x="900" y="330" width="300" height="56" rx="10" fill="#C9C3F2"/><text x="1050" y="366" stroke="none">MatMul</text>
+        <rect x="880" y="450" width="200" height="56" rx="10" fill="#BFE6C8"/><text x="980" y="486" stroke="none">SoftMax</text>
+        <rect x="880" y="560" width="200" height="56" rx="10" fill="#F6C6D3"/><text x="980" y="596" stroke="none">Mask (opt.)</text>
+        <rect x="880" y="670" width="200" height="56" rx="10" fill="#F5E9A6"/><text x="980" y="706" stroke="none">Scale</text>
+        <rect x="880" y="780" width="200" height="56" rx="10" fill="#C9C3F2"/><text x="980" y="816" stroke="none">MatMul</text>
+
+        <rect x="1515" y="330" width="170" height="56" rx="10" fill="#E3E5EA"/><text x="1600" y="366" stroke="none">Linear</text>
+        <rect x="1515" y="450" width="170" height="56" rx="10" fill="#F5E9A6"/><text x="1600" y="486" stroke="none">Concat</text>
+        <rect x="1454" y="556" width="340" height="100" rx="10" fill="#C9C3F2" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5"/>
+        <rect x="1442" y="568" width="340" height="100" rx="10" fill="#C9C3F2" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5"/>
+        <rect x="1430" y="580" width="340" height="100" rx="10" fill="#C9C3F2"/>
+        <text x="1600" y="623" stroke="none">Scaled Dot-Product</text><text x="1600" y="651" stroke="none">Attention</text>
+        <g fill="#E3E5EA" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5">
+          <rect x="1446" y="744" width="100" height="50" rx="10"/><rect x="1438" y="752" width="100" height="50" rx="10"/>
+          <rect x="1566" y="744" width="100" height="50" rx="10"/><rect x="1558" y="752" width="100" height="50" rx="10"/>
+          <rect x="1686" y="744" width="100" height="50" rx="10"/><rect x="1678" y="752" width="100" height="50" rx="10"/>
+        </g>
+        <rect x="1430" y="760" width="100" height="50" rx="10" fill="#E3E5EA"/><text x="1480" y="792" stroke="none" font-size="20">Linear</text>
+        <rect x="1550" y="760" width="100" height="50" rx="10" fill="#E3E5EA"/><text x="1600" y="792" stroke="none" font-size="20">Linear</text>
+        <rect x="1670" y="760" width="100" height="50" rx="10" fill="#E3E5EA"/><text x="1720" y="792" stroke="none" font-size="20">Linear</text>
+      </g>
+      <text x="1808" y="572" fill="#F2F4F8" font-family="JetBrains Mono" font-size="30" font-weight="700" font-style="italic">h</text>
+      <g font-family="JetBrains Mono" font-size="20" font-weight="500" fill="#8F99B0" text-anchor="middle">
+        <text x="1050" y="258">Scaled Dot-Product Attention</text>
+        <text x="1600" y="258">Multi-Head Attention</text>
+      </g>
+      <!-- rings -->
+      <g fill-opacity=".18" stroke-width="2.5">
+        <rect class="ring" data-k="Q" x="895" y="896" width="80" height="60" rx="16" fill="#FFB547" stroke="#FFB547"/>
+        <rect class="ring" data-k="K" x="985" y="896" width="80" height="60" rx="16" fill="#3DD6C6" stroke="#3DD6C6"/>
+        <rect class="ring" data-k="V" x="1120" y="896" width="80" height="60" rx="16" fill="#A78BFA" stroke="#A78BFA"/>
+        <rect class="ring" data-k="V" x="1440" y="896" width="80" height="60" rx="16" fill="#A78BFA" stroke="#A78BFA"/>
+        <rect class="ring" data-k="K" x="1560" y="896" width="80" height="60" rx="16" fill="#3DD6C6" stroke="#3DD6C6"/>
+        <rect class="ring" data-k="Q" x="1680" y="896" width="80" height="60" rx="16" fill="#FFB547" stroke="#FFB547"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="40" font-weight="700" text-anchor="middle">
+        <text x="935" y="941" fill="#FFB547">Q</text><text x="1025" y="941" fill="#3DD6C6">K</text><text x="1160" y="941" fill="#A78BFA">V</text>
+        <text x="1480" y="941" fill="#A78BFA">V</text><text x="1600" y="941" fill="#3DD6C6">K</text><text x="1720" y="941" fill="#FFB547">Q</text>
+      </g>
+    </svg>
+
+    <div id="pointer">
+      <svg width="20" height="36" viewBox="0 0 20 36" fill="none"><path d="M10 35V4" stroke-width="3" stroke-linecap="round"/><path d="M3 11L10 3L17 11" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="bubble">물어보는 주체</div>
+    </div>
+
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div>
+    <div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SLIDE 3 : I am a teacher ================= -->
+  <section class="slide" id="s3">
+    <div class="kicker">장면 08 · SELF-ATTENTION 예시</div>
+    <div class="title">‘I am a teacher’로 보는 셀프 어텐션</div>
+    <div class="sub" id="sub3"></div>
+
+    <div class="rowlab" style="top:284px">문장</div>
+    <div class="tok sent" id="sentI" style="left:360px;top:262px">I</div>
+    <div class="tok sent" style="left:590px;top:262px">am</div>
+    <div class="tok sent" style="left:820px;top:262px">a</div>
+    <div class="tok sent" style="left:1050px;top:262px">teacher</div>
+
+    <div class="rowlab reveal" data-show="1" style="top:414px"><span class="L" style="color:var(--q)">Q</span>쿼리</div>
+    <div class="tok query reveal" data-show="1" style="left:705px;top:392px">I</div>
+
+    <svg class="reveal" data-show="2" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g fill="none" stroke-linecap="round">
+        <path class="ql" d="M705 466C705 540 360 530 360 598" stroke-width="2.5"/>
+        <path class="ql" d="M705 466C705 540 590 530 590 598" stroke-width="2.5"/>
+        <path class="ql" d="M705 466C705 540 820 530 820 598" stroke-width="2.5"/>
+        <path class="ql" d="M705 466C705 540 1050 530 1050 598" stroke-width="2.5"/>
+      </g>
+    </svg>
+    <div class="rowlab reveal" data-show="2" style="top:622px"><span class="L" style="color:var(--k)">K</span>키</div>
+    <div class="tok key reveal" data-show="2" style="left:360px;top:600px">I</div>
+    <div class="tok key reveal" data-show="2" style="left:590px;top:600px">am</div>
+    <div class="tok key reveal" data-show="2" style="left:820px;top:600px">a</div>
+    <div class="tok key reveal" data-show="2" style="left:1050px;top:600px">teacher</div>
+
+    <div class="rowlab reveal" data-show="3" style="top:690px">점수<span class="op" id="op3"></span></div>
+    <div class="score reveal" data-show="3" style="left:360px"></div>
+    <div class="score reveal" data-show="3" style="left:590px"></div>
+    <div class="score reveal" data-show="3" style="left:820px"></div>
+    <div class="score reveal" data-show="3" style="left:1050px"></div>
+    <div class="bar reveal" data-show="5" style="left:360px"><i></i></div>
+    <div class="bar reveal" data-show="5" style="left:590px"><i></i></div>
+    <div class="bar reveal" data-show="5" style="left:820px"><i></i></div>
+    <div class="bar reveal" data-show="5" style="left:1050px"><i></i></div>
+
+    <div class="rowlab reveal" data-show="6" style="top:812px"><span class="L" style="color:var(--v)">V</span>밸류</div>
+    <div class="tok val reveal" data-show="6" style="left:360px;top:790px"><small>× 0.70</small>v(I)</div>
+    <div class="tok val reveal" data-show="6" style="left:590px;top:790px"><small>× 0.20</small>v(am)</div>
+    <div class="tok val reveal" data-show="6" style="left:820px;top:790px"><small>× 0.05</small>v(a)</div>
+    <div class="tok val reveal" data-show="6" style="left:1050px;top:790px"><small>× 0.05</small>v(teacher)</div>
+    <div id="result" class="reveal" data-show="6"><b>‘I’의 어텐션 값</b> = <span class="mono">0.70·v(I) + 0.20·v(am) + 0.05·v(a) + 0.05·v(teacher)</span></div>
+
+    <!-- SDPA diagram (right) -->
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g fill="none" stroke-width="2.5" stroke-linecap="round">
+        <g stroke="#8F99B0" marker-end="url(#hm)">
+          <path d="M1570 328V288"/><path d="M1500 448V392"/><path d="M1500 558V510"/><path d="M1500 668V620"/><path d="M1500 778V730"/>
+        </g>
+        <path d="M1455 896V842" stroke="#FFB547" marker-end="url(#hq)"/>
+        <path d="M1545 896V842" stroke="#3DD6C6" marker-end="url(#hk)"/>
+        <path d="M1680 896V392" stroke="#A78BFA" marker-end="url(#hv)"/>
+      </g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="500" text-anchor="middle" fill="#1A1D29">
+        <g class="blk" id="b-mm2"><rect x="1420" y="330" width="300" height="56" rx="10" fill="#C9C3F2"/><text x="1570" y="366" stroke="none">MatMul</text></g>
+        <g class="blk" id="b-soft"><rect x="1400" y="450" width="200" height="56" rx="10" fill="#BFE6C8"/><text x="1500" y="486" stroke="none">SoftMax</text></g>
+        <g class="blk" id="b-mask"><rect x="1400" y="560" width="200" height="56" rx="10" fill="#F6C6D3"/><text x="1500" y="596" stroke="none">Mask (opt.)</text></g>
+        <g class="blk" id="b-scale"><rect x="1400" y="670" width="200" height="56" rx="10" fill="#F5E9A6"/><text x="1500" y="706" stroke="none">Scale</text></g>
+        <g class="blk" id="b-mm1"><rect x="1400" y="780" width="200" height="56" rx="10" fill="#C9C3F2"/><text x="1500" y="816" stroke="none">MatMul</text></g>
+      </g>
+      <g font-family="JetBrains Mono" font-size="18" font-weight="700" text-anchor="middle">
+        <g class="badge" id="g-4"><circle cx="1376" cy="358" r="18" fill="#5AB0FF"/><text x="1376" y="364" fill="#1A1D29">4</text></g>
+        <g class="badge" id="g-3"><circle cx="1366" cy="478" r="18" fill="#5AB0FF"/><text x="1366" y="484" fill="#1A1D29">3</text></g>
+        <g class="badge" id="g-2"><circle cx="1366" cy="698" r="18" fill="#5AB0FF"/><text x="1366" y="704" fill="#1A1D29">2</text></g>
+        <g class="badge" id="g-1"><circle cx="1366" cy="808" r="18" fill="#5AB0FF"/><text x="1366" y="814" fill="#1A1D29">1</text></g>
+      </g>
+      <text x="1570" y="258" font-family="JetBrains Mono" font-size="20" font-weight="500" fill="#8F99B0" text-anchor="middle">Scaled Dot-Product Attention</text>
+      <g fill-opacity=".18" stroke-width="2.5">
+        <rect class="ring r3" data-k="Q" x="1415" y="896" width="80" height="60" rx="16" fill="#FFB547" stroke="#FFB547"/>
+        <rect class="ring r3" data-k="K" x="1505" y="896" width="80" height="60" rx="16" fill="#3DD6C6" stroke="#3DD6C6"/>
+        <rect class="ring r3" data-k="V" x="1640" y="896" width="80" height="60" rx="16" fill="#A78BFA" stroke="#A78BFA"/>
+      </g>
+      <g font-family="JetBrains Mono" font-size="40" font-weight="700" text-anchor="middle">
+        <text x="1455" y="941" fill="#FFB547">Q</text><text x="1545" y="941" fill="#3DD6C6">K</text><text x="1680" y="941" fill="#A78BFA">V</text>
+      </g>
+    </svg>
+
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div>
+    <div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SLIDE 2 : MHA architecture ================= -->
+  <section class="slide" id="s2">
+    <div class="kicker">장면 08 · MULTI-HEAD ATTENTION</div>
+    <div class="title">멀티헤드 어텐션 아키텍처</div>
+    <div class="sub" id="sub2"></div>
+
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0">
+      <g fill="none" stroke-width="2.5" stroke-linecap="round" pointer-events="none">
+        <g stroke="#8F99B0" marker-end="url(#hm)">
+          <path d="M560 288V250"/><path d="M560 418V360"/><path d="M560 558V490"/>
+          <path d="M400 758V686"/><path d="M560 758V686"/><path d="M720 758V686"/>
+        </g>
+        <path d="M400 898V826" stroke="#A78BFA" marker-end="url(#hv)"/>
+        <path d="M560 898V826" stroke="#3DD6C6" marker-end="url(#hk)"/>
+        <path d="M720 898V826" stroke="#FFB547" marker-end="url(#hq)"/>
+        <path class="leader" d="M676 322H874"/><path class="leader" d="M676 452H874"/><path class="leader" d="M846 620H874"/>
+        <path class="leader" d="M812 790H874"/><path class="leader" d="M764 935H874"/>
+      </g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="24" font-weight="500" text-anchor="middle" fill="#1A1D29">
+        <g class="part" data-hs="5"><rect class="main" x="450" y="290" width="220" height="64" rx="12" fill="#E3E5EA"/><text x="560" y="330" stroke="none">Linear</text></g>
+        <g class="part" data-hs="4"><rect class="main" x="450" y="420" width="220" height="64" rx="12" fill="#F5E9A6"/><text x="560" y="460" stroke="none">Concat</text></g>
+        <g class="part" data-hs="3">
+          <rect class="gh2" x="368" y="532" width="440" height="120" rx="12" fill="#C9C3F2" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5"/>
+          <rect class="gh1" x="354" y="546" width="440" height="120" rx="12" fill="#C9C3F2" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5"/>
+          <rect class="main" x="340" y="560" width="440" height="120" rx="12" fill="#C9C3F2"/>
+          <text x="560" y="612" stroke="none" font-size="26">Scaled Dot-Product</text><text x="560" y="646" stroke="none" font-size="26">Attention</text>
+        </g>
+        <g class="part" data-hs="2">
+          <g fill="#E3E5EA" fill-opacity=".3" stroke="#8F99B0" stroke-opacity=".6" stroke-width="1.5">
+            <rect x="355" y="740" width="130" height="60" rx="12"/><rect x="345" y="750" width="130" height="60" rx="12"/>
+            <rect x="515" y="740" width="130" height="60" rx="12"/><rect x="505" y="750" width="130" height="60" rx="12"/>
+            <rect x="675" y="740" width="130" height="60" rx="12"/><rect x="665" y="750" width="130" height="60" rx="12"/>
+          </g>
+          <rect class="main" x="335" y="760" width="130" height="60" rx="12" fill="#E3E5EA"/><text x="400" y="798" stroke="none" font-size="22">Linear</text>
+          <rect class="main" x="495" y="760" width="130" height="60" rx="12" fill="#E3E5EA"/><text x="560" y="798" stroke="none" font-size="22">Linear</text>
+          <rect class="main" x="655" y="760" width="130" height="60" rx="12" fill="#E3E5EA"/><text x="720" y="798" stroke="none" font-size="22">Linear</text>
+        </g>
+      </g>
+      <text x="814" y="548" fill="#F2F4F8" font-family="JetBrains Mono" font-size="34" font-weight="700" font-style="italic" pointer-events="none">h</text>
+      <g class="part" data-hs="1" font-family="JetBrains Mono" font-size="44" font-weight="700" text-anchor="middle">
+        <rect class="main" x="350" y="900" width="420" height="70" rx="14" fill="#fff" fill-opacity="0" stroke="none"/>
+        <text x="400" y="950" fill="#A78BFA">V</text><text x="560" y="950" fill="#3DD6C6">K</text><text x="720" y="950" fill="#FFB547">Q</text>
+      </g>
+    </svg>
+
+    <div class="hs" data-hs="5" style="top:294px"><div class="dot">5</div><div class="link"></div>
+      <div class="cap"><b>Linear (출력)</b><p>마지막 리니어를 거쳐 입력과 <b style="display:inline;font-size:inherit;color:var(--text)">같은 차원</b>으로 내보낸다. 멀티헤드 어텐션을 지나도 차원이 줄지 않는다.</p></div></div>
+    <div class="hs" data-hs="4" style="top:424px"><div class="dot">4</div><div class="link"></div>
+      <div class="cap"><b>Concat</b><p>각 헤드에서 나온 어텐션 값을 일자로 쭉 이어 붙인다. 예) 64차원 × 8헤드 = 512차원</p></div></div>
+    <div class="hs" data-hs="3" style="top:592px"><div class="dot">3</div><div class="link"></div>
+      <div class="cap"><b>Scaled Dot-Product Attention × h</b><p>헤드마다 자기 V·K·Q 쌍으로 어텐션을 수행한다. h개의 서로 다른 어텐션 컨셉 → 더 다양한 특징을 학습.</p></div></div>
+    <div class="hs" data-hs="2" style="top:762px"><div class="dot">2</div><div class="link"></div>
+      <div class="cap"><b>Linear × 3 (헤드마다)</b><p>리니어 레이어(행렬 곱)로 h개의 서로 다른 V·K·Q 쌍을 만든다. 예) 512차원 → 헤드마다 64차원 × 8개</p></div></div>
+    <div class="hs" data-hs="1" style="top:907px"><div class="dot">1</div><div class="link"></div>
+      <div class="cap"><b>입력 → V · K · Q</b><p>들어온 입력이 세 개로 복제되어 각각 밸류 · 키 · 쿼리로 들어간다.</p></div></div>
+
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div>
+    <div class="hint">클릭 또는 → 다음 단계 · 숫자키 1–5 개별 토글</div>
+  </section>
+
+  <!-- ================= SLIDE 4 : same function, different Q/K/V source ================= -->
+  <section class="slide" id="s4">
+    <div class="kicker">장면 08 · 사용 위치</div>
+    <div class="title">어디서 쓰여도 같은 함수, 다른 건 Q·K·V의 출처</div>
+    <div class="sub" id="sub4"></div>
+
+    <div class="panel reveal" data-show="2" id="enc">
+      <div class="ptitle">인코더</div><div class="pdesc">입력 문장: I am a teacher</div>
+      <div class="plab">인코더 출력</div>
+      <div class="chips"><span class="c-enc">I</span><span class="c-enc">am</span><span class="c-enc">a</span><span class="c-enc">teacher</span></div>
+    </div>
+    <div class="panel reveal" data-show="1" id="dec">
+      <div class="ptitle">디코더</div><div class="pdesc">출력 문장: 나는 선생님이다</div>
+      <div class="plab">지금 만들 단어</div>
+      <div class="chips"><span class="c-done">나는</span><span class="c-now">선생님</span><span class="c-next">이다</span></div>
+    </div>
+    <div class="ask reveal" data-show="2">디코더 → 인코더<br><b>“어떤 정보를 참고해야 해?”</b></div>
+
+    <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+      <g fill="none" stroke-width="3" stroke-linecap="round">
+        <path d="M960 538V478" stroke="#8F99B0" marker-end="url(#hm)"/>
+        <path d="M840 682V664" stroke="#A78BFA"/><path d="M960 682V664" stroke="#3DD6C6"/><path d="M1080 682V664" stroke="#FFB547"/>
+        <path class="reveal" data-show="2" d="M565 730C660 730 840 860 840 736" stroke="#A78BFA" marker-end="url(#hv)"/>
+        <path class="reveal" data-show="2" d="M565 770C700 780 960 1010 960 736" stroke="#3DD6C6" marker-end="url(#hk)"/>
+        <path class="reveal" data-show="1" d="M1355 750C1200 750 1080 960 1080 736" stroke="#FFB547" marker-end="url(#hq)"/>
+      </g>
+      <rect x="760" y="540" width="400" height="120" rx="14" fill="#C9C3F2" stroke="#1A1D29" stroke-width="2"/>
+      <text x="960" y="610" text-anchor="middle" font-size="30" font-weight="600" fill="#1A1D29">Multi-Head Attention</text>
+      <text x="960" y="456" text-anchor="middle" font-size="22" fill="#8F99B0">출력</text>
+      <g font-family="JetBrains Mono" font-size="32" font-weight="700" text-anchor="middle">
+        <text x="840" y="716" fill="#A78BFA">V</text><text x="960" y="716" fill="#3DD6C6">K</text><text x="1080" y="716" fill="#FFB547">Q</text>
+      </g>
+      <g font-size="20" font-weight="600" text-anchor="middle">
+        <text class="reveal" data-show="1" x="1580" y="848" fill="#FFB547">Q = 디코더의 출력 단어</text>
+        <text class="reveal" data-show="2" x="340" y="848" fill="#3DD6C6">K · V = 인코더의 출력</text>
+      </g>
+    </svg>
+
+    <div id="teaser" class="reveal" data-show="3">다음 ▶ 수식으로 &nbsp;<span class="mono">MultiHead(Q, K, V) = Concat(head<sub>1</sub>, …, head<sub>h</sub>)·W<sup>O</sup></span></div>
+
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div>
+    <div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 09 ================= -->
+  <section class="slide gen" id="s5">
+    <div class="kicker">장면 09 · SCALED DOT-PRODUCT ATTENTION</div>
+    <div class="title">어텐션을 수식으로</div>
+    <div class="sub"></div>
+    <div class="fx" style="top:290px">Attention(Q, K, V) = <span class="fp" data-hl="2,3">softmax</span>( <span class="fp" data-hl="1">QK<sup>T</sup></span> / <span class="fp" data-hl="2">√d<sub>k</sub></span> ) <span class="fp" data-hl="3">V</span></div>
+    <div class="note reveal" data-only="1" style="top:440px"><b>QK<sup>T</sup></b> — 각 쿼리와 각 키를 곱해서 <b>에너지(연관도 점수)</b>를 구한다.</div>
+    <div class="note reveal" data-only="2" style="top:440px;width:880px"><b>√d<sub>k</sub>로 나누는 이유</b> — d<sub>k</sub>는 키의 차원. 값이 커지면 소프트맥스가 양 끝으로 쏠려 <b>기울기가 거의 0</b>이 된다(기울기 소실). 나눠서 값을 줄이면 학습이 잘 된다.</div>
+    <svg class="reveal" data-only="2" id="sig" width="700" height="380" viewBox="0 0 700 380" style="position:absolute;left:1100px;top:430px">
+      <rect x="40" y="20" width="160" height="290" fill="#FF8A8A" fill-opacity=".1"/><rect x="480" y="20" width="160" height="290" fill="#FF8A8A" fill-opacity=".1"/>
+      <rect x="200" y="20" width="280" height="290" fill="#3DD6C6" fill-opacity=".1"/>
+      <path d="M40 310H660M340 20V318" stroke="#3A4259" stroke-width="2"/>
+      <path id="sigpath" fill="none" stroke="#F2F4F8" stroke-width="4" stroke-linecap="round"/>
+      <g font-size="20" font-weight="600" text-anchor="middle">
+        <text x="120" y="350" fill="#FF8A8A">기울기 ≈ 0</text><text x="560" y="350" fill="#FF8A8A">기울기 ≈ 0</text><text x="340" y="350" fill="#3DD6C6">기울기 큼</text>
+      </g>
+      <text x="350" y="14" font-size="16" fill="#8F99B0" text-anchor="middle">소프트맥스(시그모이드 꼴)의 모양</text>
+    </svg>
+    <div class="note reveal" data-only="3" style="top:440px"><b>softmax(…) · V</b> — 소프트맥스로 얻은 확률(가중치)을 밸류에 곱해 더하면 <b>어텐션 값</b>.</div>
+    <div class="note reveal" data-only="4" style="top:440px">헤드마다 <b>서로 다른 리니어 가중치 W<sub>i</sub></b> → h개의 서로 다른 Q·K·V → 서로 다른 어텐션 컨셉을 학습.</div>
+    <div class="fx sm reveal" data-show="4" style="top:600px">head<sub>i</sub> = Attention(Q<span class="w">W<sub>i</sub><sup>Q</sup></span>, K<span class="w">W<sub>i</sub><sup>K</sup></span>, V<span class="w">W<sub>i</sub><sup>V</sup></span>)</div>
+    <div class="fx sm reveal" data-show="4" style="top:676px">MultiHead(Q, K, V) = <span class="fp" data-hl="5">Concat(head<sub>1</sub>, …, head<sub>h</sub>)·W<sup>O</sup></span></div>
+    <div class="note reveal" data-show="5" style="top:800px;width:680px;font-size:22px">입력과 출력 차원이 같아서 <b>레이어를 중첩</b>할 수 있다. 시각화하면 <b>헤드 수(h)만큼</b> 어텐션 그림이 나온다.</div>
+    <div class="reveal" data-show="5" id="heads" style="position:absolute;left:860px;top:800px;width:900px;height:140px"></div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 10 ================= -->
+  <section class="slide gen" id="s6">
+    <div class="kicker">장면 10 · 행렬로 한 번에</div>
+    <div class="title">한 단어에서 문장 전체의 행렬 계산으로</div>
+    <div class="sub"></div>
+    <div class="fx sm" style="top:262px;font-size:34px">d<sub>model</sub> = 512 · h = 8 &nbsp;→&nbsp; d<sub>k</sub> = d<sub>v</sub> = 512 ÷ 8 = <span class="w">64</span></div>
+
+    <!-- k1 : single word -->
+    <div class="reveal" data-only="1">
+      <div class="mx" data-r="1" data-c="4" data-cs="40" data-rl="love" style="left:180px;top:434px"></div>
+      <div class="mx" data-r="1" data-c="4" data-cs="40" data-rl="love" style="left:180px;top:604px"></div>
+      <div class="mx" data-r="1" data-c="4" data-cs="40" data-rl="love" style="left:180px;top:774px"></div>
+      <div class="op" style="left:430px;top:428px">×</div><div class="op" style="left:430px;top:598px">×</div><div class="op" style="left:430px;top:768px">×</div>
+      <div class="mx" data-r="4" data-c="2" data-cs="28" data-color="#C9C3F2" style="left:490px;top:398px"></div>
+      <div class="mx" data-r="4" data-c="2" data-cs="28" data-color="#C9C3F2" style="left:490px;top:568px"></div>
+      <div class="mx" data-r="4" data-c="2" data-cs="28" data-color="#C9C3F2" style="left:490px;top:738px"></div>
+      <div class="mcap" style="left:470px;top:524px;width:100px">W<sup>Q</sup> 4×2</div>
+      <div class="mcap" style="left:470px;top:694px;width:100px">W<sup>K</sup> 4×2</div>
+      <div class="mcap" style="left:470px;top:864px;width:100px">W<sup>V</sup> 4×2</div>
+      <div class="op" style="left:590px;top:428px">=</div><div class="op" style="left:590px;top:598px">=</div><div class="op" style="left:590px;top:768px">=</div>
+      <div class="mx" data-r="1" data-c="2" data-cs="40" data-color="var(--q)" data-rl="q" style="left:650px;top:434px"></div>
+      <div class="mx" data-r="1" data-c="2" data-cs="40" data-color="var(--k)" data-rl="k" style="left:650px;top:604px"></div>
+      <div class="mx" data-r="1" data-c="2" data-cs="40" data-color="var(--v)" data-rl="v" style="left:650px;top:774px"></div>
+      <div class="note" style="top:540px;left:960px;width:840px">임베딩 차원 <b>4</b>, 헤드 <b>2</b>개라면 헤드당 <b>2</b>차원.<br>‘love’의 4차원 벡터에 W(4×2)를 곱하면 <b>Q · K · V가 각각 2차원</b>으로 만들어진다.</div>
+    </div>
+
+    <!-- k2 : I love you scores -->
+    <div class="reveal" data-only="2">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none">
+        <g stroke="#3DD6C6" stroke-opacity=".55" fill="none"><path d="M330 580C400 580 400 450 466 450" stroke-width="9"/><path d="M330 580H466" stroke-width="3"/><path d="M330 580C400 580 400 710 466 710" stroke-width="2.5"/></g>
+      </svg>
+      <div class="mx" data-r="1" data-c="2" data-cs="44" data-color="var(--q)" data-rl="q(I)" style="left:150px;top:558px"></div>
+      <div class="mx" data-r="1" data-c="2" data-cs="44" data-color="var(--k)" data-rl="k(I)" style="left:500px;top:428px"></div>
+      <div class="mx" data-r="1" data-c="2" data-cs="44" data-color="var(--k)" data-rl="k(love)" style="left:476px;top:558px"></div>
+      <div class="mx" data-r="1" data-c="2" data-cs="44" data-color="var(--k)" data-rl="k(you)" style="left:482px;top:688px"></div>
+      <div class="colh" style="left:690px;top:380px">q·k</div><div class="colh" style="left:850px;top:380px">÷ √d<sub>k</sub></div><div class="colh" style="left:1010px;top:380px">softmax</div>
+      <div class="val" style="left:690px;top:432px">2.83</div><div class="val" style="left:690px;top:562px">0.61</div><div class="val" style="left:690px;top:692px">0.41</div>
+      <div class="val" style="left:850px;top:432px">2.00</div><div class="val" style="left:850px;top:562px">0.43</div><div class="val" style="left:850px;top:692px">0.29</div>
+      <div class="val" style="left:1010px;top:422px;color:var(--k)">72%</div><div class="val" style="left:1010px;top:552px;color:var(--k)">15%</div><div class="val" style="left:1010px;top:682px;color:var(--k)">13%</div>
+      <div class="pbar" style="left:1020px;top:466px"><i style="width:72%"></i></div><div class="pbar" style="left:1020px;top:596px"><i style="width:15%"></i></div><div class="pbar" style="left:1020px;top:726px"><i style="width:13%"></i></div>
+      <div class="op" style="left:1190px;top:550px">→</div>
+      <div class="mcap" style="left:1250px;top:470px;width:560px;font:600 22px 'JetBrains Mono',monospace;color:var(--text)">0.72·v(I) + 0.15·v(love) + 0.13·v(you)</div>
+      <div class="mx" data-r="1" data-c="2" data-cs="54" data-color="var(--v)" style="left:1474px;top:552px"></div>
+      <div class="mcap" style="left:1380px;top:620px;width:300px">어텐션 값 z(I) · 2차원</div>
+      <div class="note" style="top:800px;width:1040px;font-size:22px">‘I’는 자기 자신에게 72%, love 15%, you 13%의 가중치 → 그 비율만큼 밸류를 곱해 모두 더한다.</div>
+    </div>
+
+    <!-- k3 : X·W = Q -->
+    <div class="reveal" data-only="3">
+      <div class="mx" data-r="3" data-c="4" data-cs="46" data-rl="I,love,you" style="left:150px;top:440px"></div>
+      <div class="mcap" style="left:220px;top:600px;width:200px">X (3×4)</div>
+      <div class="op" style="left:470px;top:490px">×</div>
+      <div class="mx" data-r="4" data-c="2" data-cs="36" data-color="#C9C3F2" style="left:530px;top:428px"></div>
+      <div class="mcap" style="left:520px;top:600px;width:100px">W<sup>Q</sup> (4×2)</div>
+      <div class="op" style="left:640px;top:490px">=</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="46" data-color="var(--q)" data-rl="I,love,you" style="left:690px;top:440px"></div>
+      <div class="mcap" style="left:740px;top:600px;width:160px">Q (3×2)</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="46" data-color="var(--k)" style="left:1120px;top:440px"></div>
+      <div class="mcap" style="left:1060px;top:600px;width:220px">K = X·W<sup>K</sup> (3×2)</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="46" data-color="var(--v)" style="left:1400px;top:440px"></div>
+      <div class="mcap" style="left:1340px;top:600px;width:220px">V = X·W<sup>V</sup> (3×2)</div>
+      <div class="note" style="top:720px;width:1100px">문장 전체(3×4)를 <b>한 번의 행렬 곱</b>으로 → 단어마다 Q · K · V가 한꺼번에 만들어진다.</div>
+    </div>
+
+    <!-- k4 : QK^T -> softmax -> V -->
+    <div class="reveal" data-only="4">
+      <div class="mx" data-r="3" data-c="2" data-cs="44" data-color="var(--q)" data-rl="I,love,you" style="left:120px;top:470px"></div>
+      <div class="mcap" style="left:150px;top:630px;width:140px">Q (3×2)</div>
+      <div class="op" style="left:300px;top:510px">·</div>
+      <div class="mx" data-r="2" data-c="3" data-cs="44" data-color="var(--k)" data-cl="I,love,you" style="left:340px;top:466px"></div>
+      <div class="mcap" style="left:330px;top:630px;width:160px">K<sup>T</sup> (2×3)</div>
+      <div class="op" style="left:500px;top:510px">=</div>
+      <div class="mx" data-r="3" data-c="3" data-cs="44" data-color="var(--hot)" data-rl="I,love,you" data-cl="I,love,you" data-vals="2.8,.6,.4,.5,2.1,1.2,.3,1.4,2.4" data-heat="1,.2,.15,.2,.75,.45,.1,.5,.85" style="left:550px;top:440px"></div>
+      <div class="mcap" style="left:590px;top:630px;width:170px">에너지 (3×3)</div>
+      <div class="op" style="left:785px;top:510px;font-size:26px">→ softmax →</div>
+      <div class="mx" data-r="3" data-c="3" data-cs="44" data-color="var(--k)" data-cl="I,love,you" data-vals=".72,.15,.13,.18,.55,.27,.12,.3,.58" data-heat=".72,.15,.13,.18,.55,.27,.12,.3,.58" style="left:990px;top:440px"></div>
+      <div class="mcap" style="left:970px;top:630px;width:180px">가중치 (행마다 합 1)</div>
+      <div class="op" style="left:1150px;top:510px">·</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="44" data-color="var(--v)" style="left:1195px;top:470px"></div>
+      <div class="mcap" style="left:1175px;top:630px;width:130px">V (3×2)</div>
+      <div class="op" style="left:1310px;top:510px">=</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="54" data-color="#E3E5EA" data-rl="I,love,you" style="left:1360px;top:452px"></div>
+      <div class="mcap" style="left:1400px;top:630px;width:170px">어텐션 값 (3×2)</div>
+      <div class="note" style="top:740px;width:1200px">에너지 3×3 = 단어마다 모든 단어와의 연관도. 결과(3×2)는 입력 <b>Q · K · V와 같은 차원</b>이다.</div>
+    </div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 11 ================= -->
+  <section class="slide gen" id="s7">
+    <div class="kicker">장면 11 · MASKING · CONCAT</div>
+    <div class="title">마스킹과 헤드 결합</div>
+    <div class="sub"></div>
+    <div class="reveal" data-only="0,1,2">
+      <div class="mx" data-r="3" data-c="3" data-cs="70" data-color="var(--hot)" data-rl="I,love,you" data-cl="I,love,you" data-vals="3.1,1.2,0.4,1.0,2.8,1.9,0.6,2.2,3.0" data-heat="1,.39,.13,.32,.9,.61,.19,.71,.97" style="left:150px;top:400px"></div>
+      <div class="mcap" style="left:230px;top:660px;width:230px">어텐션 에너지</div>
+      <div class="op reveal" data-show="1" style="left:480px;top:500px">+</div>
+      <div class="mx reveal" data-show="1" data-r="3" data-c="3" data-cs="70" data-color="#3A4259" data-cl="I,love,you" data-vals="0,−∞,−∞,0,0,0,0,0,0" data-heat=".2,.9,.9,.2,.2,.2,.2,.2,.2" style="left:540px;top:400px"></div>
+      <div class="mcap reveal" data-show="1" style="left:540px;top:660px;width:220px">마스크 행렬 (같은 크기)</div>
+      <div class="op reveal" data-show="2" style="left:800px;top:510px;font-size:26px">→ softmax →</div>
+      <div class="mx reveal" data-show="2" data-r="3" data-c="3" data-cs="78" data-color="var(--k)" data-rl="I,love,you" data-cl="I,love,you" data-vals="100%,0%,0%,10%,64%,26%,6%,29%,65%" data-heat="1,0,0,.1,.64,.26,.06,.29,.65" style="left:1000px;top:392px"></div>
+      <div class="mcap reveal" data-show="2" style="left:1080px;top:660px;width:240px">어텐션 가중치</div>
+      <div class="note reveal" data-only="1" style="top:760px;width:1100px">무시할 위치에 <b>−∞(가능한 가장 작은 값)</b>를 넣는다. 예) ‘I’가 love · you를 참고하지 않도록.</div>
+      <div class="note reveal" data-only="2" style="top:760px;width:1100px">소프트맥스를 거치면 −∞ 자리는 <b>0%</b> → 그 단어는 어텐션하지 않는다.</div>
+    </div>
+    <div class="reveal" data-show="3">
+      <div class="mx" data-r="3" data-c="2" data-cs="40" data-color="var(--q)" style="left:150px;top:420px"></div><div class="mcap" style="left:120px;top:560px;width:150px">head 1</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="40" data-color="var(--k)" style="left:330px;top:420px"></div><div class="mcap" style="left:300px;top:560px;width:150px">head 2</div>
+      <div class="op" style="left:500px;top:440px">…</div>
+      <div class="mx" data-r="3" data-c="2" data-cs="40" data-color="var(--v)" style="left:590px;top:420px"></div><div class="mcap" style="left:560px;top:560px;width:150px">head h</div>
+      <div class="op" style="left:740px;top:446px;font-size:26px">→ Concat →</div>
+      <div class="mx" data-r="3" data-c="8" data-cs="40" data-color="var(--hot)" style="left:930px;top:420px"></div>
+      <div class="mcap" style="left:930px;top:560px;width:360px">이어 붙인 결과 · 3 × 512 (= 64 × 8)</div>
+    </div>
+    <div class="reveal" data-show="4">
+      <div class="mx" data-r="3" data-c="8" data-cs="26" data-color="var(--hot)" style="left:150px;top:700px"></div>
+      <div class="op" style="left:400px;top:712px">×</div>
+      <div class="mx" data-r="8" data-c="8" data-cs="14" data-color="#C9C3F2" style="left:460px;top:668px"></div>
+      <div class="mcap" style="left:440px;top:822px;width:180px">W<sup>O</sup> (512×512)</div>
+      <div class="op" style="left:620px;top:712px">=</div>
+      <div class="mx" data-r="3" data-c="8" data-cs="26" data-color="#E3E5EA" style="left:680px;top:700px"></div>
+      <div class="mcap" style="left:650px;top:800px;width:310px">출력 3 × 512 · 입력과 같은 차원</div>
+      <div class="note" style="top:700px;left:1080px;width:720px;font-size:23px">차원이 그대로 유지되므로 멀티헤드 어텐션 레이어를 <b>여러 번 쌓을 수 있다</b>.</div>
+    </div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 12 ================= -->
+  <section class="slide gen" id="s8">
+    <div class="kicker">장면 12 · THREE ATTENTIONS</div>
+    <div class="title">트랜스포머의 세 가지 어텐션</div>
+    <div class="sub"></div>
+    <div class="acard reveal" data-show="0" style="left:120px">
+      <h3>① 인코더 셀프 어텐션</h3><div class="src" style="color:var(--k)">Q = K = V = 입력 문장</div>
+      <svg width="460" height="330" viewBox="0 0 460 330">
+        <g fill="none" stroke="#3DD6C6" stroke-opacity=".5" stroke-width="2.5">
+          <path d="M60 240Q115 170 170 240"/><path d="M60 240Q170 110 280 240"/><path d="M60 240Q225 50 390 240"/>
+          <path d="M170 240Q225 170 280 240"/><path d="M170 240Q280 110 390 240"/><path d="M280 240Q335 170 390 240"/>
+        </g>
+        <g font-size="24" font-weight="600" text-anchor="middle" fill="#F2F4F8"><text x="60" y="280">I</text><text x="170" y="280">am</text><text x="280" y="280">a</text><text x="390" y="280">teacher</text></g>
+        <text x="225" y="316" font-size="17" fill="#8F99B0" text-anchor="middle">모든 단어가 서로를 참고</text>
+      </svg>
+    </div>
+    <div class="acard reveal" data-show="1" style="left:700px">
+      <h3>② 마스크드 디코더 셀프 어텐션</h3><div class="src" style="color:var(--q)">Q = K = V = 출력 문장 (앞쪽만)</div>
+      <svg width="460" height="330" viewBox="0 0 460 330">
+        <g transform="translate(320,10)" font-family="JetBrains Mono" font-size="12" text-anchor="middle">
+          <rect x="0" y="0" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/><rect x="38" y="0" width="34" height="34" rx="5" fill="#3A4259"/><rect x="76" y="0" width="34" height="34" rx="5" fill="#3A4259"/>
+          <rect x="0" y="38" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/><rect x="38" y="38" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/><rect x="76" y="38" width="34" height="34" rx="5" fill="#3A4259"/>
+          <rect x="0" y="76" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/><rect x="38" y="76" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/><rect x="76" y="76" width="34" height="34" rx="5" fill="#FFB547" fill-opacity=".5"/>
+          <text x="55" y="22" fill="#FF8A8A">−∞</text><text x="93" y="22" fill="#FF8A8A">−∞</text><text x="93" y="60" fill="#FF8A8A">−∞</text>
+        </g>
+        <g fill="none" stroke="#FFB547" stroke-width="3"><path d="M200 240Q130 170 60 240" marker-end="url(#hq)"/><path d="M186 236C170 190 230 190 214 236" marker-end="url(#hq)"/></g>
+        <path d="M200 240Q270 170 340 240" fill="none" stroke="#FF8A8A" stroke-width="2.5" stroke-dasharray="6 6"/>
+        <text x="270" y="200" font-size="30" font-weight="700" fill="#FF8A8A" text-anchor="middle">✕</text>
+        <g font-size="24" font-weight="600" text-anchor="middle"><text x="60" y="280" fill="#F2F4F8">나는</text><text x="200" y="280" fill="#FFB547">축구를</text><text x="340" y="280" fill="#3A4259">했다</text></g>
+        <text x="225" y="316" font-size="17" fill="#8F99B0" text-anchor="middle">뒤 단어를 미리 보면 치팅 → 마스크로 차단</text>
+      </svg>
+    </div>
+    <div class="acard reveal" data-show="2" style="left:1280px">
+      <h3>③ 인코더-디코더 어텐션</h3><div class="src"><span style="color:var(--q)">Q = 디코더</span> · <span style="color:var(--k)">K, V = 인코더 출력</span></div>
+      <svg width="460" height="330" viewBox="0 0 460 330">
+        <g fill="none" stroke="#3DD6C6" stroke-opacity=".6"><path d="M380 210L80 80" stroke-width="2"/><path d="M380 210L230 80" stroke-width="9"/><path d="M380 210L380 80" stroke-width="3"/></g>
+        <g font-size="24" font-weight="600" text-anchor="middle">
+          <text x="80" y="66" fill="#3DD6C6">I</text><text x="230" y="66" fill="#3DD6C6">like</text><text x="380" y="66" fill="#3DD6C6">you</text>
+          <text x="80" y="246" fill="#8F99B0">난</text><text x="230" y="246" fill="#8F99B0">널</text><text x="380" y="246" fill="#FFB547">좋아해</text>
+        </g>
+        <text x="225" y="296" font-size="17" fill="#8F99B0" text-anchor="middle">‘좋아해’를 만들 때 입력의 ‘like’를 가장 많이 참고</text>
+      </svg>
+    </div>
+    <div class="heatrow reveal" data-show="3">시각화 예시 · ‘it’ →
+      <span style="background:rgba(61,214,198,.06)">The</span><span style="background:rgba(61,214,198,.85);color:var(--ink)">tree</span><span style="background:rgba(61,214,198,.1)">fell</span><span style="background:rgba(61,214,198,.05)">because</span><span style="background:rgba(61,214,198,.18);border-color:var(--q)">it</span><span style="background:rgba(61,214,198,.05)">was</span><span style="background:rgba(61,214,198,.08)">old</span>
+      <em style="font-style:normal;margin-left:12px">‘it’이 앞의 ‘tree’에 높은 점수</em></div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <!-- ================= SCENE 13 ================= -->
+  <section class="slide gen" id="s9">
+    <div class="kicker">장면 13 · 전체 흐름 · POSITIONAL ENCODING</div>
+    <div class="title">전체 흐름과 위치 인코딩</div>
+    <div class="sub"></div>
+    <svg class="reveal" data-only="0" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0">
+      <g fill="none" stroke="#8F99B0" stroke-width="2.5" marker-end="url(#hm)">
+        <path d="M362 470H416"/><path d="M706 470H872"/><path d="M1162 470H1232"/><path d="M1392 470H1442"/><path d="M1602 470H1652"/><path d="M1020 618V552"/>
+      </g>
+      <g stroke="#1A1D29" stroke-width="2" font-size="22" font-weight="600" text-anchor="middle" fill="#1A1D29">
+        <rect x="120" y="390" width="240" height="60" rx="12" fill="#E3E5EA"/><text x="240" y="428" stroke="none">입력 임베딩</text>
+        <rect x="120" y="490" width="240" height="60" rx="12" fill="#F6C6D3"/><text x="240" y="528" stroke="none">위치 인코딩</text>
+        <rect x="448" y="372" width="280" height="160" rx="14" fill="#BFE6C8" fill-opacity=".3" stroke-opacity=".4"/>
+        <rect x="436" y="380" width="280" height="160" rx="14" fill="#BFE6C8" fill-opacity=".5" stroke-opacity=".6"/>
+        <rect x="424" y="388" width="280" height="160" rx="14" fill="#BFE6C8"/><text x="564" y="460" stroke="none" font-size="26">인코더 레이어</text><text x="564" y="500" stroke="none" font-family="JetBrains Mono">× N</text>
+        <rect x="904" y="372" width="280" height="160" rx="14" fill="#C9C3F2" fill-opacity=".3" stroke-opacity=".4"/>
+        <rect x="892" y="380" width="280" height="160" rx="14" fill="#C9C3F2" fill-opacity=".5" stroke-opacity=".6"/>
+        <rect x="880" y="388" width="280" height="160" rx="14" fill="#C9C3F2"/><text x="1020" y="460" stroke="none" font-size="26">디코더 레이어</text><text x="1020" y="500" stroke="none" font-family="JetBrains Mono">× N</text>
+        <rect x="880" y="620" width="280" height="60" rx="12" fill="#E3E5EA"/><text x="1020" y="658" stroke="none" font-size="20">출력 임베딩 + 위치 인코딩</text>
+        <rect x="1240" y="440" width="150" height="60" rx="12" fill="#E3E5EA"/><text x="1315" y="478" stroke="none">Linear</text>
+        <rect x="1450" y="440" width="150" height="60" rx="12" fill="#BFE6C8"/><text x="1525" y="478" stroke="none">Softmax</text>
+      </g>
+      <text x="240" y="476" font-size="30" font-weight="700" fill="#F2F4F8" text-anchor="middle">+</text>
+      <text x="1730" y="478" font-size="24" font-weight="600" fill="#F2F4F8" text-anchor="middle">출력 단어</text>
+      <text x="790" y="322" font-size="17" fill="#5AB0FF" text-anchor="middle">마지막 인코더 출력</text><text x="790" y="344" font-size="17" fill="#5AB0FF" text-anchor="middle">→ 모든 디코더 레이어</text>
+      <text x="564" y="600" font-size="18" fill="#8F99B0" text-anchor="middle">N번 중첩 · 레이어마다 파라미터는 다름</text>
+    </svg>
+    <div class="reveal" data-show="1">
+      <div class="fx sm" style="top:290px">PE<sub>(pos, 2i)</sub> &nbsp;&nbsp;= sin( pos / 10000<sup>2i/d<sub>model</sub></sup> )</div>
+      <div class="fx sm" style="top:360px">PE<sub>(pos, 2i+1)</sub> = cos( pos / 10000<sup>2i/d<sub>model</sub></sup> )</div>
+    </div>
+    <div class="note reveal" data-only="1" style="top:480px;width:1100px"><b>pos</b> = 단어의 위치(번호), <b>2i · 2i+1</b> = 임베딩 차원 번호 (짝수 차원은 sin, 홀수 차원은 cos).<br>차원마다 주기가 달라서 위치마다 고유한 패턴이 생긴다.</div>
+    <div class="reveal" data-show="2">
+      <div class="mx" id="pe-emb" data-r="4" data-c="8" data-cs="44" data-rl="We,are,the,one" style="left:120px;top:500px"></div>
+      <div class="mcap" style="left:180px;top:700px;width:380px">입력 임베딩 (4 × 8)</div>
+      <div class="op" style="left:600px;top:560px">+</div>
+      <div class="mx" id="pe-pe" data-r="4" data-c="8" data-cs="44" style="left:660px;top:500px"></div>
+      <div class="mcap" style="left:660px;top:700px;width:380px">위치 인코딩 (같은 크기)</div>
+      <div class="op" style="left:1072px;top:560px">=</div>
+      <div class="mx" id="pe-sum" data-r="4" data-c="8" data-cs="44" style="left:1130px;top:500px"></div>
+      <div class="mcap" style="left:1130px;top:700px;width:380px">실제 입력 (원소별로 더함)</div>
+    </div>
+    <div class="note reveal" data-show="3" style="top:790px;width:1100px">사인·코사인 대신 <b>위치 임베딩을 학습</b>시켜도 성능 차이는 거의 없다 (영상의 실습 코드도 학습형 사용).</div>
+    <div class="mcap reveal" data-show="3" style="left:120px;top:920px;width:1680px;text-align:right;color:var(--hot);font-size:22px">논문 핵심 요약 끝 ▶ 다음: 코드 실습 (장면 14)</div>
+    <div class="footer">Attention Is All You Need (NIPS 2017)</div><div class="hint">클릭 또는 → 다음 단계</div>
+  </section>
+
+  <div class="prog" id="prog"><span id="pnum"></span><div class="track"><i id="pfill"></i></div></div>
+</div>
+</div>
+<button id="fs" type="button">전체화면 (F)</button>
+
+<script>
+(function(){
+  const stage = document.getElementById('stage');
+  function fit(){ const s = Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform = 'scale('+s+')'; }
+  addEventListener('resize', fit); fit();
+
+  // steps: slide1 step0..3, slide2
+  const steps = [{s:'s1',k:0},{s:'s1',k:1},{s:'s1',k:2},{s:'s1',k:3}];
+  for (let k=0;k<=6;k++) steps.push({s:'s3',k});
+  for (let k=0;k<=5;k++) steps.push({s:'s2',k});
+  for (let k=0;k<=3;k++) steps.push({s:'s4',k});
+  const GEN = {s5:6, s6:5, s7:5, s8:4, s9:4};
+  for (const id in GEN) for (let k=0;k<GEN[id];k++) steps.push({s:id,k});
+  const SUBS = {
+    s5:['핵심은 이 한 줄 — 쿼리와 키로 가중치를 만들고, 그 가중치로 밸류를 모은다','① 쿼리 × 키 → 각 쿼리가 각 키에 대해 갖는 에너지','② √d<sub>k</sub>로 나눠 소프트맥스에 들어가는 값을 줄인다','③ 소프트맥스 확률 × 밸류 → 어텐션 값','④ 헤드마다 다른 리니어로 h개의 서로 다른 Q · K · V를 만든다','⑤ 헤드를 이어 붙이고 W<sup>O</sup>를 곱하면 멀티헤드 어텐션 완성'],
+    s6:['헤드마다 Q · K · V의 차원 = d<sub>model</sub> ÷ h','간단한 예시: 임베딩 4차원, 헤드 2개 → ‘love’ 하나로 Q · K · V 만들기','‘I love you’에서 쿼리 ‘I’의 어텐션 값 구하기','문장 전체를 행렬로 한 번에: X · W = Q, K, V','행렬 곱으로 모든 단어의 어텐션을 한꺼번에 계산'],
+    s7:['어텐션 에너지: 단어마다 모든 키에 대한 연관도 (3 × 3)','마스크 행렬로 특정 단어를 무시할 수 있다','소프트맥스 후 −∞ 자리는 0% — 그 단어는 참고하지 않는다','각 헤드의 결과를 일자로 이어 붙인다 (Concat)','W<sup>O</sup>를 곱해도 입력과 같은 차원이 유지된다'],
+    s8:['① 인코더 셀프 어텐션: 단어들이 서로를 참고 → 문장 전체의 표현을 학습','② 마스크드 디코더 셀프 어텐션: 앞쪽 단어만 참고 (뒤 단어를 보면 치팅)','③ 인코더-디코더 어텐션: 출력 단어(Q)가 입력 단어(K · V) 중 무엇을 참고할지','셀프 어텐션을 시각화하면 단어 사이의 연관성을 볼 수 있다'],
+    s9:['입력 → 인코더 × N → (마지막 인코더 출력이 모든 디코더 레이어로) → 디코더 × N → Linear · Softmax','위치 정보는 주기 함수(sin · cos)로 만든다','임베딩과 같은 크기의 위치 인코딩을 원소별로 더해 입력으로 쓴다','위치 임베딩을 학습시켜도 된다 — 성능 차이는 거의 없다']
+  };
+  const PRE = {p1:5, p2:6, p3:4, p4:6, p5:4, p6:5, p7:5};
+  const preSteps=[]; for (const id in PRE) for (let k=0;k<PRE[id];k++) preSteps.push({s:id,k});
+  steps.unshift(...preSteps); Object.assign(GEN, PRE);
+  Object.assign(SUBS, {
+    p1:['논문 제목 Attention Is All You Need — 어텐션이 메인 아이디어','1986 RNN → 1997 LSTM: 순서가 있는 시퀀스를 모델링','2014 Seq2Seq: 고정 크기 컨텍스트 벡터로 번역 — 성능의 한계','어텐션 등장: Seq2Seq에 어텐션을 더해 성능 향상','2017 트랜스포머: RNN 없이 어텐션만으로 → 더 좋은 성능'],
+    p2:['인코더: 단어가 들어올 때마다 히든 스테이트를 갱신','마지막 히든 스테이트 = 컨텍스트 벡터 (문장 전체를 대표)','디코더: 컨텍스트에서 출발해 EOS가 나올 때까지 한 단어씩 출력','문제: 소스 문장 전체를 고정된 크기 하나에 압축 → 병목','개선: 컨텍스트 벡터를 매번 디코더에 참고시키기 — 그래도 압축은 그대로','아이디어: 소스 문장의 출력값 전부를 매번 참고하면?'],
+    p3:['단어마다 나온 히든 스테이트를 모두 저장해 둔다','디코더의 이전 상태와 인코더의 각 상태를 비교 → 에너지','에너지에 소프트맥스 → 어떤 단어를 얼마나 참고할지 비율','비율만큼 곱해 더한 가중합을 디코더 입력으로 함께 넣는다'],
+    p4:['① 에너지: 디코더의 이전 상태 s와 인코더의 모든 출력 h를 비교','② 가중치: 에너지에 소프트맥스 → 상대적 확률','③ 가중합: 가중치 × h를 모두 더해 디코더에 넣는다','예시: 비율을 모두 더하면 100%','어텐션은 시각화할 수 있다 — 출력 단어가 입력의 어디를 봤는지','딥러닝이 어디에 집중했는지 분석할 때 유용하다'],
+    p5:['RNN · CNN 없이 어텐션만으로 인코더와 디코더를 구성','대신 단어의 순서는 위치 인코딩으로 알려 준다','단어는 먼저 임베딩: 원-핫 → 더 작은 차원의 실수 벡터','문장 = 단어 수 × 임베딩 차원의 행렬 (원 논문 512)'],
+    p6:['임베딩 + 위치 인코딩 (원소별 덧셈) = 어텐션의 입력','인코더의 셀프 어텐션: 단어끼리 서로 얼마나 연관 있는지','인코더 레이어 하나의 구성','레지듀얼 연결: 레이어를 건너뛴 입력을 그대로 더한다','레이어를 N번 중첩 — 입력과 출력 차원이 같다'],
+    p7:['마지막 인코더 레이어의 출력이 모든 디코더 레이어로 들어간다','디코더 레이어는 어텐션을 두 번 쓴다','인코더-디코더 어텐션: 출력 단어가 입력 단어 중 무엇과 연관 있는지','학습은 병렬로, 생성은 EOS까지 한 단어씩','컨텍스트 벡터 압축 없이 RNN을 완전히 걷어냈다']
+  });
+  function renderGen(id,k){
+    const el=document.getElementById(id), ks=String(k);
+    el.querySelectorAll('[data-show]').forEach(e=>e.classList.toggle('vis', k>=+e.dataset.show));
+    el.querySelectorAll('[data-only]').forEach(e=>e.classList.toggle('vis', e.dataset.only.split(',').includes(ks)));
+    el.querySelectorAll('[data-hl]').forEach(e=>e.classList.toggle('hl', e.dataset.hl.split(',').includes(ks)));
+    swap(el.querySelector('.sub'), SUBS[id][k]);
+  }
+
+  // ---- matrix builder ----
+  let seed=7; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  function buildMx(el, signed){
+    const r=+el.dataset.r, c=+el.dataset.c, cs=+(el.dataset.cs||34), col=el.dataset.color||'#8F99B0';
+    const vals=el.dataset.vals?el.dataset.vals.split(','):null;
+    const heat=el.dataset.heat?el.dataset.heat.split(',').map(Number):null;
+    const rl=el.dataset.rl?el.dataset.rl.split(','):null, cl=el.dataset.cl?el.dataset.cl.split(','):null;
+    el.innerHTML=''; el.style.gridTemplateColumns=(rl?'auto ':'')+'repeat('+c+','+cs+'px)';
+    if (cl){ if (rl) el.append(document.createElement('span')); cl.forEach(t=>{const x=document.createElement('span');x.className='cl';x.textContent=t;el.append(x);}); }
+    for (let i=0;i<r;i++){
+      if (rl){ const x=document.createElement('span'); x.className='rl'; x.textContent=rl[i]; el.append(x); }
+      for (let j=0;j<c;j++){
+        const n=i*c+j, d=document.createElement('i'); d.style.width=d.style.height=cs+'px';
+        let h = heat?heat[n]:(.25+.45*rnd()), cc=col;
+        if (signed){ const v=signed[n]; h=Math.min(1,Math.abs(v)); cc = v>=0?'#FFB547':'#3DD6C6'; d.textContent=v.toFixed(1); }
+        d.style.background='color-mix(in srgb, '+cc+' '+Math.round((.14+.86*h)*100)+'%, transparent)';
+        if (vals){ d.textContent=vals[n]; if (vals[n].includes('∞')) d.classList.add('neg'); }
+        el.append(d);
+      }
+    }
+  }
+  const emb=[], pe=[], sum=[];
+  for (let p=0;p<4;p++) for (let j=0;j<8;j++){
+    const e=Math.round((rnd()*2-1)*10)/10, ang=p/Math.pow(10000,(j-(j%2))/8), v=j%2===0?Math.sin(ang):Math.cos(ang);
+    emb.push(e); pe.push(v); sum.push(e+v);
+  }
+  document.querySelectorAll('.mx').forEach(el=>{
+    if (el.id==='pe-emb') buildMx(el,emb); else if (el.id==='pe-pe') buildMx(el,pe); else if (el.id==='pe-sum') buildMx(el,sum); else buildMx(el);
+  });
+  // head heatmaps
+  const heads=document.getElementById('heads');
+  for (let h=0;h<8;h++){
+    const box=document.createElement('div'); box.style.cssText='position:absolute;top:0;left:'+(h*112)+'px';
+    const g=document.createElement('div'); g.className='mx'; g.style.position='relative';
+    g.dataset.r=4; g.dataset.c=4; g.dataset.cs=20; g.dataset.color='#5AB0FF';
+    const hv=[]; for (let i=0;i<4;i++) for (let j=0;j<4;j++) hv.push(j===((i*(h%3+1)+h)%4)?.95:.08+.25*rnd());
+    g.dataset.heat=hv.join(','); buildMx(g);
+    const cap=document.createElement('div'); cap.className='mcap'; cap.style.cssText='position:relative;width:89px;margin-top:6px'; cap.textContent='head '+(h+1);
+    box.append(g,cap); heads.append(box);
+  }
+  // sigmoid path
+  (function(){ let d=''; for (let x=0;x<=600;x+=6){ const t=(x-300)/45, y=310-290/(1+Math.exp(-t)); d+=(x?'L':'M')+(40+x)+' '+y.toFixed(1); } document.getElementById('sigpath').setAttribute('d',d); })();
+
+  const SUB2 = [
+    '방금 본 과정이 <b>Scaled Dot-Product Attention</b> 안에서 수행된다',
+    '① 들어온 입력이 <b>세 개로 복제</b>되어 밸류 · 키 · 쿼리로 들어간다',
+    '② 리니어(행렬 곱)로 <b>h개의 서로 다른</b> V · K · Q 쌍을 만든다',
+    '③ 헤드마다 어텐션 수행 → <b>h개의 서로 다른 어텐션 컨셉</b>을 학습',
+    '④ 헤드별 어텐션 값을 <b>Concat</b> — 일자로 쭉 이어 붙인다',
+    '⑤ 마지막 리니어 → <b>입력과 출력의 차원이 같다</b> (차원이 줄지 않음)'
+  ];
+  const SUB4 = [
+    '멀티헤드 어텐션은 전체 아키텍처에서 <b>모두 같은 함수</b>로 동작한다',
+    '인코더-디코더 어텐션: <b>디코더의 출력 단어가 쿼리</b>가 된다',
+    '<b>키와 밸류는 인코더의 출력</b> — 인코더에게 “어떤 정보를 참고해야 해?”라고 묻는 것',
+    '다른 점은 <b>Q · K · V를 어디서 가져오느냐</b>뿐 → 이제 수식으로 보자'
+  ];
+  const s2 = document.getElementById('s2'), s4 = document.getElementById('s4');
+  function renderS2(k){
+    swap(document.getElementById('sub2'), SUB2[k]);
+    document.querySelectorAll('.hs').forEach(h=>{
+      const n=+h.dataset.hs, open = n<=k;
+      h.classList.toggle('open', open);
+    });
+    document.querySelectorAll('#s2 .part').forEach(p=>p.classList.toggle('hl', k===0 ? p.dataset.hs==='3' : +p.dataset.hs===k));
+    s2.classList.toggle('fan', k>=3);
+  }
+  function renderS4(k){
+    swap(document.getElementById('sub4'), SUB4[k]);
+    s4.querySelectorAll('[data-show]').forEach(el=>el.classList.toggle('vis', k>=+el.dataset.show));
+  }
+
+  // slide 3 data (scores chosen so softmax = 70/20/5/5, d_k = 64 → ÷8)
+  const RAW=[22.4,12.4,1.3,1.3], SC=[2.8,1.55,0.16,0.16], PR=[.70,.20,.05,.05];
+  const SUB3 = [
+    '셀프 어텐션: 문장 속 <b>각 단어가 다른 단어와 얼마나 연관 있는지</b> 측정한다',
+    '‘I’가 문장의 각 단어와 얼마나 연관 있는지 구한다면 → <b>‘I’가 쿼리</b> (물어보는 주체)',
+    '‘I am a teacher’ 각각의 단어는 <b>키</b>가 된다 (물어보는 대상)',
+    '① 행렬 곱 <b>Q·Kᵀ</b> → 쿼리와 각 키의 연관도 점수',
+    '② 스케일링 <b>÷ √d_k</b> (d_k = 64 → ÷ 8) · 마스크는 필요할 때만',
+    '③ 소프트맥스 → 어떤 키와 가장 연관 있는지 <b>비율(합 100%)</b>',
+    '④ 비율 × 밸류를 모두 더하면 → <b>가중치가 적용된 어텐션 값</b>'
+  ];
+  const OP3 = ['','','','Q·Kᵀ','÷ √64','softmax','softmax'];
+  const s3 = document.getElementById('s3'), sub3 = document.getElementById('sub3'), op3 = document.getElementById('op3');
+  function swap(el, html){ if (el.innerHTML!==html){ el.innerHTML=html; el.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:380,easing:'ease-out'}); } }
+  function renderS3(k){
+    s3.querySelectorAll('[data-show]').forEach(el=>el.classList.toggle('vis', k>=+el.dataset.show));
+    document.getElementById('sentI').classList.toggle('isq', k>=1);
+    swap(sub3, SUB3[k]); swap(op3, OP3[k]);
+    s3.querySelectorAll('.score').forEach((el,i)=>{
+      const t = k<=3 ? RAW[i].toFixed(1) : k===4 ? SC[i].toFixed(2) : Math.round(PR[i]*100)+'%';
+      swap(el, t); el.style.color = k>=5 ? 'var(--k)' : 'var(--text)';
+    });
+    s3.querySelectorAll('.bar i').forEach((el,i)=>el.style.width = k>=5 ? (PR[i]*100)+'%' : '0');
+    s3.querySelectorAll('.ql').forEach((el,i)=>{ el.style.strokeWidth = k>=5 ? (1.5+PR[i]*12) : 2.5; el.style.strokeOpacity = k>=5 ? (.25+PR[i]) : .55; });
+    s3.querySelectorAll('.tok.val').forEach(el=>el.classList.toggle('w', k>=6));
+    const hl = {3:'b-mm1',4:'b-scale',5:'b-soft',6:'b-mm2'}[k];
+    s3.querySelectorAll('.blk').forEach(b=>{ b.classList.toggle('hl', b.id===hl); b.classList.toggle('hl2', k===4 && b.id==='b-mask'); });
+    s3.querySelectorAll('.badge').forEach(b=>b.classList.toggle('on', k>=3 && b.id==='g-'+(k-2)));
+    const ringK = {1:'Q',2:'K',6:'V'}[k];
+    s3.querySelectorAll('.r3').forEach(r=>r.classList.toggle('on', r.dataset.k===ringK));
+  }
+  let idx = 0;
+  const X = {Q:935, K:1025, V:1160};
+  const COL = {Q:'var(--q)', K:'var(--k)', V:'var(--v)'};
+  const ROLE = {Q:'물어보는 주체', K:'물어보는 대상', V:'실제로 가져올 정보'};
+  const ptr = document.getElementById('pointer'), bub = ptr.querySelector('.bubble');
+  const pnum=document.getElementById('pnum'), pfill=document.getElementById('pfill');
+
+  function render(){
+    const st = steps[idx];
+    document.querySelectorAll('.slide').forEach(el=>el.classList.toggle('on', el.id===st.s));
+    pnum.textContent=(idx+1)+' / '+steps.length; pfill.style.width=((idx+1)/steps.length*100)+'%';
+    if (st.s==='s1'){
+      const k = st.k;
+      ['Q','K','V'].forEach((L,i)=>{
+        const c = document.getElementById('card-'+L);
+        c.classList.toggle('active', i+1===k); c.classList.toggle('past', i+1<k);
+      });
+      document.querySelectorAll('.ring').forEach(r=>r.classList.toggle('on', k>0 && r.dataset.k===['Q','K','V'][k-1]));
+      if (k===0){ ptr.classList.remove('on'); ptr.style.left = X.Q+'px'; }
+      else { const L=['Q','K','V'][k-1]; ptr.style.setProperty('--c', COL[L]); bub.textContent = ROLE[L]; ptr.style.left = X[L]+'px'; ptr.classList.add('on'); }
+    } else if (st.s==='s3') { renderS3(st.k); }
+    else if (st.s==='s2') { renderS2(st.k); }
+    else if (st.s==='s4') { renderS4(st.k); }
+    else if (GEN[st.s]) { renderGen(st.s, st.k); }
+  }
+  function go(d){ idx = Math.max(0, Math.min(steps.length-1, idx+d)); render(); }
+
+  document.getElementById('s1').addEventListener('click', ()=>go(1));
+  document.getElementById('s3').addEventListener('click', ()=>go(1));
+  document.getElementById('s2').addEventListener('click', ()=>go(1));
+  document.getElementById('s4').addEventListener('click', ()=>go(1));
+  document.querySelectorAll('.slide.gen').forEach(el=>el.addEventListener('click', ()=>go(1)));
+  addEventListener('keydown', e=>{
+    if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)){ e.preventDefault(); go(1); }
+    else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)){ e.preventDefault(); go(-1); }
+    else if (e.key==='Escape'){ closeAll(); }
+    else if (e.key==='f' || e.key==='F'){ toggleFs(); }
+    else if (steps[idx].s==='s2' && /^[1-5]$/.test(e.key)){ toggle(e.key); }
+  });
+
+  // hotspots
+  function toggle(n){
+    const hs = document.querySelector('.hs[data-hs="'+n+'"]'); const open = !hs.classList.contains('open');
+    hs.classList.toggle('open', open);
+    document.querySelectorAll('.part[data-hs="'+n+'"]').forEach(p=>p.classList.toggle('hl', open));
+  }
+  function closeAll(){ document.querySelectorAll('.hs.open').forEach(h=>toggle(h.dataset.hs)); }
+  document.querySelectorAll('.hs .dot').forEach(d=>d.addEventListener('click', e=>{ e.stopPropagation(); toggle(d.parentElement.dataset.hs); }));
+  document.querySelectorAll('.part').forEach(p=>p.addEventListener('click', e=>{ e.stopPropagation(); toggle(p.dataset.hs); }));
+
+  function toggleFs(){
+    try { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); } catch(e){}
+  }
+  document.getElementById('fs').addEventListener('click', e=>{ e.stopPropagation(); toggleFs(); });
+  render();
+})();
+</script>
+</body>
+</html>
