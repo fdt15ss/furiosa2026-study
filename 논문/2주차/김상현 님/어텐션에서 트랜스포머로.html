@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>어텐션에서 트랜스포머로</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#eceef2; --paper:#ffffff; --ink:#1b1f2a; --sub:#5b6272; --line:#d6dae3;
+    --accent:#e0592a; --accent-soft:#fde9e1; --blue:#2f5fd0; --blue-soft:#e4ecfc;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  #stage{position:fixed;inset:0 0 52px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #deck{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none}
+  .slide{position:absolute;inset:0;width:1280px;height:720px;background:var(--paper);
+    padding:56px 72px 52px;display:none;flex-direction:column;word-break:keep-all;
+    box-shadow:0 10px 40px rgba(20,30,60,.12);border-radius:6px;overflow:hidden}
+  .slide.active{display:flex}
+  .slide::after{content:attr(data-no);position:absolute;right:40px;bottom:22px;font:500 14px var(--mono);color:#a3a9b6}
+  .slide .kicker{font:600 15px var(--mono);letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+  .slide h2{font-size:38px;font-weight:900;margin:0 0 24px;letter-spacing:-.02em;line-height:1.2}
+  .slide p,.slide li{font-size:22px;line-height:1.6;margin:0}
+  .slide ul{margin:0;padding-left:1.1em}
+  .slide li+li{margin-top:10px}
+  .slide b{color:var(--accent);font-weight:700}
+  .sub{color:var(--sub)}
+  .small{font-size:17px!important;color:var(--sub)}
+  .notes{display:none}
+  .calc .kicker{color:var(--blue)}
+  .calc .kicker::before{content:'계산 예제 · ';}
+
+  .cols{display:flex;gap:44px;flex:1;min-height:0}
+  .cols>*{flex:1;min-width:0}
+  .cols .w2{flex:1.5}
+  .center{display:flex;flex-direction:column;justify-content:center}
+  figure{margin:0;display:flex;flex-direction:column;justify-content:center}
+  figure svg{width:100%;height:auto;max-height:100%}
+  figcaption{font-size:15px;color:var(--sub);margin-top:8px;text-align:center}
+
+  .formula{font:600 24px var(--mono);background:#f5f6f9;border-left:5px solid var(--accent);
+    padding:16px 22px;border-radius:4px;margin:4px 0 18px;white-space:nowrap}
+  .formula.sm{font-size:18px;padding:12px 18px}
+  .work{font:500 18px/1.75 var(--mono);background:#f5f6f9;border-left:5px solid var(--blue);
+    padding:14px 20px;border-radius:4px;margin:0 0 14px;white-space:pre}
+  .work em{font-style:normal;color:var(--accent);font-weight:600}
+  .card{background:#f5f6f9;border-radius:8px;padding:20px 24px}
+  .card h3{margin:0 0 8px;font-size:21px}
+  .card p{font-size:18px;line-height:1.55}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  .big{font:900 60px 'Noto Sans KR';color:var(--accent);line-height:1;letter-spacing:-.03em}
+  .big small{font-size:21px;color:var(--sub);font-weight:500;margin-left:6px}
+
+  table.t{border-collapse:collapse;width:100%;font-size:20px}
+  .t th,.t td{border-bottom:1px solid var(--line);padding:11px 13px;text-align:left}
+  .t td:first-child{white-space:nowrap}
+  .t th{font-size:16px;color:var(--sub);font-weight:500;border-bottom:2px solid var(--ink)}
+  .t td.m{font-family:var(--mono);font-size:18px}
+  .t td.r,.t th.r{text-align:right}
+  .t tr.hl td{background:var(--accent-soft);font-weight:700}
+  .t.sm{font-size:17px}.t.sm th,.t.sm td{padding:8px 11px}
+
+  /* 행렬 */
+  .mrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .mat{display:inline-flex;align-items:center;gap:8px}
+  .mat .nm{font:600 19px var(--mono)}
+  .mat .rl{display:flex;flex-direction:column;font:500 14px var(--mono);color:var(--sub);text-align:right}
+  .mat .rl span{height:30px;line-height:30px}
+  .mat .rl .ch{height:22px}
+  .mat .body{display:flex;flex-direction:column}
+  .mat .cl{display:flex;font:500 13px var(--mono);color:var(--sub);height:22px;padding:0 6px}
+  .mat .cl span{width:62px;text-align:right}
+  .mat table{border-collapse:collapse;border-left:2px solid var(--ink);border-right:2px solid var(--ink);font:500 18px var(--mono);border-radius:3px}
+  .mat td{width:62px;height:30px;text-align:right;padding:0 6px}
+  .mat td.hl{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .mat td.mk{color:#9aa1b1;background:#eef0f4}
+  .mat.s td{width:50px;font-size:16px;height:26px}.mat.s .rl span{height:26px;line-height:26px}.mat.s .cl span{width:50px}
+  .op{font:600 26px var(--mono);color:var(--sub)}
+
+  .cover{background:#161a24;color:#fff;justify-content:center}
+  .cover h1{font-size:72px;font-weight:900;margin:0 0 22px;letter-spacing:-.03em;line-height:1.12}
+  .cover h1 span{color:var(--accent)}
+  .cover p{font-size:25px;color:#b6bccb}
+  .cover .kicker{color:#ff8a5b}
+  .divider{background:#161a24;color:#fff;justify-content:center}
+  .divider h2{font-size:56px;margin:0 0 16px}
+  .divider p{color:#b6bccb;font-size:24px}
+  .divider .kicker{color:#ff8a5b}
+  .toc{counter-reset:t;list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px 56px}
+  .toc li{counter-increment:t;font-size:24px;margin:0!important;padding:14px 0;border-bottom:1px solid var(--line)}
+  .toc li::before{content:counter(t,decimal-leading-zero);font:600 18px var(--mono);color:var(--accent);margin-right:18px}
+  .toc li.focus{font-weight:700}
+  .toc li.focus::after{content:'핵심';font:600 13px var(--mono);color:#fff;background:var(--accent);border-radius:3px;padding:2px 7px;margin-left:12px;vertical-align:3px}
+
+  #bar{position:fixed;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--sub)}
+  #bar button{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:6px 14px;cursor:pointer}
+  #bar button:hover{border-color:var(--ink)}
+  #count{font-family:var(--mono);min-width:64px;text-align:center}
+  #notebox{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);width:min(900px,92vw);
+    background:#161a24;color:#e8eaf0;border-radius:8px;padding:14px 18px;font-size:15px;line-height:1.6;display:none}
+  body.shownotes #notebox{display:block}
+  body.shownotes #stage{bottom:200px}
+  body.list #stage{position:static;display:block;overflow:visible;padding:24px 0 80px}
+  body.list #deck{transform:none!important;height:auto;margin:0 auto;zoom:var(--listzoom,1)}
+  body.list .slide{display:flex;position:relative;margin:0 auto 28px}
+  body.list #notebox{display:none}
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    #bar,#notebox{display:none!important}
+    #stage{position:static;display:block}
+    #deck{transform:none!important;height:auto}
+    .slide{display:flex!important;position:relative;box-shadow:none;border-radius:0;page-break-after:always}
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+
+<!-- ===== 표지 ===== -->
+<section class="slide cover">
+  <p class="kicker">Deep Learning · Sequence Modeling</p>
+  <h1>어텐션에서 <span>트랜스포머</span>로<br>숫자로 따라가는 구조</h1>
+  <p>“Attention Is All You Need”(2017)를 작은 예제와 실제 규모의 계산으로 해부한다</p>
+  <aside class="notes">이번 발표의 중심은 트랜스포머 자체입니다. 어텐션은 배경으로 짧게 다루고, 트랜스포머 한 층에서 일어나는 계산을 실제 숫자로 끝까지 따라갑니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">Contents</p>
+  <h2>목차</h2>
+  <ol class="toc">
+    <li>배경: seq2seq와 어텐션</li>
+    <li class="focus">트랜스포머 전체 구조</li>
+    <li class="focus">한 층의 데이터 흐름과 텐서 크기</li>
+    <li class="focus">계산 예제: 인코더 한 층</li>
+    <li class="focus">계산 예제: 디코더와 출력</li>
+    <li class="focus">실제 규모의 숫자</li>
+    <li>학습 설정과 결과</li>
+    <li>정리</li>
+  </ol>
+  <aside class="notes">1장은 짧게 배경만 다루고, 2장부터가 본론입니다.</aside>
+</section>
+
+<!-- ===== 1. 배경 ===== -->
+<section class="slide">
+  <p class="kicker">01 · Background</p>
+  <h2>출발점: 벡터 하나에 갇힌 문장</h2>
+  <div class="cols">
+    <figure class="w2">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="인코더 RNN의 마지막 은닉 상태 하나만 디코더로 전달되는 seq2seq 구조">
+        <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-family="Noto Sans KR, system-ui, sans-serif" font-size="20" text-anchor="middle" fill="currentColor">
+          <text x="235" y="28" font-weight="700" fill="#5b6272">인코더 (RNN)</text>
+          <text x="760" y="28" font-weight="700" fill="#5b6272">디코더 (RNN)</text>
+          <g fill="#e4ecfc" stroke="#2f5fd0" stroke-width="2">
+            <rect x="40" y="110" width="86" height="54" rx="6"/><rect x="160" y="110" width="86" height="54" rx="6"/>
+            <rect x="280" y="110" width="86" height="54" rx="6"/><rect x="400" y="110" width="86" height="54" rx="6"/>
+            <rect x="620" y="110" width="86" height="54" rx="6"/><rect x="740" y="110" width="86" height="54" rx="6"/><rect x="860" y="110" width="86" height="54" rx="6"/>
+          </g>
+          <g font-family="JetBrains Mono, ui-monospace, monospace" font-size="20"><text x="83" y="144">h₁</text><text x="203" y="144">h₂</text><text x="323" y="144">h₃</text><text x="443" y="144">h₄</text>
+          <text x="663" y="144">s₁</text><text x="783" y="144">s₂</text><text x="903" y="144">s₃</text></g>
+          <g font-size="19" fill="#5b6272"><text x="83" y="240">I</text><text x="203" y="240">am</text><text x="323" y="240">a</text><text x="443" y="240">student</text>
+          <text x="663" y="80">je</text><text x="783" y="80">suis</text><text x="903" y="80">étudiant</text></g>
+          <g stroke="currentColor" stroke-width="2" marker-end="url(#ar3)">
+            <line x1="126" y1="137" x2="156" y2="137"/><line x1="246" y1="137" x2="276" y2="137"/><line x1="366" y1="137" x2="396" y2="137"/>
+            <line x1="706" y1="137" x2="736" y2="137"/><line x1="826" y1="137" x2="856" y2="137"/>
+            <line x1="83" y1="218" x2="83" y2="168"/><line x1="203" y1="218" x2="203" y2="168"/><line x1="323" y1="218" x2="323" y2="168"/><line x1="443" y1="218" x2="443" y2="168"/>
+            <line x1="663" y1="108" x2="663" y2="88"/><line x1="783" y1="108" x2="783" y2="88"/><line x1="903" y1="108" x2="903" y2="88"/>
+            <line x1="486" y1="137" x2="514" y2="137"/><line x1="586" y1="137" x2="616" y2="137"/>
+          </g>
+          <circle cx="550" cy="137" r="34" fill="#fde9e1" stroke="#e0592a" stroke-width="3"/>
+          <text x="550" y="145" font-family="JetBrains Mono, ui-monospace, monospace" font-size="24" font-weight="600" fill="#e0592a">c</text>
+          <text x="550" y="206" font-size="17" fill="#e0592a" font-weight="700">고정 길이 벡터</text>
+        </g>
+      </svg>
+      <figcaption>seq2seq: 인코더의 마지막 상태 c 하나만 디코더로 넘어간다</figcaption>
+    </figure>
+    <div class="center">
+      <ul>
+        <li>긴 문장일수록 <b>c 하나</b>에 정보가 다 담기지 않음</li>
+        <li><b>RNN</b>: hₜ가 hₜ₋₁에 의존 → 문장 안에서 병렬화 불가</li>
+        <li><b>CNN</b>: 병렬화는 되지만 먼 두 위치를 잇는 연산 수가 거리에 따라 증가</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">어텐션 이전의 seq2seq는 문장을 고정 길이 벡터 하나로 요약해 긴 문장에서 정보가 손실됐습니다. 논문은 여기에 더해 RNN의 순차성과 CNN의 경로 길이 문제를 트랜스포머의 출발점으로 제시합니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">01 · Attention in one slide</p>
+  <h2>어텐션 한 장 요약</h2>
+  <div class="cols">
+    <div class="center">
+      <div class="formula">out = Σ softmax(score(q, kᵢ)) · vᵢ</div>
+      <ul>
+        <li>쿼리(Q)와 키(K)의 유사도로 가중치를 만들고, 그 비율로 값(V)을 섞는 <b>소프트 룩업</b></li>
+        <li>2014~16년에는 RNN에 붙은 <b>보조 장치</b>: 디코더가 인코더를 들여다보는 창구</li>
+        <li>트랜스포머는 이것을 <b>모델의 유일한 시퀀스 혼합 수단</b>으로 올렸다</li>
+      </ul>
+    </div>
+    <div class="center">
+      <table class="t sm">
+        <tr><th>연도</th><th>방식</th><th>점수 함수</th></tr>
+        <tr><td>2014</td><td>Bahdanau (가산)</td><td class="m">vᵀtanh(Ws + Uh)</td></tr>
+        <tr><td>2015</td><td>Luong (곱셈)</td><td class="m">sᵀh, sᵀWh</td></tr>
+        <tr class="hl"><td>2017</td><td>Transformer</td><td class="m">qᵀk / √dₖ</td></tr>
+      </table>
+      <p class="small" style="margin-top:16px">Luong의 내적 방식은 행렬곱 한 번으로 계산돼 GPU에 유리했고, 트랜스포머 점수 함수의 직접적인 조상이다.</p>
+    </div>
+  </div>
+  <aside class="notes">어텐션 연산 자체는 2015년에 이미 있었습니다. 트랜스포머의 새로움은 이 연산을 어디에, 어떻게 배치했느냐에 있습니다. 여기서부터 본론입니다.</aside>
+</section>
+
+<!-- ===== 2. 구조 ===== -->
+<section class="slide divider">
+  <p class="kicker">Part 2</p>
+  <h2>트랜스포머의 구조</h2>
+  <p>RNN 없이, 어텐션과 FFN을 블록으로 쌓는다</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">02 · Architecture</p>
+  <h2>트랜스포머 전체 구조</h2>
+  <div class="cols">
+    <figure style="flex:1.25">
+      <svg viewBox="0 0 870 540" role="img" aria-label="인코더 6층과 디코더 6층, 인코더 출력이 디코더의 크로스 어텐션에 키와 값으로 들어가는 트랜스포머 구조">
+        <defs><marker id="ar7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g font-family="Noto Sans KR, system-ui, sans-serif" font-size="17" text-anchor="middle" fill="currentColor">
+          <rect x="40" y="200" width="320" height="250" rx="12" fill="none" stroke="#9aa1b1" stroke-width="2"/>
+          <text x="30" y="330" font-family="JetBrains Mono, ui-monospace, monospace" font-size="22" font-weight="600" text-anchor="end">6×</text>
+          <rect x="70" y="370" width="260" height="50" rx="6" fill="#fde9e1" stroke="#e0592a" stroke-width="2"/><text x="200" y="401">멀티헤드 셀프 어텐션</text>
+          <rect x="70" y="322" width="260" height="34" rx="6" fill="#f5f6f9" stroke="#9aa1b1"/><text x="200" y="345" font-size="15">Add &amp; Norm</text>
+          <rect x="70" y="258" width="260" height="50" rx="6" fill="#e4ecfc" stroke="#2f5fd0" stroke-width="2"/><text x="200" y="289">피드포워드 (FFN)</text>
+          <rect x="70" y="212" width="260" height="34" rx="6" fill="#f5f6f9" stroke="#9aa1b1"/><text x="200" y="235" font-size="15">Add &amp; Norm</text>
+          <rect x="70" y="472" width="260" height="44" rx="6" fill="#fff" stroke="#9aa1b1"/><text x="200" y="500" font-size="15">입력 임베딩 + 위치 인코딩</text>
+          <line x1="200" y1="470" x2="200" y2="424" stroke="currentColor" stroke-width="2" marker-end="url(#ar7)"/>
+          <text x="200" y="190" font-weight="700" fill="#5b6272">인코더</text>
+          <rect x="480" y="60" width="340" height="390" rx="12" fill="none" stroke="#9aa1b1" stroke-width="2"/>
+          <text x="828" y="260" font-family="JetBrains Mono, ui-monospace, monospace" font-size="22" font-weight="600" text-anchor="start">×6</text>
+          <rect x="520" y="382" width="260" height="50" rx="6" fill="#fde9e1" stroke="#e0592a" stroke-width="2"/><text x="650" y="413">마스크드 셀프 어텐션</text>
+          <rect x="520" y="338" width="260" height="32" rx="6" fill="#f5f6f9" stroke="#9aa1b1"/><text x="650" y="360" font-size="15">Add &amp; Norm</text>
+          <rect x="520" y="274" width="260" height="50" rx="6" fill="#fde9e1" stroke="#e0592a" stroke-width="2"/><text x="650" y="305">인코더-디코더 어텐션</text>
+          <rect x="520" y="230" width="260" height="32" rx="6" fill="#f5f6f9" stroke="#9aa1b1"/><text x="650" y="252" font-size="15">Add &amp; Norm</text>
+          <rect x="520" y="166" width="260" height="50" rx="6" fill="#e4ecfc" stroke="#2f5fd0" stroke-width="2"/><text x="650" y="197">피드포워드 (FFN)</text>
+          <rect x="520" y="122" width="260" height="32" rx="6" fill="#f5f6f9" stroke="#9aa1b1"/><text x="650" y="144" font-size="15">Add &amp; Norm</text>
+          <rect x="520" y="8" width="260" height="40" rx="6" fill="#161a24"/><text x="650" y="34" fill="#fff" font-size="16">Linear → Softmax → 출력 확률</text>
+          <line x1="650" y1="120" x2="650" y2="52" stroke="currentColor" stroke-width="2" marker-end="url(#ar7)"/>
+          <rect x="520" y="472" width="260" height="44" rx="6" fill="#fff" stroke="#9aa1b1"/><text x="650" y="500" font-size="15">출력 임베딩 + 위치 인코딩</text>
+          <line x1="650" y1="470" x2="650" y2="436" stroke="currentColor" stroke-width="2" marker-end="url(#ar7)"/>
+          <text x="650" y="96" font-weight="700" fill="#5b6272">디코더</text>
+          <path d="M200 208 V160 H440 V299 H516" fill="none" stroke="#e0592a" stroke-width="3" marker-end="url(#ar7)"/>
+          <text x="420" y="150" font-family="JetBrains Mono, ui-monospace, monospace" font-size="17" fill="#e0592a" font-weight="600">K, V</text>
+        </g>
+      </svg>
+    </figure>
+    <div class="center" style="flex:.75">
+      <ul>
+        <li>인코더·디코더 각 <b>N = 6</b>층</li>
+        <li>모든 서브층 출력 <b>d<sub>model</sub> = 512</b></li>
+        <li>서브층마다 <span style="font-family:var(--mono);font-size:18px">LayerNorm(x + Sublayer(x))</span></li>
+        <li>인코더 최종 출력이 <b>모든</b> 디코더 층의 K, V로 들어감</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">인코더 층은 셀프 어텐션과 FFN, 디코더 층은 여기에 인코더-디코더 어텐션이 더해진 세 서브층입니다. 차원을 512로 통일한 것은 잔차 연결에서 x와 Sublayer(x)를 더하기 위해서입니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">02 · Hyperparameters</p>
+  <h2>하이퍼파라미터: base와 big</h2>
+  <table class="t">
+    <tr><th>기호</th><th>의미</th><th class="r">base</th><th class="r">big</th></tr>
+    <tr><td class="m">N</td><td>인코더·디코더 층 수</td><td class="m r">6</td><td class="m r">6</td></tr>
+    <tr><td class="m">d<sub>model</sub></td><td>모든 층의 입출력 차원</td><td class="m r">512</td><td class="m r">1024</td></tr>
+    <tr><td class="m">d<sub>ff</sub></td><td>FFN 은닉층 크기</td><td class="m r">2048</td><td class="m r">4096</td></tr>
+    <tr><td class="m">h</td><td>어텐션 헤드 수</td><td class="m r">8</td><td class="m r">16</td></tr>
+    <tr><td class="m">d<sub>k</sub> = d<sub>v</sub></td><td>헤드당 차원 (d<sub>model</sub> / h)</td><td class="m r">64</td><td class="m r">64</td></tr>
+    <tr><td class="m">P<sub>drop</sub></td><td>드롭아웃</td><td class="m r">0.1</td><td class="m r">0.3</td></tr>
+    <tr class="hl"><td class="m">params</td><td>파라미터 수 (논문)</td><td class="m r">65M</td><td class="m r">213M</td></tr>
+  </table>
+  <p class="small" style="margin-top:16px">d<sub>ff</sub> = 4 × d<sub>model</sub>, d<sub>k</sub> = d<sub>model</sub> / h 라는 비율은 이후 대부분의 트랜스포머가 그대로 따른다.</p>
+  <aside class="notes">big 모델은 차원과 헤드를 두 배로 늘렸지만 헤드당 차원은 64로 같습니다. 파라미터 수 65M이 어떻게 나오는지는 뒤에서 직접 계산합니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">02 · Data flow</p>
+  <h2>인코더 한 층을 지나는 텐서 크기 (base, 문장 길이 n)</h2>
+  <figure style="flex:1">
+    <svg viewBox="0 0 1130 400" role="img" aria-label="인코더 한 층에서 텐서 크기가 n×512에서 Q K V, n×n 점수, 다시 n×512, FFN의 n×2048을 거쳐 n×512로 돌아오는 흐름">
+      <defs><marker id="arF" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <g font-family="Noto Sans KR, system-ui, sans-serif" text-anchor="middle" fill="currentColor">
+        <text x="20" y="32" text-anchor="start" font-size="17" font-weight="700" fill="#e0592a">서브층 1 · 멀티헤드 셀프 어텐션</text>
+        <text x="150" y="246" text-anchor="start" font-size="17" font-weight="700" fill="#2f5fd0">서브층 2 · FFN</text>
+        <g font-size="17">
+          <rect x="20" y="60" width="200" height="110" rx="8" fill="#fff" stroke="#9aa1b1" stroke-width="2"/>
+          <text x="120" y="98">입력 X</text><text x="120" y="135" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" font-weight="600">n × 512</text>
+          <rect x="300" y="60" width="200" height="110" rx="8" fill="#fde9e1" stroke="#e0592a" stroke-width="2"/>
+          <text x="400" y="98">Q, K, V 투영</text><text x="400" y="135" font-family="JetBrains Mono, ui-monospace, monospace" font-size="17" font-weight="600">8 × (n × 64)</text>
+          <rect x="580" y="60" width="200" height="110" rx="8" fill="#fde9e1" stroke="#e0592a" stroke-width="3"/>
+          <text x="680" y="98">QKᵀ/√64 → softmax</text><text x="680" y="135" font-family="JetBrains Mono, ui-monospace, monospace" font-size="17" font-weight="600" fill="#e0592a">8 × (n × n)</text>
+          <rect x="860" y="60" width="250" height="110" rx="8" fill="#fde9e1" stroke="#e0592a" stroke-width="2"/>
+          <text x="985" y="92">× V → Concat → W<tspan font-size="11" dy="-6">O</tspan></text><text x="985" y="122" font-family="JetBrains Mono, ui-monospace, monospace" font-size="17" font-weight="600">n × 512</text>
+          <text x="985" y="152" font-size="15" fill="#5b6272">+ X, LayerNorm</text>
+
+          <rect x="20" y="260" width="200" height="110" rx="8" fill="#fff" stroke="#9aa1b1" stroke-width="2"/>
+          <text x="120" y="298">입력</text><text x="120" y="335" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" font-weight="600">n × 512</text>
+          <rect x="300" y="260" width="200" height="110" rx="8" fill="#e4ecfc" stroke="#2f5fd0" stroke-width="2"/>
+          <text x="400" y="298">xW₁ + b₁, ReLU</text><text x="400" y="335" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" font-weight="600" fill="#2f5fd0">n × 2048</text>
+          <rect x="580" y="260" width="200" height="110" rx="8" fill="#e4ecfc" stroke="#2f5fd0" stroke-width="2"/>
+          <text x="680" y="298">· W₂ + b₂</text><text x="680" y="335" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" font-weight="600">n × 512</text>
+          <rect x="860" y="260" width="250" height="110" rx="8" fill="#161a24"/>
+          <text x="985" y="298" fill="#fff">+ 입력, LayerNorm</text><text x="985" y="335" font-family="JetBrains Mono, ui-monospace, monospace" font-size="19" font-weight="600" fill="#ff8a5b">n × 512 → 다음 층</text>
+        </g>
+        <g stroke="currentColor" stroke-width="2" marker-end="url(#arF)">
+          <line x1="222" y1="115" x2="296" y2="115"/><line x1="502" y1="115" x2="576" y2="115"/><line x1="782" y1="115" x2="856" y2="115"/>
+          <line x1="222" y1="315" x2="296" y2="315"/><line x1="502" y1="315" x2="576" y2="315"/><line x1="782" y1="315" x2="856" y2="315"/>
+        </g>
+        <path d="M985 172 V215 H120 V256" fill="none" stroke="#9aa1b1" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arF)"/>
+      </g>
+    </svg>
+  </figure>
+  <p class="small">입력과 출력의 크기가 n × 512로 같기 때문에 같은 층을 6번 쌓을 수 있다. 크기가 n에 대해 제곱으로 커지는 곳은 어텐션 점수 행렬(n × n) 하나뿐이다.</p>
+  <aside class="notes">이 슬라이드가 이후 계산 예제의 지도입니다. 계산 예제에서는 512를 4로, 8개 헤드를 1~2개로 줄여서 같은 흐름을 손으로 따라갑니다.</aside>
+</section>
+
+<!-- ===== 3. 계산 예제: 인코더 ===== -->
+<section class="slide divider">
+  <p class="kicker">Part 3</p>
+  <h2>계산 예제: 숫자로 한 층 통과하기</h2>
+  <p>“I love you” · d<sub>model</sub> = 4 · d<sub>ff</sub> = 8 · 모든 값은 소수 둘째 자리 반올림</p>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Setup</p>
+  <h2>예제 설정: 512차원을 4차원으로 축소</h2>
+  <div class="cols">
+    <div class="center" style="flex:.8">
+      <ul>
+        <li>문장: <b>I love you</b> (n = 3)</li>
+        <li>d<sub>model</sub> = 4, 먼저 <b>단일 헤드</b>(d<sub>k</sub> = 4)로 계산</li>
+        <li>가중치는 손으로 계산하기 쉽게 <b>0과 1</b>로 설정</li>
+        <li>실제 모델에서는 이 값들이 모두 <b>학습</b>된다</li>
+      </ul>
+    </div>
+    <div class="center" style="gap:18px">
+      <div class="mrow">
+        <div class="mat" data-name="E =" data-r="I,love,you" data-m="[[1,0,0,0],[0,1,1,0],[0,0,1,1]]" data-int></div>
+        <span class="small">토큰 임베딩</span>
+      </div>
+      <div class="mrow">
+        <div class="mat s" data-name="W<sup>Q</sup>=" data-m="[[1,0,1,0],[0,1,0,1],[1,1,0,0],[0,0,1,1]]" data-int></div>
+        <div class="mat s" data-name="W<sup>K</sup>=" data-m="[[0,1,0,1],[1,0,1,0],[0,0,1,1],[1,1,0,0]]" data-int></div>
+        <div class="mat s" data-name="W<sup>V</sup>=" data-m="[[1,0,0,1],[0,1,1,0],[1,0,1,0],[0,1,0,1]]" data-int></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">실제 모델은 512차원, 8개 헤드, 학습된 실수 가중치를 씁니다. 원리는 같으므로 차원만 줄여 직접 계산해 봅니다. 논문은 임베딩에 루트 d_model을 곱하지만 예제에서는 생략했습니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 1 · Embedding + PE</p>
+  <h2>① 임베딩에 위치 인코딩을 더한다</h2>
+  <div class="formula sm">d=4일 때: PE(pos) = [ sin(pos), cos(pos), sin(pos/100), cos(pos/100) ]</div>
+  <div class="work">love (pos=1): [ sin 1, cos 1, sin 0.01, cos 0.01 ] = [ <em>0.84, 0.54, 0.01, 1.00</em> ]</div>
+  <div class="mrow" style="margin-top:10px">
+    <div class="mat" data-name="E" data-r="I,love,you" data-m="[[1,0,0,0],[0,1,1,0],[0,0,1,1]]" data-int></div>
+    <span class="op">+</span>
+    <div class="mat" data-name="PE" data-m="[[0,1,0,1],[0.84,0.54,0.01,1],[0.91,-0.42,0.02,1]]" data-hl="r1"></div>
+    <span class="op">=</span>
+    <div class="mat" data-name="X" data-m="[[1,1,0,1],[0.84,1.54,1.01,1],[0.91,-0.42,1.02,2]]" data-hl="r1"></div>
+  </div>
+  <p class="small" style="margin-top:18px">10000<sup>2i/d</sup>에서 d=4이면 i=1일 때 분모가 10000<sup>0.5</sup> = 100. 차원이 높을수록 천천히 변한다.</p>
+  <aside class="notes">위치 인코딩은 더하기입니다. 같은 단어라도 위치가 다르면 X가 달라집니다. pos 0인 I는 사인 값이 0, 코사인 값이 1이라 0, 1, 0, 1이 더해졌습니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 2 · Q, K, V</p>
+  <h2>② 같은 X에서 Q, K, V를 만든다</h2>
+  <div class="work">q_I = x_I · W<sup>Q</sup> = [1, 1, 0, 1] · W<sup>Q</sup>
+  1열: 1·1 + 1·0 + 0·1 + 1·0 = <em>1</em>     3열: 1·1 + 1·0 + 0·0 + 1·1 = <em>2</em>
+  → q_I = [ <em>1, 1, 2, 2</em> ]</div>
+  <div class="mrow">
+    <div class="mat" data-name="Q" data-r="I,love,you" data-m="[[1,1,2,2],[1.85,2.55,1.84,2.54],[1.93,0.6,2.91,1.58]]" data-hl="r0"></div>
+    <div class="mat" data-name="K" data-m="[[2,2,1,1],[2.54,1.84,2.55,1.85],[1.58,2.91,0.6,1.93]]" data-hl="r1"></div>
+    <div class="mat" data-name="V" data-m="[[1,2,1,2],[1.85,2.54,2.55,1.84],[1.93,1.58,0.6,2.91]]"></div>
+  </div>
+  <p class="small" style="margin-top:16px">셀프 어텐션: Q·K·V 모두 같은 X에서 나온다. 다른 것은 곱하는 가중치 행렬뿐이다.</p>
+  <aside class="notes">Q는 내가 찾는 것, K는 내가 가진 특징, V는 실제로 전달할 내용이라고 생각하면 됩니다. 셋은 같은 입력을 서로 다른 행렬로 투영한 결과입니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 3 · Scores</p>
+  <h2>③ 점수 QKᵀ를 계산하고 √d<sub>k</sub>로 나눈다</h2>
+  <div class="work">s(I, love) = q_I · k_love = 1×2.54 + 1×1.84 + 2×2.55 + 2×1.85 = <em>13.18</em>
+s(I, I)    = q_I · k_I    = 1×2 + 1×2 + 2×1 + 2×1             = <em>8.00</em>
+√d_k = √4 = 2  →  13.18 / 2 = <em>6.59</em></div>
+  <div class="mrow">
+    <div class="mat" data-name="QKᵀ" data-r="I,love,you" data-c="I,love,you" data-m="[[8,13.18,9.55],[13.18,18.78,16.35],[9.55,16.35,9.59]]" data-hl="c0.1,c0.0"></div>
+    <span class="op">÷ 2 =</span>
+    <div class="mat" data-name="" data-c="I,love,you" data-m="[[4,6.59,4.78],[6.59,9.39,8.18],[4.78,8.18,4.8]]" data-hl="r0"></div>
+  </div>
+  <p class="small" style="margin-top:14px">행 = 쿼리(보는 쪽), 열 = 키(보이는 쪽). n × n 크기라서 문장 길이의 제곱으로 커진다.</p>
+  <aside class="notes">점수 행렬의 i행 j열은 i번째 단어가 j번째 단어를 얼마나 참고할지의 원점수입니다. 예제는 W_Q와 W_K가 대칭 관계라 행렬이 대칭이지만, 일반적으로는 대칭이 아닙니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 4 · Softmax</p>
+  <h2>④ softmax로 가중치를 만든다</h2>
+  <div class="work">I 행: [4.00, 6.59, 4.78]
+exp → [ e⁴ , e⁶·⁵⁹ , e⁴·⁷⁸ ] = [ 54.6, 727.8, 119.1 ]    합 = 901.5
+÷ 합 → [ 54.6/901.5, 727.8/901.5, 119.1/901.5 ] = [ <em>0.06, 0.81, 0.13</em> ]</div>
+  <div class="cols" style="margin-top:6px">
+    <div class="center" style="flex:.9">
+      <div class="mat" data-name="A" data-r="I,love,you" data-c="I,love,you" data-m="[[0.06,0.81,0.13],[0.04,0.74,0.22],[0.03,0.94,0.03]]" data-hl="r0"></div>
+    </div>
+    <div class="center">
+      <ul>
+        <li>각 행의 합 = <b>1</b></li>
+        <li>“I”는 정보의 <b>81%</b>를 love에서 가져온다</li>
+        <li>예제 가중치에서는 세 단어 모두 love에 집중</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">softmax는 각 행을 확률 분포로 바꿉니다. 점수 차이가 2.6 정도인데도 지수 함수 때문에 가중치는 0.06 대 0.81로 크게 벌어집니다. 그래서 스케일링이 중요합니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 5 · Weighted sum</p>
+  <h2>⑤ 가중치로 V를 섞는다: Z = A · V</h2>
+  <div class="work">z_I = 0.06 × v_I + 0.81 × v_love + 0.13 × v_you
+    = 0.06×[1, 2, 1, 2] + 0.81×[1.85, 2.54, 2.55, 1.84] + 0.13×[1.93, 1.58, 0.60, 2.91]
+1열: 0.06 + 1.50 + 0.25 = <em>1.81</em>
+→ z_I = [ <em>1.81, 2.38, 2.20, 1.99</em> ]</div>
+  <div class="mrow">
+    <div class="mat" data-name="A" data-r="I,love,you" data-m="[[0.06,0.81,0.13],[0.04,0.74,0.22],[0.03,0.94,0.03]]" data-hl="r0"></div>
+    <span class="op">·</span>
+    <div class="mat" data-name="V" data-m="[[1,2,1,2],[1.85,2.54,2.55,1.84],[1.93,1.58,0.6,2.91]]"></div>
+    <span class="op">=</span>
+    <div class="mat" data-name="Z" data-m="[[1.81,2.38,2.2,1.99],[1.83,2.31,2.06,2.08],[1.83,2.5,2.44,1.88]]" data-hl="r0"></div>
+  </div>
+  <aside class="notes">이제 각 단어의 벡터는 문장 전체의 정보를 가중 평균한 값이 됐습니다. 원래 I의 X는 1, 1, 0, 1이었지만 love의 정보가 많이 섞였습니다. 이 과정이 셀프 어텐션의 전부이고, 세 단어를 동시에 행렬곱으로 계산합니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 6 · Multi-head</p>
+  <h2>⑥ 멀티헤드: 4차원을 2개 헤드 × 2차원으로</h2>
+  <div class="cols">
+    <div>
+      <div class="work" style="font-size:16px">head 1 = Q,K,V의 1~2열 · head 2 = 3~4열, √d_k = √2 = 1.41
+head 1, I 행: q=[1,1]   점수=[4.00, 4.38, 4.49]
+          ÷1.41 → [2.83, 3.10, 3.17] → softmax [<em>0.27, 0.35, 0.38</em>]
+head 2, I 행: q=[2,2]   점수=[4.00, 8.80, 5.06]
+          ÷1.41 → [2.83, 6.22, 3.58] → softmax [<em>0.03, 0.90, 0.06</em>]</div>
+      <div class="work" style="font-size:16px">Concat: z_I = [ 1.65, 2.03 | 2.36, 1.89 ] → · W<sup>O</sup> (4×4) → 4차원</div>
+    </div>
+    <div class="center" style="flex:.7">
+      <ul>
+        <li>head 1은 세 단어를 <b>고르게</b> 본다</li>
+        <li>head 2는 love에 <b>90%</b> 집중한다</li>
+        <li>같은 입력, 다른 투영 → <b>다른 관계</b>를 포착</li>
+        <li>실제: 512 = 8 × 64, 비용은 단일 헤드와 비슷</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">헤드를 나누면 각 헤드가 다른 부분공간에서 어텐션을 계산합니다. 예제에서도 같은 단어 I가 헤드 1에서는 고르게, 헤드 2에서는 love에 집중합니다. 논문 실험에서 헤드 1개는 최적보다 BLEU가 0.9 낮았습니다. head 2 가중치 합이 0.99인 것은 반올림 때문입니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 7 · Add &amp; Norm</p>
+  <h2>⑦ 잔차 연결과 층 정규화</h2>
+  <div class="work">잔차:  y_I = x_I + z_I = [1, 1, 0, 1] + [1.81, 2.38, 2.20, 1.99] = [<em>2.81, 3.38, 2.20, 2.99</em>]
+평균:  μ = (2.81 + 3.38 + 2.20 + 2.99) / 4 = <em>2.84</em>
+분산:  σ² = (0.03² + 0.54² + 0.64² + 0.15²) / 4 = <em>0.18</em>   →  σ = 0.42
+정규화: (y − μ) / σ = [ −0.03, 0.54, −0.64, 0.15 ] / 0.42 = [<em>−0.07, 1.27, −1.51, 0.35</em>]</div>
+  <div class="cols" style="margin-top:6px">
+    <div class="center"><div class="mat" data-name="LN" data-r="I,love,you" data-m="[[-0.07,1.27,-1.51,0.35],[-1.18,1.6,-0.24,-0.21],[-0.44,-1.4,0.61,1.23]]" data-hl="r0"></div></div>
+    <div class="center">
+      <ul>
+        <li><b>잔차</b>: 어텐션이 망쳐도 원래 x가 그대로 남는다 → 깊게 쌓아도 학습됨</li>
+        <li><b>LayerNorm</b>: 토큰마다 평균 0, 분산 1로 맞춘다 (학습 파라미터 γ=1, β=0 가정)</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">예제에서는 W_O를 단위행렬로 두고 단일 헤드 결과 Z를 사용했습니다. 잔차 연결이 있어야 6층 이상을 쌓아도 기울기가 흐릅니다. 층 정규화는 배치가 아니라 토큰 하나의 벡터 안에서 평균과 분산을 계산합니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 8 · FFN</p>
+  <h2>⑧ FFN: 토큰마다 따로 4 → 8 → 4</h2>
+  <div class="cols">
+    <div class="w2">
+      <div class="work" style="font-size:16px">x = [−0.07, 1.27, −1.51, 0.35]      (⑦의 I 행)
+xW₁       = [ 1.79,  1.34, −2.78, −1.93,  1.62,  1.44,  1.69, −2.43]
+ReLU      = [ 1.79,  1.34,  <em>0   ,  0   </em>,  1.62,  1.44,  1.69,  <em>0   </em>]
+· W₂      = [ 3.44,  2.15,  1.56,  0.72]
++ x (잔차) = [<em> 3.37,  3.42,  0.05,  1.07</em>]  → LayerNorm → 다음 층</div>
+      <div class="mrow">
+        <div class="mat s" data-name="W₁=" data-m="[[1,-1,0,1,0,1,-1,0],[0,1,-1,0,1,0,1,-1],[-1,0,1,1,0,-1,0,1],[1,0,0,-1,1,0,1,1]]" data-int></div>
+      </div>
+    </div>
+    <div class="center" style="flex:.8">
+      <ul>
+        <li>어텐션은 토큰을 <b>섞고</b>, FFN은 각 토큰을 <b>변환</b>한다</li>
+        <li>ReLU가 음수를 0으로 만들어 <b>비선형성</b>을 준다</li>
+        <li>실제: 512 → <b>2048</b> → 512</li>
+        <li>모든 위치에 <b>같은 W₁, W₂</b>를 쓴다 (b = 0 가정)</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">W2는 8×4 행렬로, 앞 4개 행은 단위행렬, 뒤 4개 행은 0.5씩 섞는 값으로 두었습니다. 어텐션은 가중 평균이라 그 자체로는 선형에 가깝고, 비선형 변환은 FFN이 맡습니다. 여기까지가 인코더 한 층입니다.</aside>
+</section>
+
+<!-- ===== 4. 디코더 ===== -->
+<section class="slide calc">
+  <p class="kicker">Step 9 · Masked self-attention</p>
+  <h2>⑨ 디코더: 미래를 가리는 마스크</h2>
+  <div class="work">③의 점수 행렬에서 대각선 위를 −∞로 바꾼 뒤 softmax  (e^−∞ = 0)
+love 행: [6.59, 9.39, −∞] → exp [727.8, 11968, 0] → [<em>0.06, 0.94, 0</em>]
+I 행:    [4.00, −∞, −∞]   → [<em>1, 0, 0</em>]   (자기 자신만 볼 수 있음)</div>
+  <div class="mrow">
+    <div class="mat" data-name="점수" data-r="I,love,you" data-c="I,love,you" data-m="[[4,'−∞','−∞'],[6.59,9.39,'−∞'],[4.78,8.18,4.8]]" data-hl="r1"></div>
+    <span class="op">→</span>
+    <div class="mat" data-name="A" data-c="I,love,you" data-m="[[1,0,0],[0.06,0.94,0],[0.03,0.94,0.03]]" data-hl="r1"></div>
+  </div>
+  <p class="small" style="margin-top:14px">학습 때는 정답 문장 전체를 한 번에 넣고 마스크로 미래를 가린다 → <b>병렬 학습</b>과 자기회귀 생성을 동시에 만족.</p>
+  <aside class="notes">마스크가 없었다면 love는 you를 미리 볼 수 있었을 것입니다. 마스크를 쓰면 RNN처럼 한 단어씩 돌리지 않고도, 각 위치가 이전 단어만 본 결과를 한 번의 행렬곱으로 얻습니다. 예제에서는 같은 문장을 디코더 입력으로 가정했습니다.</aside>
+</section>
+
+<section class="slide calc">
+  <p class="kicker">Step 10 · Cross-attention &amp; Output</p>
+  <h2>⑩ 크로스 어텐션과 출력 확률</h2>
+  <div class="cols">
+    <div class="w2">
+      <p style="font-size:20px;margin-bottom:12px"><b>크로스 어텐션</b>: Q는 디코더 벡터, K·V는 인코더 최종 출력. 계산은 ③~⑤와 같다.</p>
+      <div class="work" style="font-size:16px">디코더 마지막 출력이 y = [−0.07, 1.27, −1.51, 0.35] 라고 하면
+로짓 = y · Eᵀ   (출력층이 임베딩 행렬 E를 공유)
+  I    = [1,0,0,0]·y = <em>−0.07</em>
+  love = [0,1,1,0]·y = 1.27 − 1.51 = <em>−0.24</em>
+  you  = [0,0,1,1]·y = −1.51 + 0.35 = <em>−1.16</em>
+softmax → P = [ <em>0.46, 0.39, 0.15</em> ]  → 다음 토큰 “I”</div>
+    </div>
+    <div class="center" style="flex:.7">
+      <ul>
+        <li>입력 임베딩·출력 임베딩·softmax 직전 선형층이 <b>가중치 하나를 공유</b></li>
+        <li>실제: y(512) · Eᵀ(512 × 약 37,000) → 37,000개 단어의 확률</li>
+        <li>추론 시 빔 크기 4로 탐색</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">로짓 계산은 출력 벡터와 각 단어 임베딩의 내적입니다. 즉 출력 벡터와 가장 비슷한 임베딩을 가진 단어의 확률이 높아집니다. 여기서 y는 설명을 위해 ⑦의 값을 그대로 가져왔습니다.</aside>
+</section>
+
+<!-- ===== 5. 실제 규모 ===== -->
+<section class="slide divider">
+  <p class="kicker">Part 4</p>
+  <h2>실제 규모의 숫자</h2>
+  <p>d<sub>model</sub> = 512, h = 8, d<sub>k</sub> = 64에서 무슨 일이 일어나나</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">04 · Why √dₖ</p>
+  <h2>√d<sub>k</sub>로 나누지 않으면 생기는 일</h2>
+  <div class="work">q, k 성분이 평균 0, 분산 1 → q·k 의 분산 = d_k = 64 → 표준편차 = <em>8</em></div>
+  <div class="grid2" style="margin-top:6px">
+    <div class="card">
+      <h3>스케일링 없음: 점수 [8, 0, −8]</h3>
+      <p style="font-family:var(--mono);font-size:20px;margin:8px 0">softmax = [<b>0.9997</b>, 0.0003, 0.0000003]</p>
+      <p>거의 one-hot. 기울기 p(1−p) ≈ <b>0.0003</b> → 학습이 멈춘다</p>
+    </div>
+    <div class="card" style="background:#e4ecfc">
+      <h3>÷ √64 = ÷ 8: 점수 [1, 0, −1]</h3>
+      <p style="font-family:var(--mono);font-size:20px;margin:8px 0">softmax = [0.665, 0.245, 0.090]</p>
+      <p>분포가 살아 있다. 기울기 p(1−p) ≈ <b>0.22</b> → 약 <b>700배</b> 큰 신호</p>
+    </div>
+  </div>
+  <p class="small" style="margin-top:18px">계산 예제(d<sub>k</sub>=4)에서도 ÷2 전 점수 차이는 5.2, 나눈 뒤는 2.6이었다. d<sub>k</sub>가 64면 이 효과가 훨씬 커진다.</p>
+  <aside class="notes">점수의 표준편차가 8이면 점수 차이 16 정도는 흔하게 생깁니다. 그러면 softmax가 한쪽으로 포화돼 기울기가 사라집니다. 루트 d_k로 나누면 분산이 1로 돌아옵니다. p(1-p)는 softmax 대각 미분 항을 단순화한 비교입니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">04 · Positional encoding</p>
+  <h2>위치 인코딩의 실제 값 (d<sub>model</sub> = 512)</h2>
+  <div class="cols">
+    <div class="w2">
+      <table class="t sm">
+        <tr><th>pos</th><th class="r">dim 0 (sin)</th><th class="r">dim 1 (cos)</th><th class="r">dim 2 (sin)</th><th class="r">dim 3 (cos)</th><th class="r">dim 510</th><th class="r">dim 511</th></tr>
+        <tr><td class="m">0</td><td class="m r">0.0000</td><td class="m r">1.0000</td><td class="m r">0.0000</td><td class="m r">1.0000</td><td class="m r">0.0000</td><td class="m r">1.0000</td></tr>
+        <tr><td class="m">1</td><td class="m r">0.8415</td><td class="m r">0.5403</td><td class="m r">0.8219</td><td class="m r">0.5697</td><td class="m r">0.0001</td><td class="m r">1.0000</td></tr>
+        <tr><td class="m">2</td><td class="m r">0.9093</td><td class="m r">−0.4161</td><td class="m r">0.9364</td><td class="m r">−0.3509</td><td class="m r">0.0002</td><td class="m r">1.0000</td></tr>
+        <tr><td class="m">10</td><td class="m r">−0.5440</td><td class="m r">−0.8391</td><td class="m r">−0.2200</td><td class="m r">−0.9755</td><td class="m r">0.0010</td><td class="m r">1.0000</td></tr>
+        <tr><td class="m">50</td><td class="m r">−0.2624</td><td class="m r">0.9650</td><td class="m r">−0.8953</td><td class="m r">−0.4454</td><td class="m r">0.0052</td><td class="m r">1.0000</td></tr>
+      </table>
+      <div class="work" style="font-size:16px;margin-top:16px">dim 2: pos / 10000^(2/512) = pos × <em>0.9647</em>    pos=1 → sin(0.9647) = <em>0.8219</em>
+dim 510: pos × <em>0.000104</em>   → 거의 변하지 않음</div>
+    </div>
+    <div class="center" style="flex:.7">
+      <ul>
+        <li>파장: 2π ≈ <b>6.3</b> (dim 0) ~ 약 <b>60,600</b> (dim 510)</li>
+        <li>앞쪽 차원은 가까운 위치를, 뒤쪽 차원은 먼 위치를 구분</li>
+        <li>학습형 위치 임베딩과 성능 <b>거의 동일</b>, 긴 문장 외삽 가능성 때문에 사인파 선택</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">각 위치는 512개의 서로 다른 주기를 가진 사인·코사인 값의 조합으로 표현됩니다. 시계의 초침, 분침, 시침이 함께 시각을 나타내는 것과 비슷합니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">04 · Parameter count</p>
+  <h2>base 모델 파라미터 수 직접 세기</h2>
+  <div class="cols">
+    <div class="w2">
+      <table class="t sm">
+        <tr><th>부품</th><th>계산</th><th class="r">개수</th></tr>
+        <tr><td>어텐션 1개</td><td class="m">4 × (512×512 + 512)</td><td class="m r">1,050,624</td></tr>
+        <tr><td>FFN 1개</td><td class="m">512×2048 + 2048 + 2048×512 + 512</td><td class="m r">2,099,712</td></tr>
+        <tr><td>LayerNorm 1개</td><td class="m">2 × 512 (γ, β)</td><td class="m r">1,024</td></tr>
+        <tr><td>인코더 층</td><td class="m">어텐션 + FFN + LN×2</td><td class="m r">3,152,384</td></tr>
+        <tr><td>디코더 층</td><td class="m">어텐션×2 + FFN + LN×3</td><td class="m r">4,204,032</td></tr>
+        <tr><td>층 합계</td><td class="m">6 × (3.15M + 4.20M)</td><td class="m r">44,138,496</td></tr>
+        <tr><td>공유 임베딩</td><td class="m">37,000 × 512</td><td class="m r">18,944,000</td></tr>
+        <tr class="hl"><td>합계</td><td></td><td class="m r">≈ 63.1M</td></tr>
+      </table>
+    </div>
+    <div class="center" style="flex:.7">
+      <div class="big">63.1M<small>vs 논문 65M</small></div>
+      <ul style="margin-top:22px">
+        <li>같은 방식으로 big: <b>≈ 214M</b> (논문 213M)</li>
+        <li>층 파라미터의 약 <b>2/3가 FFN</b></li>
+        <li>차이는 어휘 크기·편향 처리 가정 차이</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">어텐션 하나는 W_Q, W_K, W_V, W_O 네 개의 512×512 행렬과 편향으로 이뤄집니다. 어휘 크기는 영-독 공유 BPE 어휘 약 37,000개로 가정했고, 편향 포함 여부에 따라 수치가 조금 달라집니다. 이 계산은 추정치입니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">04 · Cost</p>
+  <h2>연산량과 메모리: n² 은 언제 문제가 되나</h2>
+  <div class="cols">
+    <div>
+      <p class="small" style="margin-bottom:8px">층당 연산량 (d = 512)</p>
+      <table class="t sm">
+        <tr><th>n</th><th class="r">셀프 어텐션 n²·d</th><th class="r">RNN n·d²</th><th>비교</th></tr>
+        <tr class="hl"><td class="m">50</td><td class="m r">1.28M</td><td class="m r">13.1M</td><td>어텐션이 <b>10배</b> 적음</td></tr>
+        <tr><td class="m">512</td><td class="m r">134M</td><td class="m r">134M</td><td>같음 (n = d)</td></tr>
+        <tr><td class="m">4096</td><td class="m r">8.6G</td><td class="m r">1.07G</td><td>어텐션이 8배 많음</td></tr>
+      </table>
+      <p class="small" style="margin-top:10px">논문 당시 번역 문장은 n &lt; d → 어텐션이 더 빠르다. 게다가 순차 연산이 O(1)이라 병렬화된다.</p>
+    </div>
+    <div>
+      <p class="small" style="margin-bottom:8px">점수 행렬 메모리 (fp32, 8헤드, 층 1개·문장 1개)</p>
+      <table class="t sm">
+        <tr><th>n</th><th>계산</th><th class="r">크기</th></tr>
+        <tr><td class="m">512</td><td class="m">512² × 8 × 4B</td><td class="m r">8 MiB</td></tr>
+        <tr><td class="m">4,096</td><td class="m">4096² × 8 × 4B</td><td class="m r">512 MiB</td></tr>
+        <tr class="hl"><td class="m">32,768</td><td class="m">32768² × 8 × 4B</td><td class="m r">32 GiB</td></tr>
+      </table>
+      <p class="small" style="margin-top:10px">긴 문맥에서는 n×n 행렬을 메모리에 쓰지 않는 FlashAttention 같은 기법이 필요해진다.</p>
+    </div>
+  </div>
+  <aside class="notes">n이 d보다 작으면 셀프 어텐션이 RNN보다 연산이 적고, n이 커지면 역전됩니다. 메모리는 n의 제곱으로 늘어 3만 토큰이면 층 하나에 32기가바이트가 필요합니다. 이것이 이후 어텐션 최적화 연구의 출발점입니다.</aside>
+</section>
+
+<!-- ===== 6. 학습 · 결과 ===== -->
+<section class="slide">
+  <p class="kicker">05 · Training</p>
+  <h2>학습 설정과 학습률 계산</h2>
+  <div class="cols">
+    <div>
+      <table class="t sm">
+        <tr><th>항목</th><th>설정</th></tr>
+        <tr><td>데이터</td><td>WMT14 영-독 약 450만 쌍 · 영-불 3,600만 문장</td></tr>
+        <tr><td>배치</td><td>원문·번역문 각 약 25,000 토큰</td></tr>
+        <tr><td>하드웨어</td><td>P100 GPU 8장</td></tr>
+        <tr><td>base</td><td>0.4초/스텝 × 10만 스텝 ≈ <b>12시간</b></td></tr>
+        <tr><td>big</td><td>1.0초/스텝 × 30만 스텝 ≈ <b>3.5일</b></td></tr>
+        <tr><td>옵티마이저</td><td>Adam (β₁ 0.9, β₂ 0.98, ε 10⁻⁹)</td></tr>
+        <tr><td>정규화</td><td>드롭아웃 0.1 · 라벨 스무딩 0.1</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="formula sm" style="white-space:normal">lr = 512<sup>−0.5</sup> · min(step<sup>−0.5</sup>, step · 4000<sup>−1.5</sup>)</div>
+      <table class="t sm">
+        <tr><th>step</th><th>계산</th><th class="r">lr</th></tr>
+        <tr><td class="m">1</td><td class="m">0.0442 × 1 × 4000<sup>−1.5</sup></td><td class="m r">1.7×10⁻⁷</td></tr>
+        <tr><td class="m">1,000</td><td class="m">0.0442 × 1000 × 4000<sup>−1.5</sup></td><td class="m r">1.7×10⁻⁴</td></tr>
+        <tr class="hl"><td class="m">4,000</td><td class="m">0.0442 × 4000<sup>−0.5</sup></td><td class="m r">7.0×10⁻⁴</td></tr>
+        <tr><td class="m">10,000</td><td class="m">0.0442 × 10000<sup>−0.5</sup></td><td class="m r">4.4×10⁻⁴</td></tr>
+        <tr><td class="m">100,000</td><td class="m">0.0442 × 100000<sup>−0.5</sup></td><td class="m r">1.4×10⁻⁴</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">학습률은 4000스텝까지 선형으로 올라가 최대 약 0.0007에 도달한 뒤, 스텝 수의 역제곱근으로 줄어듭니다. 512의 -0.5승은 약 0.0442입니다. 학습 시간은 스텝당 시간에 스텝 수를 곱한 값입니다: 0.4초 곱하기 10만은 약 11시간입니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">05 · Results</p>
+  <h2>결과: 더 높은 품질, 더 적은 학습 비용</h2>
+  <div class="grid3">
+    <div class="card"><p class="small">영어 → 독일어 (big)</p><div class="big">28.4<small>BLEU</small></div><p style="margin-top:10px">기존 최고(앙상블 포함)보다 <b>2.0 BLEU 이상</b> 높음</p></div>
+    <div class="card"><p class="small">영어 → 프랑스어 (big)</p><div class="big">41.8<small>BLEU</small></div><p style="margin-top:10px">단일 모델 최고, 이전 최고 모델 학습 비용의 <b>1/4 미만</b></p></div>
+    <div class="card"><p class="small">영어 구문 분석 (WSJ)</p><div class="big">91.3<small>F1</small></div><p style="margin-top:10px">번역 외 과제로 일반화. 준지도 설정 92.7</p></div>
+  </div>
+  <table class="t sm" style="margin-top:24px">
+    <tr><th>모델</th><th class="r">영-독 BLEU</th><th class="r">학습 FLOPs</th><th>환산</th></tr>
+    <tr><td>base</td><td class="m r">27.3</td><td class="m r">3.3 × 10¹⁸</td><td>P100 8장 × 12시간</td></tr>
+    <tr class="hl"><td>big</td><td class="m r">28.4</td><td class="m r">2.3 × 10¹⁹</td><td>P100 8장 × 3.5일</td></tr>
+  </table>
+  <aside class="notes">영-불 결과는 초록과 표에서는 41.8, 본문에서는 41.0으로 논문 안에서 수치가 다릅니다. 여기서는 초록과 표 기준을 썼습니다. base 모델만으로도 영-독 27.3으로 기존 모델을 넘었습니다.</aside>
+</section>
+
+<!-- ===== 정리 ===== -->
+<section class="slide">
+  <p class="kicker">Summary</p>
+  <h2>정리: 트랜스포머를 이루는 것들</h2>
+  <table class="t">
+    <tr><th>부품</th><th>역할</th><th>계산 예제에서 본 것</th></tr>
+    <tr><td>위치 인코딩</td><td>RNN 대신 순서 정보 주입</td><td class="m">love: +[0.84, 0.54, 0.01, 1.00]</td></tr>
+    <tr class="hl"><td>셀프 어텐션</td><td>토큰 간 정보 교환, 병렬화</td><td class="m">I → love 가중치 0.81</td></tr>
+    <tr><td>멀티헤드</td><td>여러 관계를 동시에</td><td class="m">head1 고르게 / head2 love 0.90</td></tr>
+    <tr><td>잔차 + LayerNorm</td><td>깊게 쌓기 위한 안정성</td><td class="m">μ 2.84, σ 0.42로 정규화</td></tr>
+    <tr><td>FFN</td><td>토큰별 비선형 변환</td><td class="m">4 → 8 → 4, ReLU로 3개 0</td></tr>
+    <tr><td>마스크</td><td>병렬 학습 + 자기회귀 생성</td><td class="m">love 행: [0.06, 0.94, 0]</td></tr>
+  </table>
+  <p style="margin-top:22px;font-size:21px">어텐션은 2015년에도 있었다. 트랜스포머의 기여는 이 부품들을 <b>n × 512 → n × 512 블록</b>으로 묶어 병렬화와 규모 확장이 가능한 구조를 만든 것이다.</p>
+  <aside class="notes">이후 BERT는 인코더만, GPT는 디코더만 가져다 썼고, 블록 구조는 거의 그대로 유지됐습니다. 그만큼 이 블록 설계가 핵심이라는 뜻입니다.</aside>
+</section>
+
+<section class="slide">
+  <p class="kicker">References</p>
+  <h2>참고 자료</h2>
+  <ul style="font-size:20px">
+    <li>Vaswani et al., “Attention Is All You Need,” NeurIPS 2017 — <span class="sub" style="font-family:var(--mono);font-size:17px">arxiv.org/abs/1706.03762</span></li>
+    <li>Bahdanau et al., “Neural Machine Translation by Jointly Learning to Align and Translate,” 2014</li>
+    <li>Luong et al., “Effective Approaches to Attention-based Neural Machine Translation,” 2015</li>
+  </ul>
+  <p class="small" style="margin:30px 0 10px">함께 읽기</p>
+  <ul style="font-size:20px">
+    <li>나무위키, “트랜스포머(인공신경망)”</li>
+    <li>위키독스, 『딥 러닝을 이용한 자연어 처리 입문』 트랜스포머 장 — <span class="sub" style="font-family:var(--mono);font-size:17px">wikidocs.net/31379</span></li>
+  </ul>
+  <p class="small" style="margin-top:30px">계산 예제의 가중치는 설명용으로 임의로 정한 값이며, 파라미터 수·연산량·메모리는 논문 하이퍼파라미터로 직접 계산한 추정치다.</p>
+</section>
+
+</div></div>
+
+<div id="notebox"></div>
+<div id="bar">
+  <button id="prev" aria-label="이전">←</button>
+  <span id="count"></span>
+  <button id="next" aria-label="다음">→</button>
+  <button id="notesBtn">발표자 노트 (N)</button>
+  <button id="listBtn">전체 보기 (L)</button>
+</div>
+
+<script>
+(function(){
+  /* 행렬 렌더링: data-m(JSON), data-r(행 라벨), data-c(열 라벨), data-hl(r1 / c0.1 = 행0 열1), data-int */
+  document.querySelectorAll('.mat').forEach(el=>{
+    const m=JSON.parse(el.dataset.m.replace(/'/g,'"'));
+    const rl=el.dataset.r?el.dataset.r.split(','):null, cl=el.dataset.c?el.dataset.c.split(','):null;
+    const hl=(el.dataset.hl||'').split(',').filter(Boolean), isInt=el.hasAttribute('data-int');
+    const isHl=(i,j)=>hl.some(h=>h==='r'+i||h==='c'+i+'.'+j);
+    const fmt=v=>typeof v==='string'?v:(isInt?String(v):v.toFixed(2)).replace('-','−');
+    let html='';
+    if(el.dataset.name) html+='<span class="nm">'+el.dataset.name+'</span>';
+    if(rl) html+='<div class="rl">'+(cl?'<span class="ch"></span>':'')+rl.map(r=>'<span>'+r+'</span>').join('')+'</div>';
+    html+='<div class="body">'+(cl?'<div class="cl">'+cl.map(c=>'<span>'+c+'</span>').join('')+'</div>':'')+'<table>';
+    m.forEach((row,i)=>{html+='<tr>'+row.map((v,j)=>'<td class="'+(typeof v==='string'?'mk':isHl(i,j)?'hl':'')+'">'+fmt(v)+'</td>').join('')+'</tr>';});
+    html+='</table></div>';
+    el.innerHTML=html;
+  });
+
+  const slides=[...document.querySelectorAll('.slide')];
+  slides.forEach((s,i)=>{s.dataset.no=String(i+1).padStart(2,'0'); s.id='s'+(i+1);});
+  let cur=0;
+  const deck=document.getElementById('deck'), count=document.getElementById('count'), note=document.getElementById('notebox');
+  function fit(){
+    if(document.body.classList.contains('list')){deck.style.setProperty('--listzoom',Math.min(1,(window.innerWidth-32)/1280));deck.style.transform='none';return;}
+    const st=document.getElementById('stage').getBoundingClientRect();
+    deck.style.transform='scale('+Math.min((st.width-32)/1280,(st.height-24)/720)+')';
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(slides.length-1,i));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===cur));
+    count.textContent=(cur+1)+' / '+slides.length;
+    const n=slides[cur].querySelector('.notes'); note.textContent=n?n.textContent.trim():'(노트 없음)';
+    if(location.hash!=='#s'+(cur+1)) history.replaceState(null,'','#s'+(cur+1));
+  }
+  const fromHash=()=>{const m=/^#s(\d+)$/.exec(location.hash);return m?parseInt(m[1],10)-1:0;};
+  const toggle=c=>{document.body.classList.toggle(c);fit();};
+  document.getElementById('prev').onclick=()=>show(cur-1);
+  document.getElementById('next').onclick=()=>show(cur+1);
+  document.getElementById('notesBtn').onclick=()=>toggle('shownotes');
+  document.getElementById('listBtn').onclick=()=>toggle('list');
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(cur+1);}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(cur-1);}
+    else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='n'||e.key==='N')toggle('shownotes');
+    else if(e.key==='l'||e.key==='L')toggle('list');
+  });
+  document.getElementById('stage').addEventListener('click',e=>{
+    if(document.body.classList.contains('list')||e.target.closest('a,button'))return;
+    show(cur+(e.clientX>window.innerWidth/2?1:-1));
+  });
+  window.addEventListener('resize',fit);
+  window.addEventListener('hashchange',()=>show(fromHash()));
+  show(fromHash()); fit();
+})();
+</script>
+</body>
+</html>
