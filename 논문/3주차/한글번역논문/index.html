@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent 3주차 핵심 논문 번역 및 해설 포털</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .hero-section {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: white;
+      padding: 3.5rem 2.5rem;
+      border-radius: 1rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid #3b82f6;
+      color: #60a5fa;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      line-height: 1.3;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 850px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.75rem;
+      margin-top: 1rem;
+    }
+    .portal-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.875rem;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+    .portal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      border-color: #3b82f6;
+    }
+    .portal-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #e2e8f0;
+      transition: background 0.25s ease;
+    }
+    .card-cot::before { background: #2563eb; }
+    .card-react::before { background: #0d9488; }
+    .card-reflexion::before { background: #8b5cf6; }
+    .card-glossary::before { background: #f59e0b; }
+    
+    .card-top {
+      margin-bottom: 1.5rem;
+    }
+    .card-num-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 0.375rem;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .badge-cot { background: #eff6ff; color: #1d4ed8; }
+    .badge-react { background: #f0fdfa; color: #0f766e; }
+    .badge-reflexion { background: #f5f3ff; color: #6d28d9; }
+    .badge-glossary { background: #fffbeb; color: #b45309; }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+    .card-en-title {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .card-summary {
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2563eb;
+    }
+    .arrow-icon {
+      transition: transform 0.2s ease;
+    }
+    .portal-card:hover .arrow-icon {
+      transform: translateX(4px);
+    }
+    .features-list {
+      margin-top: 3rem;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 2rem;
+    }
+    .features-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 글로벌 네비게이션 -->
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">
+      <span>AI Agent 3주차 스터디 포털</span>
+      <span class="badge">통합 허브</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="1_chain_of_thought_korean.html">1. CoT (추론 유도)</a></li>
+      <li><a href="2_react_korean.html">2. ReAct (추론과 행동)</a></li>
+      <li><a href="3_reflexion_korean.html">3. Reflexion (자기반성)</a></li>
+      <li><a href="ai_agent_glossary.html">📖 AI Agent 용어집</a></li>
+    </ul>
+  </header>
+
+  <div class="layout-container" style="max-width: 1200px; display: block;">
+    
+    <div class="hero-section">
+      <div class="hero-badge">AI AGENT FOUNDATION PAPERS & GLOSSARY</div>
+      <h1 class="hero-title">현대 AI Agent 3대 기념비적 논문 번역 & 용어집</h1>
+      <p class="hero-desc">
+        대규모 언어 모델이 어떻게 <strong>추론(CoT)</strong>을 시작하고, <strong>도구를 활용해 행동(ReAct)</strong>하며, <strong>자신의 실수를 되돌아보며 스스로 발전(Reflexion)</strong>하게 되었는지 원 논문과 시각 자료, 알기 쉬운 용어집을 통해 학습할 수 있습니다.
+      </p>
+    </div>
+
+    <div class="portal-grid">
+      
+      <!-- 카드 1: CoT -->
+      <a href="1_chain_of_thought_korean.html" class="portal-card card-cot">
+        <div class="card-top">
+          <span class="card-num-badge badge-cot">NeurIPS 2022 Oral</span>
+          <h2 class="card-title">1. 생각의 사슬 (CoT)</h2>
+          <div class="card-en-title">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</div>
+          <p class="card-summary">
+            문제를 바로 풀지 않고 "단계별 중간 추론 과정(Chain-of-Thought)"을 생성하게 함으로써 복잡한 산술, 상식, 기호 추론 능력을 극적으로 끌어올린 연구. 모델 크기 100B 이상에서의 창발적 능력 입증.
+          </p>
+        </div>
+        <div class="card-bottom">
+          <span>고해상도 피규어 8개 포함 국문 번역 읽기</span>
+          <span class="arrow-icon">→</span>
+        </div>
+      </a>
+
+      <!-- 카드 2: ReAct -->
+      <a href="2_react_korean.html" class="portal-card card-react">
+        <div class="card-top">
+          <span class="card-num-badge badge-react">ICLR 2023 Top-cited</span>
+          <h2 class="card-title">2. 리액트 (ReAct)</h2>
+          <div class="card-en-title">REACT: Synergizing Reasoning and Acting in Language Models</div>
+          <p class="card-summary">
+            내부 추론(Reasoning)과 외부 도구/환경 상호작용(Acting)을 결합. Thought-Action-Observation 3단계 루프를 통해 환각(Hallucination)을 줄이고 최신 정보 기반의 자율 문제 해결 프레임워크 제시.
+          </p>
+        </div>
+        <div class="card-bottom">
+          <span>고해상도 피규어 5개 포함 국문 번역 읽기</span>
+          <span class="arrow-icon">→</span>
+        </div>
+      </a>
+
+      <!-- 카드 3: Reflexion -->
+      <a href="3_reflexion_korean.html" class="portal-card card-reflexion">
+        <div class="card-top">
+          <span class="card-num-badge badge-reflexion">NeurIPS 2023 Spotlight</span>
+          <h2 class="card-title">3. 리플렉션 (Reflexion)</h2>
+          <div class="card-en-title">Reflexion: Language Agents with Verbal Reinforcement Learning</div>
+          <p class="card-summary">
+            가중치 업데이트 없이 자연어 '자기반성(Self-Reflection)'과 '기억(Memory)'을 통해 실수로부터 배우는 언어적 강화학습 에이전트. 코딩 디버깅(HumanEval 91%), 의사결정(ALFWorld 97%) 대폭 향상.
+          </p>
+        </div>
+        <div class="card-bottom">
+          <span>고해상도 피규어 7개 포함 국문 번역 읽기</span>
+          <span class="arrow-icon">→</span>
+        </div>
+      </a>
+
+      <!-- 카드 4: 용어집 -->
+      <a href="ai_agent_glossary.html" class="portal-card card-glossary">
+        <div class="card-top">
+          <span class="card-num-badge badge-glossary">알기 쉬운 용어집</span>
+          <h2 class="card-title">📖 AI AGENT 핵심 용어집</h2>
+          <div class="card-en-title">Essential Concepts, Analogies & Benchmarks Guide</div>
+          <p class="card-summary">
+            In-Context Learning, Grounding, Verbal RL, Trajectory, Episodic Memory, GSM8K, HotpotQA 등 에이전트의 생소한 핵심 기술 용어들을 친절한 실생활 비유와 기술 정의로 완벽 정리. 실시간 검색 지원.
+          </p>
+        </div>
+        <div class="card-bottom">
+          <span>실시간 검색 지원 인터랙티브 용어집 보기</span>
+          <span class="arrow-icon">→</span>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="features-list">
+      <h3 class="features-title">✨ 본 번역 & 용어집 자료의 특징</h3>
+      <ul>
+        <li><strong>PDF 원문 고해상도 이미지 포함:</strong> LaTeX 벡터로 렌더링된 핵심 도표와 그래프(Figure, Table) 20종을 2.5배 고해상도 PNG로 크롭하여 원문 위치에 완벽 수록.</li>
+        <li><strong>전문 한국어 번역 & 영문 병기:</strong> 인공지능 연구 및 엔지니어링 실무에 가장 적합한 명료하고 자연스러운 한국어 문체 적용 및 핵심 원어 표기.</li>
+        <li><strong>반응형 레이아웃 & 목차 내비게이션:</strong> 화면 크기에 따라 최적화되며, 좌측 사이드바 Sticky TOC로 원하는 섹션으로 즉시 이동 가능.</li>
+        <li><strong>상호 연결 링크:</strong> 3개 논문과 용어집 간의 유기적 크로스 링크 지원으로 개념 이해 극대화.</li>
+      </ul>
+    </div>
+
+    <footer>
+      <p>© 2026 AI Agent 스터디 3주차 | 루트 디렉토리 번역 산출물</p>
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[논문 번역] 생각의 사슬 프롬프팅이 대규모 언어 모델의 추론을 유도한다 (CoT)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <!-- 상단 글로벌 네비게이션 -->
+  <header class="top-nav">
+    <a href="1_chain_of_thought_korean.html" class="nav-brand">
+      <span>AI Agent 3주차 핵심 논문</span>
+      <span class="badge">NeurIPS 2022</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="1_chain_of_thought_korean.html" class="active">1. CoT (추론 유도)</a></li>
+      <li><a href="2_react_korean.html">2. ReAct (추론과 행동)</a></li>
+      <li><a href="3_reflexion_korean.html">3. Reflexion (자기반성)</a></li>
+      <li><a href="ai_agent_glossary.html">📖 AI Agent 용어집</a></li>
+    </ul>
+  </header>
+
+  <div class="layout-container">
+    <!-- 좌측 목차 (TOC) -->
+    <aside class="sidebar">
+      <div class="sidebar-title">목차 (Contents)</div>
+      <ul class="toc-list">
+        <li><a href="#abstract">초록 (Abstract)</a></li>
+        <li><a href="#intro">1. 서론 (Introduction)</a></li>
+        <li><a href="#sec2">2. 생각의 사슬 프롬프팅 (CoT)</a></li>
+        <li>
+          <a href="#sec3">3. 산술 추론 (Arithmetic)</a>
+          <div class="toc-sub">
+            <a href="#sec3-1">3.1 실험 설정</a>
+            <a href="#sec3-2">3.2 주요 결과</a>
+            <a href="#sec3-3">3.3 어블레이션 연구</a>
+            <a href="#sec3-4">3.4 프롬프트 강건성</a>
+          </div>
+        </li>
+        <li><a href="#sec4">4. 상식 추론 (Commonsense)</a></li>
+        <li><a href="#sec5">5. 심볼릭 추론 (Symbolic)</a></li>
+        <li><a href="#sec6">6. 고찰 및 한계점 (Discussion)</a></li>
+        <li><a href="#sec7">7. 관련 연구 (Related Work)</a></li>
+        <li><a href="#sec8">8. 결론 (Conclusions)</a></li>
+      </ul>
+    </aside>
+
+    <!-- 메인 논문 본문 -->
+    <main class="content">
+      <div class="paper-header">
+        <div class="paper-badge">NeurIPS 2022 Oral Paper</div>
+        <h1 class="paper-title">생각의 사슬 프롬프팅이 대규모 언어 모델의 추론을 유도한다</h1>
+        <div class="paper-subtitle">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</div>
+        <div class="paper-meta">
+          <div class="meta-item"><strong>저자:</strong> Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Florencia Leal, Ed Chi, Quoc Le, Denny Zhou</div>
+          <div class="meta-item"><strong>소속:</strong> Google Research, Brain Team</div>
+          <div class="meta-item"><strong>원문 링크:</strong> arXiv:2201.11903v6 (NeurIPS 2022)</div>
+        </div>
+      </div>
+
+      <!-- 초록 -->
+      <section id="abstract" class="abstract-card">
+        <div class="abstract-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          초록 (Abstract)
+        </div>
+        <p class="abstract-text">
+          본 논문에서는 <strong>'생각의 사슬(chain of thought)'</strong>, 즉 최종 정답에 도달하기까지의 일련의 중간 추론 단계를 생성하는 방식이 대규모 언어 모델(LLM)의 복잡한 추론 수행 능력을 유의미하게 향상시킬 수 있음을 탐구한다. 특히, 소수의 '생각의 사슬' 예시가 퓨샷 프롬프팅(few-shot prompting)에 제공될 때 충분히 큰 언어 모델에서 이러한 추론 능력이 자연스럽게 발현(emergent property)된다는 사실을 밝혀낸다.
+        </p>
+        <p class="abstract-text">
+          산술(arithmetic), 상식(commonsense), 심볼릭(symbolic) 추론 벤치마크에 대한 실증적 평가 결과, 생각의 사슬 프롬프팅(Chain-of-Thought Prompting, CoT)은 표준 프롬프팅(standard prompting)에 비해 현저한 성능 향상을 이끌어냈다. 예를 들어, 540B 파라미터를 가진 PaLM 모델에 단 8개의 생각의 사슬 예시만을 프롬프트로 제공했을 때, 수학 서술형 문제 벤치마크인 <strong>GSM8K</strong>에서 56.9%의 정확도를 기록하며 최신 최고 성능(SOTA, 당시 파인튜닝된 GPT-3 모델 포함)을 경신하였다.
+        </p>
+      </section>
+
+      <!-- 대표 Figure 1 -->
+      <div class="figure-container">
+        <img src="images/cot_fig1.png" alt="Figure 1: Standard Prompting vs Chain-of-Thought Prompting" class="figure-img">
+        <div class="figure-caption">
+          <strong>Figure 1:</strong> 생각의 사슬 프롬프팅(Chain-of-thought prompting)은 대규모 언어 모델이 복잡한 산술, 상식, 심볼릭 추론 작업을 해결할 수 있도록 돕는다. 
+          좌측(표준 프롬프팅)에서는 질문에서 곧바로 오답(27)을 내놓지만, 우측(생각의 사슬 프롬프팅)에서는 단계별 풀이 과정을 거쳐 정확한 정답(9)을 도출한다.
+        </div>
+      </div>
+
+      <!-- 1. 서론 -->
+      <section id="intro">
+        <h2>1. 서론 (Introduction)</h2>
+        <p>
+          최근 자연어 처리(NLP) 분야는 언어 모델의 규모를 키우는 스케일링(scaling)을 통해 번역, 요약, 질의응답 등 다양한 작업에서 눈부신 성능 향상을 달성해왔다. 그러나 단순히 모델 크기를 늘리는 것만으로는 산술 연산, 상식 추론, 기호 조작과 같은 <strong>다단계 추론(multi-step reasoning)</strong> 문제에서 여전히 취약한 모습을 보여주었다.
+        </p>
+        <p>
+          인간은 복잡한 문제(예: 여러 단계의 계산이 필요한 수학 문장제)를 풀 때 곧바로 최종 답을 내놓지 않는다. 대신 문제를 여러 하위 문제로 분해하고, 중간 사고 과정을 머릿속에 떠올리거나 종이에 적어가며 차근차근 해결한다.
+        </p>
+        <p>
+          우리는 대규모 언어 모델에서도 이와 유사한 능력을 이끌어낼 수 있는지 질문을 던진다. 본 연구에서는 <strong>생각의 사슬(Chain-of-Thought, CoT) 프롬프팅</strong>이라는 지극히 단순하면서도 강력한 기법을 제안한다. 이는 언어 모델에 몇 개의 예시(Few-shot exemplars)를 제공할 때 단순히 <code>⟨입력, 정답⟩</code> 쌍만 주는 것이 아니라, <code>⟨입력, 생각의 사슬, 정답⟩</code>의 형태로 중간 추론 과정을 명시해 주는 방법이다.
+        </p>
+      </section>
+
+      <!-- 2. 생각의 사슬 프롬프팅 -->
+      <section id="sec2">
+        <h2>2. 생각의 사슬 프롬프팅 (Chain-of-Thought Prompting)</h2>
+        <p>
+          생각의 사슬은 문제 해결을 위한 일련의 중간 자연어 추론 단계를 의미한다. 이 접근법은 다음과 같은 몇 가지 매력적인 특성을 지닌다:
+        </p>
+        
+        <div class="key-point-card">
+          <div class="key-point-icon">🧩</div>
+          <div>
+            <strong>1. 다단계 문제의 분해 (Problem Decomposition):</strong>
+            모델이 더 많은 연산 자원(토큰 생성 수)을 다단계 추론 과정에 할당할 수 있도록 해주며, 복잡한 문제를 보다 쉬운 하위 단계들로 분해한다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">🔍</div>
+          <div>
+            <strong>2. 해석 가능성과 디버깅 용이성 (Interpretability):</strong>
+            모델이 도출한 최종 결론뿐만 아니라 그에 이르는 사고 경로를 추적할 수 있어, 모델이 어디서 잘못된 판단을 내렸는지 해석하고 디버깅하기 쉽다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">🌐</div>
+          <div>
+            <strong>3. 광범위한 범용성 (Broad Applicability):</strong>
+            산술 문제뿐만 아니라 인간이 언어를 통해 사고할 수 있는 상식 추론, 기호 조작 등 언어로 표현 가능한 모든 작업에 바로 적용할 수 있다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">⚡</div>
+          <div>
+            <strong>4. 파라미터 업데이트 불필요 (No Fine-tuning):</strong>
+            수십억 개의 가중치를 업데이트할 필요 없이 사전 학습된 대형 모델에 프롬프트 예시 몇 개를 인컨텍스트(in-context)로 붙여주는 것만으로 작동한다.
+          </div>
+        </div>
+
+        <div class="figure-container">
+          <img src="images/cot_fig2.png" alt="Figure 2: PaLM 540B GSM8K SOTA" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 2:</strong> PaLM 540B 모델은 생각의 사슬 프롬프팅을 사용하여 GSM8K 벤치마크에서 새로운 SOTA(최고 성능)를 달성했다. 지도학습(파인튜닝)된 특화 모델이나 표준 프롬프팅 대비 성능이 획기적으로 도약함을 보여준다.
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 산술 추론 -->
+      <section id="sec3">
+        <h2>3. 산술 추론 (Arithmetic Reasoning)</h2>
+        <p>
+          언어 모델이 가장 취약하다고 알려진 수학 문장제 문제(Math Word Problems)를 대상으로 평가를 수행하였다.
+        </p>
+
+        <h3 id="sec3-1">3.1 실험 설정</h3>
+        <p>다음 5개 벤치마크 데이터셋을 평가에 사용하였다:</p>
+        <ul>
+          <li><strong>GSM8K:</strong> 초등학교 수준의 다단계 수학 문장제 데이터셋 (가장 대표적인 벤치마크)</li>
+          <li><strong>SVAMP:</strong> 어휘적 함정과 가변성이 추가된 수학 문제셋</li>
+          <li><strong>ASDiv:</strong> 다양한 언어적 패턴의 산술 문제 모음</li>
+          <li><strong>AQuA:</strong> 객관식 대수학 및 확률 추론 문제셋</li>
+          <li><strong>MAWPS:</strong> 단순 사칙연산 중심의 문장제 문제셋</li>
+        </ul>
+
+        <div class="figure-container">
+          <img src="images/cot_fig3.png" alt="Figure 3: Exemplar Triples" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 3:</strong> 산술, 상식, 심볼릭 추론 벤치마크에 사용된 ⟨입력, 생각의 사슬, 출력⟩ 3요소 프롬프트 예시 모음.
+          </div>
+        </div>
+
+        <h3 id="sec3-2">3.2 주요 결과 (Results)</h3>
+        <p>
+          주요 실험 결과는 <strong>Figure 4</strong>에 요약되어 있다. 여기서 세 가지 결정적인 관찰이 도출된다:
+        </p>
+
+        <div class="figure-container">
+          <img src="images/cot_fig4.png" alt="Figure 4: Model Scale vs Arithmetic Performance" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 4:</strong> 생각의 사슬 프롬프팅은 대규모 언어 모델이 까다로운 수학 문제를 해결할 수 있도록 지원한다. 특히 CoT는 모델 규모가 100B(1,000억 파라미터) 이상일 때 비로소 진가를 발휘하는 <em>창발적 능력(emergent ability)</em>임을 명확히 보여준다.
+          </div>
+        </div>
+
+        <ol>
+          <li>
+            <strong>창발적 능력 (Emergent Ability):</strong> 모델 크기가 작은 경우(예: 10B 이하)에는 CoT가 거의 효과가 없거나 오히려 엉뚱한 추론을 생성하여 정확도가 떨어지기도 한다. 그러나 모델 파라미터가 <strong>약 1,000억(100B) 이상</strong>으로 커지면 급격한 성능 상승이 나타난다.
+          </li>
+          <li>
+            <strong>복잡한 문제일수록 더 큰 성능 향상:</strong> 단순 단단계 문제(MAWPS)보다 다단계 추론이 필수적인 GSM8K에서 CoT의 효과가 압도적으로 크다(PaLM 540B 기준: 표준 프롬프팅 17.9% → CoT 56.9%로 3배 이상 폭증).
+          </li>
+          <li>
+            <strong>기존 파인튜닝 SOTA 능가:</strong> PaLM 540B에 CoT를 결합했을 때, 대규모 훈련 데이터로 직접 지도학습된 특화 모델들의 최고 기록을 뛰어넘었다.
+          </li>
+        </ol>
+
+        <h3 id="sec3-3">3.3 어블레이션 연구 (Ablation Study)</h3>
+        <p>
+          CoT의 성능 향상이 단순히 '더 많은 토큰'을 출력해서인지, 아니면 '자연어 추론 과정' 덕분인지를 검증하기 위해 다음과 같은 변형을 비교하였다:
+        </p>
+
+        <div class="figure-container">
+          <img src="images/cot_fig5.png" alt="Figure 5: Ablation Study" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 5:</strong> 프롬프팅 변형에 대한 어블레이션 연구. 자연어 설명 없이 단순 수식만 나열하거나, 계산 후에 설명을 덧붙이는 방식은 CoT만큼의 성능을 내지 못한다.
+          </div>
+        </div>
+
+        <ul>
+          <li><strong>수식 전용(Equation only):</strong> 자연어 설명 없이 중간 연산식만 출력하게 함 → 성능이 크게 떨어짐. 자연어 맥락이 복잡한 하위 계산을 계획하는 데 필수적임.</li>
+          <li><strong>계산 전용(Computation only):</strong> 토큰 수만 맞추고 무의미한 연산 기호를 나열 → 아무런 향상 없음.</li>
+          <li><strong>답변 후 추론(Reasoning after answer):</strong> 정답을 먼저 출력하고 뒤에 설명을 붙이게 함 → 표준 프롬프팅과 비슷한 수준에 머무름. 이는 모델이 답을 내기 '전에' 추론 토큰을 먼저 생성하는 것이 인과적 어텐션(causal attention) 메커니즘에서 필수적임을 증명함.</li>
+        </ul>
+
+        <h3 id="sec3-4">3.4 프롬프트 작성자 및 예시에 대한 강건성</h3>
+        <div class="figure-container">
+          <img src="images/cot_fig6.png" alt="Figure 6: Prompt Variance and Robustness" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 6:</strong> 서로 다른 세 명의 연구자(Annotator A, B, C)가 독립적으로 작성한 CoT 프롬프트 모두 표준 프롬프팅을 압도적인 차이로 능가하며, 프롬프트 작성 스타일에 대해 높은 강건성을 보였다.
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. 상식 추론 -->
+      <section id="sec4">
+        <h2>4. 상식 추론 (Commonsense Reasoning)</h2>
+        <p>
+          CoT는 수학 계산뿐만 아니라 인간의 일상 상식과 암묵적 지식이 필요한 추론 과제에서도 뛰어난 성능을 나타낸다.
+          CSQA(CommonsenseQA), StrategyQA, Date Understanding, Sports Understanding, SayCan 등의 과제에서 평가를 진행하였다.
+        </p>
+
+        <div class="figure-container">
+          <img src="images/cot_fig7.png" alt="Figure 7: Commonsense Reasoning Results" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 7:</strong> 상식 추론 벤치마크 평가 결과. PaLM 540B에 CoT를 적용했을 때 스포츠 상식 판별 및 날짜 추론 등 전반적인 상식 벤치마크에서 표준 프롬프팅 대비 상당한 개선을 보였다.
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 심볼릭 추론 -->
+      <section id="sec5">
+        <h2>5. 심볼릭 추론 (Symbolic Reasoning)</h2>
+        <p>
+          기호 조작 및 논리 규칙 적용 능력을 검증하기 위해 두 가지 과제를 설계하였다:
+        </p>
+        <ul>
+          <li><strong>동전 뒤집기 (Coin Flip):</strong> 동전이 처음에 앞면일 때, 일련의 뒤집기/그대로 두기 행동 후 최종 면을 맞추는 과제.</li>
+          <li><strong>마지막 글자 이어붙이기 (Last Letter Concatenation):</strong> 단어 목록이 주어졌을 때 각 단어의 마지막 알파벳들을 순서대로 결합하는 과제 (예: "John Lennon" → "nn").</li>
+        </ul>
+
+        <div class="figure-container">
+          <img src="images/cot_fig8.png" alt="Figure 8: Symbolic Reasoning & OOD Generalization" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 8:</strong> 심볼릭 추론 및 OOD(분포 외) 일반화 결과. 2단어 예시만 보고도 CoT를 통해 3단어, 4단어 문제로 성공적으로 일반화(길이 외삽)할 수 있음을 입증한다.
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. 논의 및 한계점 -->
+      <section id="sec6">
+        <h2>6. 고찰 및 한계점 (Discussion & Limitations)</h2>
+        <div class="callout callout-warning">
+          <div class="callout-title">⚠️ 주요 한계점</div>
+          <ol>
+            <li><strong>초대형 모델에 대한 의존성:</strong> 모델 크기가 100B 미만일 경우 CoT는 종종 환각(hallucination)이나 논리적 비약이 섞인 잘못된 사슬을 생성한다.</li>
+            <li><strong>사실 왜곡 및 환각 (Hallucination):</strong> 언어 모델이 추론 사슬 안에서 사실과 다른 전제를 생성하거나 중간 단계에서 그럴듯한 거짓말을 만들어낼 위험이 상존한다.</li>
+            <li><strong>추론 비용 증가:</strong> 중간 추론 토큰을 수십~수백 개 생성해야 하므로 계산 비용과 응답 지연(latency)이 증가한다.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 7. 관련 연구 -->
+      <section id="sec7">
+        <h2>7. 관련 연구 (Related Work)</h2>
+        <p>
+          본 연구는 다단계 추론을 유도하는 스크래치패드(Scratchpad) 기법, 수식 및 프로그램 생성 기반 추론, 그리고 퓨샷 인컨텍스트 학습(In-Context Few-Shot Learning) 연구들과 긴밀하게 연결되어 있다. 본 연구의 차별점은 별도의 파인튜닝 없이 사전학습된 언어 모델의 본래 능력만으로 자연어 생각의 사슬을 유도해냈다는 점이다.
+        </p>
+      </section>
+
+      <!-- 8. 결론 -->
+      <section id="sec8">
+        <h2>8. 결론 (Conclusions)</h2>
+        <p>
+          생각의 사슬 프롬프팅은 대규모 언어 모델이 다단계 추론을 수행하도록 이끄는 극히 직관적이면서도 강력한 메커니즘이다. 산술, 상식, 기호 추론 전반에서 현저한 성능 향상을 입증하였으며, 오늘날 <strong>AI Agent(ReAct, Reflexion, Tree of Thoughts 등)</strong>의 모든 추론적 기틀을 다진 기념비적 연구이다.
+        </p>
+      </section>
+
+      <footer>
+        <p>© 2026 AI Agent 스터디 3주차 | 원저작자: Jason Wei et al. (Google Brain) | 국문 번역 및 편집본</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

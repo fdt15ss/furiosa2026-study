@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent 핵심 용어집 (Glossary) - 알기 쉬운 개념 백과</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .glossary-header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: white;
+      padding: 3rem 2rem;
+      border-radius: 1rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .glossary-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(to right, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .glossary-header p {
+      color: #94a3b8;
+      font-size: 1.15rem;
+      max-width: 850px;
+      margin: 0 auto 1.5rem auto;
+      line-height: 1.6;
+    }
+    .search-box-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.9rem 1.25rem 0.9rem 3rem;
+      border-radius: 9999px;
+      border: 1px solid #475569;
+      background: rgba(30, 41, 59, 0.8);
+      color: white;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      background: #1e293b;
+    }
+    .search-icon {
+      position: absolute;
+      left: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+    
+    .category-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover {
+      background: var(--bg-alt);
+      color: var(--primary);
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .term-section {
+      margin-bottom: 3.5rem;
+    }
+    .term-category-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .term-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .term-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .term-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-border);
+    }
+    .term-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .term-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .term-name-ko {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .term-name-en {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    .term-tag {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .tag-reasoning { background: #eff6ff; color: #2563eb; }
+    .tag-action { background: #f0fdf4; color: #16a34a; }
+    .tag-memory { background: #faf5ff; color: #9333ea; }
+    .tag-eval { background: #fff7ed; color: #ea580c; }
+    .tag-architecture { background: #fef2f2; color: #dc2626; }
+
+    .analogy-box {
+      background: #f8fafc;
+      border-left: 4px solid #3b82f6;
+      padding: 0.85rem 1.15rem;
+      border-radius: 0.375rem;
+      margin: 0.85rem 0;
+      font-size: 0.95rem;
+    }
+    .analogy-label {
+      font-weight: 700;
+      color: #1e40af;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.25rem;
+    }
+    .technical-detail {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.7;
+    }
+    .related-paper {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .paper-link-pill {
+      background: #f1f5f9;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.35rem;
+      text-decoration: none;
+      color: #2563eb;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .paper-link-pill:hover {
+      background: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 글로벌 네비게이션 -->
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">
+      <span>AI Agent 3주차 핵심 논문</span>
+      <span class="badge">용어 백과사전 v2.0</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="1_chain_of_thought_korean.html">1. CoT (추론 유도)</a></li>
+      <li><a href="2_react_korean.html">2. ReAct (추론과 행동)</a></li>
+      <li><a href="3_reflexion_korean.html">3. Reflexion (자기반성)</a></li>
+      <li><a href="ai_agent_glossary.html" class="active">📖 AI Agent 용어집</a></li>
+    </ul>
+  </header>
+
+  <div class="layout-container">
+    <aside class="sidebar">
+      <div class="sidebar-title">용어 카테고리</div>
+      <ul class="toc-list">
+        <li><a href="#cat-foundations">1. 에이전트 기본 개념</a></li>
+        <li><a href="#cat-reasoning">2. 추론 및 프롬프팅 기법</a></li>
+        <li><a href="#cat-action">3. 행동 및 도구 상호작용 (ReAct)</a></li>
+        <li><a href="#cat-memory">4. 기억, 반성 및 메타인지 (Reflexion)</a></li>
+        <li><a href="#cat-architecture">5. 지식 아키텍처 및 안전성</a></li>
+        <li><a href="#cat-benchmarks">6. 핵심 평가 벤치마크</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <div class="glossary-header">
+        <h1>AI AGENT 핵심 용어집</h1>
+        <p>
+          단순한 챗봇을 넘어 스스로 생각하고(CoT), 도구를 쓰며(ReAct), 실수로부터 배우는(Reflexion) <strong>자율 에이전트(Autonomous Agent)</strong>의 핵심 이론과 기술 용어를 알기 쉽게 해설합니다.
+        </p>
+        <div class="search-box-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="termSearch" class="search-input" placeholder="용어 검색 (예: CoT, ReAct, Grounding, 메모리, 환각, Scratchpad...)" oninput="filterTerms()">
+        </div>
+      </div>
+
+      <!-- 카테고리 필터 버튼 -->
+      <div class="category-nav">
+        <button class="filter-btn active" onclick="setCategory('all')">전체 보기</button>
+        <button class="filter-btn" onclick="setCategory('foundations')">에이전트 기초</button>
+        <button class="filter-btn" onclick="setCategory('reasoning')">추론 (CoT 등)</button>
+        <button class="filter-btn" onclick="setCategory('action')">행동 및 도구 (ReAct)</button>
+        <button class="filter-btn" onclick="setCategory('memory')">기억 및 반성 (Reflexion)</button>
+        <button class="filter-btn" onclick="setCategory('architecture')">아키텍처/안전성</button>
+        <button class="filter-btn" onclick="setCategory('benchmarks')">평가 벤치마크</button>
+      </div>
+
+      <!-- 1. 에이전트 기본 개념 -->
+      <section id="cat-foundations" class="term-section" data-category="foundations">
+        <div class="term-category-title">
+          <span>🤖 1. 에이전트 기본 개념 (Foundations)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- AI Agent -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">AI 에이전트</span>
+                <span class="term-name-en">AI Agent</span>
+              </div>
+              <span class="term-tag tag-reasoning">기초 개념</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              단순한 LLM(챗봇)이 <strong>"말만 유창하게 하는 자문위원"</strong>이라면, AI 에이전트는 <strong>"스스로 계획을 세우고, 인터넷을 검색하고, 엑셀을 켜서 작업을 끝마치는 행동력 있는 비서"</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              대규모 언어 모델(LLM)을 두뇌로 삼아, 사용자의 목표(Goal)를 달성하기 위해 <strong>인식(Perception) → 추론(Reasoning) → 행동(Action) → 관찰(Observation)</strong>의 피드백 루프를 자율적으로 반복 수행하는 지능형 시스템입니다.
+            </div>
+          </div>
+
+          <!-- Emergent Ability -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">창발적 능력</span>
+                <span class="term-name-en">Emergent Ability</span>
+              </div>
+              <span class="term-tag tag-reasoning">모델 특성</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              물이 99℃까지는 액체 상태이다가 100℃가 되는 순간 갑자기 수증기로 비등하듯, 모델이 일정 크기(보통 1,000억 파라미터 이상)를 넘어서는 순간 이전에는 전혀 못 하던 고난도 추론 능력이 갑자기 생겨나는 현상입니다.
+            </div>
+            <div class="technical-detail">
+              소형 모델에서는 아무리 유도해도 나타나지 않던 성능 향상이, 모델 파라미터가 임계점(Scale threshold)을 넘어서면서 비선형적으로 폭발하는 현상입니다. CoT 논문(Wei et al.)에서 100B 이상의 PaLM 모델에서 CoT 효과가 창발함을 확인했습니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="1_chain_of_thought_korean.html#sec3-2" class="paper-link-pill">CoT 논문 섹션 3.2</a>
+            </div>
+          </div>
+
+          <!-- In-Context Learning -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">인컨텍스트 학습</span>
+                <span class="term-name-en">In-Context Learning (ICL)</span>
+              </div>
+              <span class="term-tag tag-reasoning">프롬프팅</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              직원에게 장기 교육 훈련(파인튜닝)을 시키지 않고, <strong>"이런 식으로 일하면 돼"라며 책상 위에 샘플 보고서 3장을 얹어주는 것(프롬프트 예시)</strong>과 같습니다.
+            </div>
+            <div class="technical-detail">
+              신경망의 가중치(Weights)를 역전파(Backpropagation)로 업데이트하지 않고, 프롬프트 입력창(Context window) 안에 몇 가지 예시(Exemplars)를 제공함으로써 모델이 즉석에서 패턴을 파악하여 작업을 수행하도록 유도하는 학습 방식입니다.
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 2. 추론 및 프롬프팅 기법 -->
+      <section id="cat-reasoning" class="term-section" data-category="reasoning">
+        <div class="term-category-title">
+          <span>🧠 2. 추론 및 프롬프팅 기법 (Reasoning & Prompting)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- Chain-of-Thought (CoT) -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">생각의 사슬</span>
+                <span class="term-name-en">Chain-of-Thought (CoT)</span>
+              </div>
+              <span class="term-tag tag-reasoning">추론 혁신</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              수학 문제를 풀 때 주관식 답만 곧바로 찍지 않고, <strong>연습장에 1단계, 2단계, 3단계 풀이 과정을 차근차근 적어가며</strong> 최종 답을 구하는 것과 같습니다.
+            </div>
+            <div class="technical-detail">
+              복잡한 문제를 하위 문제들로 분해하여 최종 결론에 이르기까지 일련의 중간 자연어 추론 단계를 명시적으로 생성하는 프롬프팅 기법입니다. 다음 토큰을 생성할 때 이전의 추론 단계들이 인과적 어텐션(Causal attention) 맥락으로 작용하여 계산 정확도를 획기적으로 높입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="1_chain_of_thought_korean.html" class="paper-link-pill">CoT 논문 전문</a>
+            </div>
+          </div>
+
+          <!-- Reasoning Traces -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">추론 트레이스</span>
+                <span class="term-name-en">Reasoning Traces (사고 자취)</span>
+              </div>
+              <span class="term-tag tag-reasoning">내부 추론</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              탐정이 사건을 해결하며 <strong>다이어리에 남긴 생각의 흐름과 추리 노트</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              ReAct에서 에이전트가 외부 행동(Action)을 취하기 전후에 생성하는 언어적 추론 텍스트(Thought)의 전체 흐름입니다. 행동의 목적을 정의하고 관찰된 외부 사실을 해석하는 인지적 다리 역할을 합니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec2" class="paper-link-pill">ReAct 논문 섹션 2</a>
+            </div>
+          </div>
+
+          <!-- Zero-shot CoT -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">제로샷 생각의 사슬</span>
+                <span class="term-name-en">Zero-shot CoT ("Let's think step by step")</span>
+              </div>
+              <span class="term-tag tag-reasoning">프롬프트 기법</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              당황한 상대방에게 <strong>"자, 침착하고 한 단계씩 천천히 생각해 보자"</strong>라고 한마디 건네는 마법의 주문입니다.
+            </div>
+            <div class="technical-detail">
+              퓨샷 예시를 하나도 주지 않고도, 질문 뒤에 <code>"Let's think step by step"</code>이라는 한 문장만 덧붙이면 모델이 자발적으로 중간 사고 과정을 출력하도록 만드는 기법입니다 (Kojima et al., 2022).
+            </div>
+          </div>
+
+          <!-- Self-Consistency (CoT-SC) -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">자기 일관성</span>
+                <span class="term-name-en">Self-Consistency (CoT-SC)</span>
+              </div>
+              <span class="term-tag tag-reasoning">앙상블/검증</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              한 사람의 의견만 듣지 않고 <strong>여러 전문가에게 독립적으로 문제를 풀게 한 뒤 가장 많이 나온 답(다수결 투표)</strong>을 최종 정답으로 선택하는 방법입니다.
+            </div>
+            <div class="technical-detail">
+              동일한 프롬프트에 대해 Temperature를 높여 여러 추론 경로를 샘플링한 후, 가장 빈도가 높은 결론(Majority vote)을 최종 답안으로 선택하는 디코딩 전략입니다. ReAct 논문에서 ReAct와 상호보완 앙상블로 최고 성능을 달성했습니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec3-3" class="paper-link-pill">ReAct 논문 섹션 3.3</a>
+            </div>
+          </div>
+
+          <!-- Scratchpad -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">스크래치패드</span>
+                <span class="term-name-en">Scratchpad</span>
+              </div>
+              <span class="term-tag tag-reasoning">연산 버퍼</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              복잡한 암산을 할 때 옆에 두고 마구 끄적이는 <strong>낙서장/연습장</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              언어 모델이 최종 결과를 내기 전에 중간 연산 상태(예: 긴 알고리즘 실행 추적, 코드 변수 상태 등)를 텍스트 버퍼 형태로 출력할 수 있도록 허용하는 기법으로, CoT의 전신이 된 메커니즘입니다 (Nye et al., 2021).
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 3. 행동 및 도구 상호작용 (ReAct) -->
+      <section id="cat-action" class="term-section" data-category="action">
+        <div class="term-category-title">
+          <span>🦾 3. 행동 및 도구 상호작용 (Action, Tool & Grounding)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- ReAct -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">리액트</span>
+                <span class="term-name-en">ReAct (Reasoning + Acting)</span>
+              </div>
+              <span class="term-tag tag-action">에이전트 패러다임</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              <strong>생각만 하고 행동하지 않는 학자(CoT)</strong>와 <strong>생각 없이 버튼만 마구잡이로 누르는 기계(Act-only)</strong>를 합쳐, <strong>"생각하고 → 행동하고 → 관찰하고 → 다시 생각하는 똑똑한 실행가"</strong>를 만든 것입니다.
+            </div>
+            <div class="technical-detail">
+              언어 모델이 <code>Thought(추론 계획)</code>과 <code>Action(도구 실행)</code>을 번갈아 생성하고, 환경으로부터 <code>Observation(결과 관찰)</code>을 입력받아 다음 결정을 내리는 상호작용적 에이전트 프레임워크입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html" class="paper-link-pill">ReAct 논문 전문</a>
+            </div>
+          </div>
+
+          <!-- Interleaved Generation -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">인터리브드 / 교차 생성</span>
+                <span class="term-name-en">Interleaved Generation</span>
+              </div>
+              <span class="term-tag tag-action">실행 구조</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              샌드위치처럼 <strong>빵(생각) - 햄(행동) - 치즈(관찰) - 빵(생각)...</strong> 순서로 다른 층들을 차곡차곡 교차해서 쌓아 올리는 방식입니다.
+            </div>
+            <div class="technical-detail">
+              생각(Thought)과 행동(Action)을 한 번에 몰아서 출력하는 것이 아니라, `Thought 1 → Action 1 → Observation 1 → Thought 2 → Action 2...`와 같이 교차적으로 생성하고 실행하는 순차 구조입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec2-1" class="paper-link-pill">ReAct 논문 공식화</a>
+            </div>
+          </div>
+
+          <!-- State Tracking -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">상태 추적</span>
+                <span class="term-name-en">State Tracking</span>
+              </div>
+              <span class="term-tag tag-action">진행 관리</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              체스 게임에서 <strong>"현재 말들이 판 위에 어떻게 놓여있고, 내가 몇 번째 수까지 두었는가"</strong>를 머릿속에 정확히 업데이트하고 있는 것입니다.
+            </div>
+            <div class="technical-detail">
+              다단계 작업을 수행하는 동안 이전 행동들이 환경에 어떤 변화를 가져왔는지, 남은 하위 목표가 무엇인지 에이전트의 컨텍스트 안에서 지속적으로 갱신하고 추적하는 기능입니다. ReAct는 Thought를 통해 이를 달성합니다.
+            </div>
+          </div>
+
+          <!-- Trajectory -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">에이전트 궤적</span>
+                <span class="term-name-en">Trajectory (τ)</span>
+              </div>
+              <span class="term-tag tag-action">실행 기록</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              비행기의 블랙박스 기록이나 사건 현장의 CCTV 녹화본처럼, <strong>"에이전트가 무슨 생각을 했고, 어떤 도구를 썼으며, 화면에 무엇이 떴는지"</strong> 처음부터 끝까지 기록된 전체 타임라인입니다.
+            </div>
+            <div class="technical-detail">
+              에이전트가 문제를 해결하는 동안 발생한 모든 상태, 생각, 행동, 관찰의 순차적 시계열 기록 $\tau = (o_1, a_1, o_2, a_2, \dots, o_T)$입니다. Reflexion 에이전트는 이 궤적 전체를 검토하여 실패 원인을 분석합니다.
+            </div>
+          </div>
+
+          <!-- Grounding -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">그라운딩</span>
+                <span class="term-name-en">Grounding (현실 접지)</span>
+              </div>
+              <span class="term-tag tag-action">외부 연동</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              탁상공론만 하던 사람이 <strong>실제 현장에 나가 두 눈으로 실태를 확인하고 팩트를 발 디딜 땅(Ground)에 단단히 고정</strong>시키는 것입니다.
+            </div>
+            <div class="technical-detail">
+              언어 모델의 내부 추상적 표현이나 생성 텍스트를 실제 물리적 환경, 데이터베이스의 정확한 수치, 최신 웹 검색 결과 등 <strong>검증 가능한 현실 세계의 실체와 일치시키는 과정</strong>입니다. ReAct는 외부 API 관찰을 통해 환각을 억제합니다.
+            </div>
+          </div>
+
+          <!-- Action Space & Observation Space -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">행동 공간과 관찰 공간</span>
+                <span class="term-name-en">Action Space (A) & Observation Space (O)</span>
+              </div>
+              <span class="term-tag tag-action">수학적 모델</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              게임기 패드에 있는 <strong>버튼들의 종류(조이스틱, A버튼, B버튼 = 행동 공간)</strong>와 게임기 <strong>모니터 화면에 출력되는 영상(관찰 공간)</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              에이전트가 취할 수 있는 모든 유효 조작 명령어들의 집합 $\mathcal{A}$과 환경이 이에 반응하여 반환하는 모든 감각/텍스트 출력의 집합 $\mathcal{O}$입니다. ReAct는 여기에 언어 공간 $\mathcal{L}$(생각)을 행동 공간의 일부로 확장했습니다.
+            </div>
+          </div>
+
+          <!-- Tool Calling -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">도구 호출</span>
+                <span class="term-name-en">Tool Calling / Function Calling</span>
+              </div>
+              <span class="term-tag tag-action">API 연동</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              계산이 필요할 때 머리로만 끙끙대지 않고 <strong>계산기 앱을 실행하고, 날씨를 모르면 기상청 웹사이트 API를 호출하는 능력</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              언어 모델이 텍스트로 정해진 포맷(예: JSON, 함수 시그니처)의 호출 명령을 출력하면, 시스템이 이를 가로채 실제 외부 프로그램(계산기, 검색엔진, Python 인터프리터 등)을 실행하고 그 결과를 다시 모델의 입력으로 넣어주는 기능입니다.
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. 기억, 반성 및 메타인지 (Reflexion) -->
+      <section id="cat-memory" class="term-section" data-category="memory">
+        <div class="term-category-title">
+          <span>🪞 4. 기억, 반성 및 메타인지 (Reflexion & Memory)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- Reflexion -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">리플렉션</span>
+                <span class="term-name-en">Reflexion</span>
+              </div>
+              <span class="term-tag tag-memory">자기반성 에이전트</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              시험에서 오답을 냈을 때, 채점 결과를 보고 <strong>"아, 내가 이 공식에서 마이너스 부호를 빠뜨렸구나. 다음번엔 부호를 꼭 검토하자"라고 '오답 노트'를 적어두고 다음 시험에 대비</strong>하는 우등생의 학습법입니다.
+            </div>
+            <div class="technical-detail">
+              가중치를 업데이트하지 않고, 실패한 궤적에 대해 자연어로 된 자기비판(Self-reflection)을 생성하여 장기 기억 버퍼에 저장하고, 후속 시도(Trial)에서 이를 프롬프트로 재참조하여 실수를 스스로 바로잡는 에이전트 아키텍처입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="3_reflexion_korean.html" class="paper-link-pill">Reflexion 논문 전문</a>
+            </div>
+          </div>
+
+          <!-- Metacognition -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">메타인지</span>
+                <span class="term-name-en">Metacognition (자각과 자기평가)</span>
+              </div>
+              <span class="term-tag tag-memory">고차 인지</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              <strong>"내가 무엇을 알고 무엇을 모르는지", "내 논리가 어디서 허점이 있었는지"</strong>를 한 걸음 물러서서 객관적으로 내려다보는 상위 1% 인지 능력입니다.
+            </div>
+            <div class="technical-detail">
+              자신의 사고 과정 자체를 대상화하여 관찰하고 검토하는 능력입니다. Reflexion의 Self-Reflection 모듈은 실패한 궤적을 제3자 입장에서 평가하여 "내가 왜 틀렸는지"를 분석합니다.
+            </div>
+          </div>
+
+          <!-- Verbal Reinforcement Learning -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">언어적 강화학습</span>
+                <span class="term-name-en">Verbal Reinforcement Learning</span>
+              </div>
+              <span class="term-tag tag-memory">학습 이론</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              선수가 실수했을 때 말없이 점수만 깎는(-10점) 대신, <strong>코치가 다가와서 "방금 스윙할 때 팔꿈치가 너무 들렸어. 다음엔 팔꿈치를 붙여봐"라고 구체적인 말(Verbal feedback)로 교정</strong>해주는 방식입니다.
+            </div>
+            <div class="technical-detail">
+              전통적인 강화학습(RL)이 수치형 스칼라 보상($R \in \mathbb{R}$)과 그래디언트 역전파를 통해 신경망 가중치를 학습시켰던 것과 달리, <strong>풍부한 의미 정보를 담은 자연어 피드백 신호</strong>를 보상으로 사용하여 모델의 행동 정책을 인컨텍스트로 최적화하는 기법입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="3_reflexion_korean.html#sec2" class="paper-link-pill">Reflexion 논문 섹션 2</a>
+            </div>
+          </div>
+
+          <!-- Actor-Evaluator-Self-Reflection -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">행동자-평가자-반성자 분업 구조</span>
+                <span class="term-name-en">Actor-Evaluator-Self-Reflection Triad</span>
+              </div>
+              <span class="term-tag tag-memory">아키텍처 모듈</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              <strong>직접 연기하는 배우(Actor)</strong>, <strong>연기를 채점하는 심사위원(Evaluator)</strong>, 그리고 <strong>"다음 무대에선 이 감정선을 보완하자"고 피드백을 주는 연기 지도자(Self-Reflection)</strong>의 3인 1조 팀플레이입니다.
+            </div>
+            <div class="technical-detail">
+              Reflexion의 핵심 3대 모듈:
+              <ul>
+                <li><strong>Actor:</strong> 환경과 상호작용하여 행동 궤적을 산출하는 역할</li>
+                <li><strong>Evaluator:</strong> 결과물의 정답 여부나 유닛 테스트 통과 여부를 검증하고 점수를 매기는 역할</li>
+                <li><strong>Self-Reflection:</strong> 실패 원인을 진단하고 다음 시도에 적용할 구체적 개선 조언을 텍스트로 생성하는 역할</li>
+              </ul>
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="3_reflexion_korean.html#sec2-1" class="paper-link-pill">Reflexion 모듈 상세</a>
+            </div>
+          </div>
+
+          <!-- Episodic Memory vs Working Memory -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">에이전트 메모리 시스템</span>
+                <span class="term-name-en">Working Memory & Episodic Memory</span>
+              </div>
+              <span class="term-tag tag-memory">기억 구조</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              컴퓨터의 <strong>RAM(작업 메모리: 지금 당장 열려있는 창)</strong>과 <strong>하드디스크(에피소드 기억: 지난번 프로젝트의 오답 노트와 노하우 파일)</strong>의 관계입니다.
+            </div>
+            <div class="technical-detail">
+              <ul>
+                <li><strong>단기/작업 기억(Working Memory):</strong> 현재 진행 중인 세션 내의 최근 대화 및 궤적($\tau_t$). 컨텍스트 윈도우 크기에 제한을 받음.</li>
+                <li><strong>장기/에피소드 기억(Episodic Memory):</strong> 이전 시도나 과거 상호작용에서 얻은 교훈, 반성 텍스트($sr_t$), 또는 벡터 DB에 임베딩되어 영구 보관되는 경험 데이터베이스.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 5. 지식 아키텍처 및 안전성 -->
+      <section id="cat-architecture" class="term-section" data-category="architecture">
+        <div class="term-category-title">
+          <span>🛡️ 5. 지식 아키텍처 및 안전성 (Architecture & Safety)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- Parametric vs Non-parametric Knowledge -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">파라메트릭 지식 vs 비(非)파라메트릭 지식</span>
+                <span class="term-name-en">Parametric vs Non-Parametric Knowledge</span>
+              </div>
+              <span class="term-tag tag-architecture">지식 표현</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              내 머릿속에 완전히 <strong>외워둔 암기 지식(파라메트릭)</strong>과 책상 위 <strong>백과사전이나 스마트폰 검색으로 찾아보는 외부 지식(비파라메트릭)</strong>의 차이입니다.
+            </div>
+            <div class="technical-detail">
+              <ul>
+                <li><strong>파라메트릭 지식(Parametric):</strong> 모델 사전학습 시 수천억 개의 신경망 가중치(파라미터) 속에 굳어진 정적 지식. 업데이트가 불가능하고 환각이 발생할 수 있음 (CoT가 주로 의존).</li>
+                <li><strong>비파라메트릭 지식(Non-parametric):</strong> 위키피디아, 벡터 DB, 외부 웹사이트 등 외부 소스로부터 실행 시점에 동적으로 주입되는 지식 (ReAct가 활용).</li>
+              </ul>
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec1" class="paper-link-pill">ReAct 서론</a>
+            </div>
+          </div>
+
+          <!-- Error Propagation / Cascading -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">오류 전파 / 환각 누적</span>
+                <span class="term-name-en">Error Propagation / Cascading Hallucination</span>
+              </div>
+              <span class="term-tag tag-architecture">에러 메커니즘</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              첫 단추를 잘못 꿰면 <strong>마지막 단추까지 줄줄이 엉망으로 꿰어지는 눈덩이 효과</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              다단계 추론 모델에서 1단계나 2단계의 사소한 잘못된 계산이나 거짓 사실(환각)이 다음 단계의 입력 전제로 들어가면서, 단계가 거듭될수록 걷잡을 수 없이 오답으로 확산되는 현상입니다. ReAct는 외부 관찰로 이 연쇄 고리를 끊어냅니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="1_chain_of_thought_korean.html#sec6" class="paper-link-pill">CoT 논문 섹션 6</a>
+            </div>
+          </div>
+
+          <!-- Thought Editing / Human-in-the-Loop -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">생각 편집 & 인간 개입</span>
+                <span class="term-name-en">Thought Editing & Human-in-the-Loop (HITL)</span>
+              </div>
+              <span class="term-tag tag-action">안전 제어</span>
+            </div>
+            <div class="analogy-box">
+              <div class="analogy-label">💡 비유로 이해하기</div>
+              자율주행차가 엉뚱한 골목길로 들어가려 할 때 <strong>운전자가 운전대를 잡고 올바른 방향으로 쓱 돌려주는 것</strong>입니다.
+            </div>
+            <div class="technical-detail">
+              ReAct에서 에이전트의 'Thought'가 자연어로 실시간 노출되므로, 관리자가 잘못된 방향으로 가려는 생각 텍스트를 즉석에서 수정하여 에이전트를 올바른 경로로 재정렬(Alignment)시키는 기법입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec5" class="paper-link-pill">ReAct 논문 섹션 5</a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 6. 핵심 평가 벤치마크 -->
+      <section id="cat-benchmarks" class="term-section" data-category="benchmarks">
+        <div class="term-category-title">
+          <span>📊 6. 핵심 평가 벤치마크 (Agent Benchmarks)</span>
+        </div>
+        <div class="term-grid">
+
+          <!-- GSM8K -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">GSM8K</span>
+                <span class="term-name-en">Grade School Math 8K</span>
+              </div>
+              <span class="term-tag tag-eval">산술 추론</span>
+            </div>
+            <div class="technical-detail">
+              초등학교 수준의 고품질 언어 수학 문장제 8,500개로 구성된 대표적 추론 벤치마크입니다. 2단계~8단계의 다단계 사칙연산과 언어 이해가 필수적이며, CoT 논문에서 LLM의 추론 성능을 검증하는 핵심 시험대로 사용되었습니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="1_chain_of_thought_korean.html#sec3-1" class="paper-link-pill">CoT 논문 섹션 3.1</a>
+            </div>
+          </div>
+
+          <!-- HotpotQA -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">HotpotQA</span>
+                <span class="term-name-en">Multi-hop Question Answering</span>
+              </div>
+              <span class="term-tag tag-eval">지식 탐색</span>
+            </div>
+            <div class="technical-detail">
+              단 한 번의 검색으로는 답을 알 수 없고, <strong>여러 문서 사이를 징검다리처럼 건너뛰어야(Multi-hop)만</strong> 풀 수 있는 질문 응답 데이터셋입니다. (예: "영화 '기생충' 감독의 고향에서 열리는 축제는?" → 기생충 감독 검색 → 봉준호 확인 → 봉준호 고향 대구 검색 → 대구 축제 검색). ReAct와 Reflexion에서 정보 탐색 능력을 평가하는 표준 과제입니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec3-1" class="paper-link-pill">ReAct 섹션 3.1</a>, <a href="3_reflexion_korean.html#sec3-2" class="paper-link-pill">Reflexion 섹션 3.2</a>
+            </div>
+          </div>
+
+          <!-- FEVER -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">FEVER</span>
+                <span class="term-name-en">Fact Extraction and VERification</span>
+              </div>
+              <span class="term-tag tag-eval">사실 검증</span>
+            </div>
+            <div class="technical-detail">
+              제시된 주장이 참(Supports), 거짓(Refutes), 또는 정보 부족(Not Enough Info)인지 방대한 위키피디아에서 증거 문장을 추출해 검증하는 사실 확인 벤치마크입니다. ReAct 논문에서 환각 억제 능력을 입증하는 주요 과제로 사용되었습니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec3-1" class="paper-link-pill">ReAct 섹션 3.1</a>
+            </div>
+          </div>
+
+          <!-- ALFWorld -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">ALFWorld</span>
+                <span class="term-name-en">Text-based Embodied Environment</span>
+              </div>
+              <span class="term-tag tag-eval">가상 환경</span>
+            </div>
+            <div class="technical-detail">
+              가상 가옥 환경(주방, 침실, 거실 등)에서 텍스트 명령어를 입력하여 물건을 집고, 씻고, 가열하고, 서랍에 넣는 등의 복합 과제를 수행하는 인터랙티브 시뮬레이터입니다. 에이전트가 현실 세계와 같은 환경에서 상식적 계획을 세우고 실패에 대처하는 능력을 측정합니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec4-1" class="paper-link-pill">ReAct 섹션 4.1</a>, <a href="3_reflexion_korean.html#sec3-1" class="paper-link-pill">Reflexion 섹션 3.1</a>
+            </div>
+          </div>
+
+          <!-- WebShop -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">WebShop</span>
+                <span class="term-name-en">Web Interaction & E-Commerce</span>
+              </div>
+              <span class="term-tag tag-eval">웹 에이전트</span>
+            </div>
+            <div class="technical-detail">
+              118만 개 이상의 실제 아마존 제품 페이지를 모사한 전자상거래 웹 브라우징 벤치마크입니다. 검색창 입력, 버튼 클릭, 옵션 선택 등의 웹 UI 액션을 취하며 사용자의 구매 요구사항을 충족해야 합니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="2_react_korean.html#sec4-2" class="paper-link-pill">ReAct 섹션 4.2</a>
+            </div>
+          </div>
+
+          <!-- HumanEval -->
+          <div class="term-card">
+            <div class="term-card-header">
+              <div class="term-title-group">
+                <span class="term-name-ko">HumanEval</span>
+                <span class="term-name-en">Code Generation Benchmark</span>
+              </div>
+              <span class="term-tag tag-eval">프로그래밍</span>
+            </div>
+            <div class="technical-detail">
+              OpenAI가 공개한 파이썬 알고리즘 함수 작성 벤치마크(164개 문제)로, 함수 설명(Docstring)을 보고 코드를 완성한 뒤 숨겨진 유닛 테스트를 모두 통과해야 성공으로 인정됩니다. Reflexion 논문에서 컴파일러 에러 기반의 자기반성 학습으로 91.0%의 SOTA를 달성했습니다.
+            </div>
+            <div class="related-paper">
+              관련 논문: <a href="3_reflexion_korean.html#sec3-3" class="paper-link-pill">Reflexion 섹션 3.3</a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <footer>
+        <p>© 2026 AI Agent 스터디 3주차 | AI Agent 핵심 용어집 v2.0 | CoT · ReAct · Reflexion 연계 학습서</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    function filterTerms() {
+      const query = document.getElementById('termSearch').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.term-card');
+      const sections = document.querySelectorAll('.term-section');
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(query)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      sections.forEach(sec => {
+        const visibleCards = sec.querySelectorAll('.term-card:not([style*="display: none"])');
+        if (visibleCards.length === 0 && query !== '') {
+          sec.style.display = 'none';
+        } else {
+          sec.style.display = '';
+        }
+      });
+    }
+
+    function setCategory(cat) {
+      const buttons = document.querySelectorAll('.filter-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const sections = document.querySelectorAll('.term-section');
+      sections.forEach(sec => {
+        if (cat === 'all' || sec.getAttribute('data-category') === cat) {
+          sec.style.display = '';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

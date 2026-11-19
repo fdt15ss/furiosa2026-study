@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[논문 번역] Reflexion: 언어적 강화학습을 갖춘 언어 에이전트 (Reflexion)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <!-- 상단 글로벌 네비게이션 -->
+  <header class="top-nav">
+    <a href="1_chain_of_thought_korean.html" class="nav-brand">
+      <span>AI Agent 3주차 핵심 논문</span>
+      <span class="badge">NeurIPS 2023</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="1_chain_of_thought_korean.html">1. CoT (추론 유도)</a></li>
+      <li><a href="2_react_korean.html">2. ReAct (추론과 행동)</a></li>
+      <li><a href="3_reflexion_korean.html" class="active">3. Reflexion (자기반성)</a></li>
+      <li><a href="ai_agent_glossary.html">📖 AI Agent 용어집</a></li>
+    </ul>
+  </header>
+
+  <div class="layout-container">
+    <!-- 좌측 목차 (TOC) -->
+    <aside class="sidebar">
+      <div class="sidebar-title">목차 (Contents)</div>
+      <ul class="toc-list">
+        <li><a href="#abstract">초록 (Abstract)</a></li>
+        <li><a href="#intro">1. 서론 (Introduction)</a></li>
+        <li>
+          <a href="#sec2">2. Reflexion 아키텍처</a>
+          <div class="toc-sub">
+            <a href="#sec2-1">2.1 4대 핵심 구성 모듈</a>
+            <a href="#sec2-2">2.2 자기반성 강화 알고리즘</a>
+          </div>
+        </li>
+        <li>
+          <a href="#sec3">3. 실험 및 실증 평가</a>
+          <div class="toc-sub">
+            <a href="#sec3-1">3.1 의사결정 (ALFWorld, WebShop)</a>
+            <a href="#sec3-2">3.2 추론 (HotpotQA)</a>
+            <a href="#sec3-3">3.3 코드 작성 (HumanEval, LeetCode)</a>
+          </div>
+        </li>
+        <li><a href="#sec4">4. 어블레이션 및 심층 분석</a></li>
+        <li><a href="#sec5">5. 고찰 및 미래 연구</a></li>
+        <li><a href="#sec6">6. 결론 (Conclusions)</a></li>
+      </ul>
+    </aside>
+
+    <!-- 메인 논문 본문 -->
+    <main class="content">
+      <div class="paper-header">
+        <div class="paper-badge">NeurIPS 2023 Spotlight Paper</div>
+        <h1 class="paper-title">Reflexion: 언어적 강화학습을 갖춘 자율 언어 에이전트</h1>
+        <div class="paper-subtitle">Reflexion: Language Agents with Verbal Reinforcement Learning</div>
+        <div class="paper-meta">
+          <div class="meta-item"><strong>저자:</strong> Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik Narasimhan, Shunyu Yao</div>
+          <div class="meta-item"><strong>소속:</strong> Northeastern University, MIT, Princeton University</div>
+          <div class="meta-item"><strong>원문 링크:</strong> arXiv:2303.11366 (NeurIPS 2023)</div>
+        </div>
+      </div>
+
+      <!-- 초록 -->
+      <section id="abstract" class="abstract-card">
+        <div class="abstract-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          초록 (Abstract)
+        </div>
+        <p class="abstract-text">
+          대규모 언어 모델(LLM) 기반의 인공지능 에이전트는 복잡한 환경에서 지속적으로 오류를 범하고, 자신의 실패로부터 학습하지 못하는 치명적인 한계가 있다. 전통적인 강화학습(RL)은 신경망 가중치를 업데이트하기 위해 수천 번의 상호작용과 정교한 보상 설계(Reward engineering)를 요구하므로 수백억~수천억 파라미터를 가진 대형 모델에 적용하기에는 비용이 극도로 크다.
+        </p>
+        <p class="abstract-text">
+          본 논문에서는 신경망 가중치를 단 한 번도 업데이트하지 않고도 <strong>언어적 피드백(Verbal Feedback)</strong>을 통해 언어 에이전트를 강화하는 새로운 프레임워크인 <strong>Reflexion</strong>을 제안한다. Reflexion 에이전트는 작업 수행 후 자신의 행동 궤적과 평가 신호를 되돌아보며 자연어로 된 <strong>'자기반성(Self-Reflection)'</strong> 텍스트를 생성하고, 이를 <strong>장기 기억 버퍼(Long-term Memory)</strong>에 저장한다. 이후 후속 시도에서 이 기억을 컨텍스트로 불러와 이전 실수를 반복하지 않고 최적의 경로를 찾아간다.
+        </p>
+        <p class="abstract-text">
+          실험 결과, 의사결정 과제(ALFWorld 97% 성공률 달성), 다단계 추론(HotpotQA), 그리고 코드 생성(HumanEval 91.0% 달성, LeetCode Hard 난제 해결) 전반에서 기존의 CoT 및 ReAct 에이전트를 압도하는 자가 개선 능력을 입증하였다.
+        </p>
+      </section>
+
+      <!-- 대표 Figure 1 -->
+      <div class="figure-container">
+        <img src="images/reflexion_fig1.png" alt="Figure 1: Reflexion overview in 3 domains" class="figure-img">
+        <div class="figure-caption">
+          <strong>Figure 1:</strong> Reflexion 프레임워크가 적용되는 3대 핵심 도메인. (1) 순차적 의사결정(ALFWorld), (2) 프로그래밍/코딩(HumanEval, LeetCode), (3) 지식 추론(HotpotQA). 에이전트는 이전 실패 경험을 언어로 반성하고 메모리에 축적하여 다음 시도에서 올바른 해답을 도출한다.
+        </div>
+      </div>
+
+      <!-- 1. 서론 -->
+      <section id="intro">
+        <h2>1. 서론 (Introduction)</h2>
+        <p>
+          인간이 새로운 기술을 배우거나 난제를 해결할 때를 떠올려보자. 인간은 시행착오(Trial and error)를 겪으며 즉각적으로 뇌 세포의 모든 연결 가중치를 수학적으로 재조정하지 않는다. 
+          대신 <em>"내가 왜 이 연산에서 틀렸지? 아, 인덱스 범위를 1만큼 벗어났구나. 다음번엔 반복문의 종료 조건을 수정해야겠다"</em>와 같이 <strong>자연어로 된 자기비판과 반성</strong>을 수행하고, 이를 기억해 두었다가 다음 번 시도에 반영한다.
+        </p>
+        <p>
+          그러나 기존의 LLM 에이전트(예: ReAct, CoT)는 <strong>단일 시도(Single-trial) 에이전트</strong>에 불과했다. 실패하더라도 왜 실패했는지 기억하지 못하고, 새로운 프롬프트가 주어지면 똑같은 오류를 무한히 반복했다. 
+          이를 해결하기 위해 우리는 대규모 언어 모델의 언어 이해 및 추론 능력을 <strong>'보상 및 피드백 신호'</strong> 자체로 사용하는 <strong>언어적 강화학습(Verbal Reinforcement Learning)</strong>의 개념을 도입한다.
+        </p>
+      </section>
+
+      <!-- 2. Reflexion 아키텍처 -->
+      <section id="sec2">
+        <h2>2. Reflexion 프레임워크 아키텍처</h2>
+        <p>
+          Reflexion은 에이전트가 단기적 상호작용뿐만 아니라 여러 번의 에피소드(시도, Trial)를 거치며 스스로 학습할 수 있도록 다음 4가지 핵심 모듈로 구성된다:
+        </p>
+
+        <div class="figure-container">
+          <img src="images/reflexion_fig2.png" alt="Figure 2: Reflexion Architecture and Algorithm" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 2:</strong> (a) Reflexion의 모듈식 아키텍처 다이어그램: Actor, Evaluator, Self-Reflection 모델, 그리고 메모리 시스템의 상호작용 구조. (b) 자기반성 기반 언어 강화학습 알고리즘 의사코드.
+          </div>
+        </div>
+
+        <h3 id="sec2-1">2.1 4대 핵심 구성 모듈</h3>
+        
+        <div class="key-point-card">
+          <div class="key-point-icon">🤖</div>
+          <div>
+            <strong>1. 행동자 (Actor, $M_a$):</strong>
+            환경과 직접 상호작용하며 텍스트와 행동을 생성하는 LLM. CoT 또는 ReAct 스타일을 사용하여 궤적 $\tau_t$를 생성한다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">⚖️</div>
+          <div>
+            <strong>2. 평가자 (Evaluator, $M_e$):</strong>
+            Actor가 완수한 결과물 또는 궤적을 채점한다. 코딩 과제의 경우 유닛 테스트 통과 여부(컴파일러/테스트 스위트)가 될 수 있고, 추론 과제에서는 별도의 검증 프롬프트나 정답 일치 여부가 된다. 스칼라 점수 또는 성공/실패 이진 신호를 출력한다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">🪞</div>
+          <div>
+            <strong>3. 자기반성 모델 (Self-Reflection Model, $M_{sr}$):</strong>
+            실패한 궤적 $\tau_t$와 Evaluator의 피드백을 입력받아, <em>"무엇이 잘못되었으며, 다음 시도에서는 어떻게 접근해야 하는가?"</em>에 대한 구체적이고 실행 가능한(actionable) 언어적 비판과 교훈 $sr_t$를 생성한다.
+          </div>
+        </div>
+
+        <div class="key-point-card">
+          <div class="key-point-icon">💾</div>
+          <div>
+            <strong>4. 기억 장치 (Memory Buffer):</strong>
+            <ul>
+              <li><strong>단기 기억(Short-term):</strong> 현재 에피소드 내에서의 세부 상호작용 히스토리.</li>
+              <li><strong>장기 기억(Long-term):</strong> 이전 시도들에서 축적된 자기반성 텍스트 목록 $\{sr_1, sr_2, \dots\}$. 후속 시도 시 프롬프트에 주입되어 행동을 가이드한다.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 id="sec2-2">2.2 자기반성 강화 알고리즘</h3>
+        <p>
+          알고리즘은 최대 $N$번의 시도(Trial) 동안 반복된다:
+        </p>
+        <ol>
+          <li>에이전트(Actor)는 메모리에 누적된 이전 반성 내용($\text{mem}$)을 참고하여 궤적 $\tau_t$를 생성한다.</li>
+          <li>평가자(Evaluator)가 성패를 판정한다. 과제가 성공하면 즉시 종료하고 결과를 반환한다.</li>
+          <li>실패한 경우, 자기반성 모델이 현재의 실패 궤적을 분석하여 피드백 $sr_t$를 작성하고 이를 메모리에 추가한다.</li>
+          <li>다음 시도 $t+1$로 넘어가 새로운 전략으로 문제를 다시 푼다.</li>
+        </ol>
+      </section>
+
+      <!-- 3. 실험 및 실증 평가 -->
+      <section id="sec3">
+        <h2>3. 실험 및 실증 평가 (Experiments & Results)</h2>
+
+        <h3 id="sec3-1">3.1 순차적 의사결정: ALFWorld & WebShop</h3>
+        <p>
+          가상 환경 과제인 <strong>ALFWorld</strong> 134개 태스크에서 ReAct 베이스라인은 73%의 성공률에 머물렀다. 그러나 Reflexion을 적용하자 시도가 거듭될수록 실패했던 태스크들을 자가 수정하며 <strong>최종 97%의 압도적인 성공률</strong>을 달성하였다.
+        </p>
+
+        <div class="figure-container">
+          <img src="images/reflexion_fig3.png" alt="Figure 3: ALFWorld Performance" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 3:</strong> ALFWorld 134개 태스크에서의 시도 횟수(Trial Number)별 누적 해결률. ReAct 단독 방식에 비해 Reflexion은 반복 시도를 통해 미해결 과제들을 빠르게 해결하며 97% 이상으로 수렴한다.
+          </div>
+        </div>
+
+        <div class="figure-container">
+          <img src="images/reflexion_fig5.png" alt="Figure 5: AlfWorld Trajectory Example" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 5:</strong> ALFWorld 실제 궤적 예시. [상단] 1차 시도에서 에이전트가 비효율적인 탐색 루프에 빠져 실패함. [하단] 자기반성 메모리를 주입받은 2차 시도에서는 냉장고와 조리대로 곧바로 이동하여 완벽하게 성공함.
+          </div>
+        </div>
+
+        <h3 id="sec3-2">3.2 지식 추론: HotpotQA</h3>
+        <p>
+          다단계 질문 응답 벤치마크인 HotpotQA에서도 Reflexion은 이전 검색 실패 원인을 분석하여(예: "동명이인과 혼동함", "검색 키워드가 너무 포괄적이었음") 후속 시도에서 검색 질의어를 정교화함으로써 상당한 정확도 향상을 이끌어냈다.
+        </p>
+
+        <div class="figure-container">
+          <img src="images/reflexion_fig7.png" alt="Figure 7: HotPotQA Trials and Self-Reflection" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 7:</strong> HotPotQA 과제에서의 2차 시도 궤적. 1차 시도 실패 후 에이전트가 "내가 키워드를 잘못 지정했다"고 반성한 뒤, 2차 시도에서 정확한 아티스트 이름을 검색하여 정답을 찾아낸다.
+          </div>
+        </div>
+
+        <h3 id="sec3-3">3.3 코드 작성 및 디버깅: HumanEval & LeetCode</h3>
+        <p>
+          Reflexion의 진가가 가장 극명하게 드러난 도메인은 <strong>코드 생성 및 자가 디버깅(Self-debugging)</strong>이다. 
+          컴파일러 에러 메시지와 유닛 테스트 실패 결과를 Evaluator의 피드백으로 활용하여, 에이전트가 코드의 버그를 스스로 찾고 고칠 수 있도록 했다.
+        </p>
+
+        <div class="figure-container">
+          <img src="images/reflexion_fig4.png" alt="Figure 4: CoT vs Reflexion across domains" class="figure-img">
+          <div class="figure-caption">
+            <strong>Figure 4:</strong> HotPotQA, HumanEval(파이썬), LeetCode(Hard 난이도) 전반에서 CoT 및 ReAct 베이스라인과 Reflexion의 성능 비교. 코딩 태스크에서 유닛 테스트 기반 자기반성을 거치며 성공률이 비약적으로 상승한다.
+          </div>
+        </div>
+
+        <ul>
+          <li><strong>HumanEval (Python):</strong> 기존 GPT-4의 제로샷 점수(80.1%)를 <strong>91.0%</strong>까지 끌어올렸다.</li>
+          <li><strong>LeetCode Hard:</strong> 기존 언어 모델들이 거의 풀지 못하던 고난도 알고리즘 문제에서도 런타임 오류 및 시간 초과 원인을 분석하여 스스로 정답 코드를 완성했다.</li>
+        </ul>
+      </section>
+
+      <!-- 4. 어블레이션 및 심층 분석 -->
+      <section id="sec4">
+        <h2>4. 어블레이션 및 심층 분석 (Ablation Study)</h2>
+        <p>
+          연구진은 다음 변형들과 비교하여 자기반성의 기여도를 검증하였다:
+        </p>
+        <ol>
+          <li><strong>단순 재시도(Naïve retry):</strong> 피드백 없이 단순히 문제를 다시 풀게 함 → 성능 향상이 미미하거나 동일한 실수를 반복함.</li>
+          <li><strong>스칼라 보상만 제공(Scalar reward):</strong> "틀렸음(-1점)"이라는 점수만 알려줌 → 무엇이 틀렸는지 알지 못해 무작위 탐색에 그침.</li>
+          <li><strong>언어적 자기반성(Verbal Self-reflection):</strong> "반복문 내부의 변수 업데이트 누락"과 같이 구체적 언어 피드백을 줄 때만이 압도적인 성능 도약을 견인함.</li>
+        </ol>
+      </section>
+
+      <!-- 5. 고찰 및 미래 연구 -->
+      <section id="sec5">
+        <h2>5. 고찰 및 미래 연구 (Discussion)</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">📌 Reflexion의 의의와 발전 방향</div>
+          <p>
+            Reflexion은 에이전트에게 <strong>'메타인지(Metacognition)'</strong>와 <strong>'에피소드 기억(Episodic Memory)'</strong>을 부여했다는 점에서 AI Agent 아키텍처의 중대한 이정표이다.
+            최근 등장한 자율 코딩 에이전트(Devin, Cursor, Claude Engineer 등)가 터미널 실행 오류를 읽고 스스로 코드를 수정하는 메커니즘의 이론적 토대가 바로 이 논문이다.
+          </p>
+        </div>
+      </section>
+
+      <!-- 6. 결론 -->
+      <section id="sec6">
+        <h2>6. 결론 (Conclusions)</h2>
+        <p>
+          Reflexion은 값비싼 모델 파인튜닝 없이도, 자연어 자기반성과 메모리 버퍼를 결합하여 에이전트가 과거의 실패로부터 배우도록 만드는 혁신적인 언어적 강화학습 프레임워크이다. 의사결정, 논리 추론, 복잡한 프로그래밍 전 영역에서 탁월한 적응력을 입증하였다.
+        </p>
+      </section>
+
+      <footer>
+        <p>© 2026 AI Agent 스터디 3주차 | 원저작자: Noah Shinn et al. (Northeastern, MIT, Princeton) | 국문 번역 및 편집본</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
