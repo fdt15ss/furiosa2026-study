@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoT · ReAct · Reflexion — 논문 리뷰와 8B 재현 실험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>section{box-sizing:border-box;padding:128px;background:#F6F4EE;color:#16213A;font-family:'Noto Sans KR',Arial,sans-serif;display:flex;flex-direction:column}
+section.alt{background:#ECE7DC}
+section.dark{background:#16213A;color:#F3F1EA}
+p{margin:0}
+.eyebrow{font-size:24px;font-weight:700;letter-spacing:1px;color:#1F6F62}
+.title{font-size:56px;font-weight:700;line-height:1.25;margin:8px 0 0}
+.lede{font-size:28px;line-height:1.5;color:#4A5568;margin-top:12px}
+
+.cover{justify-content:center}
+.cover-eyebrow{font-size:24px;font-weight:700;letter-spacing:1px;color:#7FD1C0}
+.cover-title{font-size:96px;font-weight:700;line-height:1.1;margin:24px 0 0}
+.cover-sub{font-size:32px;color:#C7CEDB;margin-top:24px}
+.cover-chain{display:flex;align-items:center;gap:24px;margin-top:72px}
+.pill{font-size:28px;font-weight:500;padding:12px 28px;border-radius:40px;border:2px solid #7FD1C0;color:#F3F1EA}
+.presenter{font-size:24px;color:#9AA6BA;margin-top:72px}
+
+.node{box-sizing:border-box;background:#FCFBF8;border:2px solid #C8C1B3;border-radius:16px;padding:14px 24px;display:flex;flex-direction:column;justify-content:center}
+.node.cot{background:#FBE3D6;border-color:#B84A22}
+.node.react{background:#D8EFE9;border-color:#1F6F62}
+.node.refl{background:#E5E1F5;border-color:#4B3FA0}
+.node.bad{background:#F3E2E2;border-color:#9C3B3B}
+.node.good{background:#DCEFE0;border-color:#2F6E3F}
+.nt{font-size:32px;font-weight:700;line-height:1.3}
+.ns{font-size:24px;line-height:1.4;color:#4A5568}
+.pin{position:absolute;width:320px;height:110px}
+.pin-short{position:absolute;width:320px;height:80px}
+.pin-label{position:absolute;font-size:24px;line-height:36px;height:36px;color:#4A5568}
+
+.arw{width:56px;height:28px;background:#8A93A3;flex:none}
+.arw-d{width:28px;height:44px;background:#8A93A3;flex:none;align-self:center}
+
+.ring{box-sizing:border-box;border:3px solid #4B3FA0;border-radius:24px;padding:24px 32px;display:flex;flex-direction:column;gap:16px}
+.ring-outer{background:#E5E1F5;border-color:#4B3FA0;margin-top:40px}
+.ring-inner{background:#D8EFE9;border-color:#1F6F62}
+.ring-label{font-size:28px;font-weight:700}
+.ring-row{display:flex;align-items:center;gap:24px}
+.chain{display:flex;align-items:center;gap:16px}
+.chain .node{width:280px}
+.chain .wide{width:300px}
+.side{display:flex;flex-direction:column;align-items:center;gap:12px;width:320px}
+.side .node{width:320px;border-color:#4B3FA0}
+.loop-note{font-size:24px;color:#4A5568}
+
+.body{display:flex;gap:64px;margin-top:40px;align-items:center}
+.lanes3{display:flex;gap:40px;margin-top:40px;align-items:flex-start}
+.lane3{display:flex;flex-direction:column;gap:12px;width:528px}
+.lane3-h{font-size:28px;font-weight:700;color:#FAF8F3;padding:8px 20px;border-radius:12px}
+.fact-k{font-size:28px;font-weight:700;line-height:1.35}
+.compare{display:flex;gap:40px;width:840px;flex:none}
+.lane{display:flex;flex-direction:column;gap:12px;width:400px}
+.lane-h{font-size:28px;font-weight:700;color:#4A5568}
+.facts{display:flex;flex-direction:column;gap:24px;flex:1}
+.fact{display:flex;gap:24px;align-items:center;background:#FCFBF8;border:2px solid #DDD6C8;border-radius:16px;padding:20px 24px}
+.fact-n{font-size:56px;font-weight:700;width:240px;flex:none;line-height:1.1}
+.fact-t{font-size:28px;font-weight:700;line-height:1.3}
+.fact-b{font-size:24px;line-height:1.4;color:#4A5568;margin-top:4px}
+
+.host{position:relative;width:840px;height:540px;flex:none}
+.panel{flex:1;display:flex;flex-direction:column;gap:20px}
+.panel-h{font-size:32px;font-weight:700}
+.bar-group{display:flex;flex-direction:column;gap:8px}
+.bar-label{font-size:28px;font-weight:700}
+.bar-row{display:flex;align-items:center;gap:16px}
+.who{font-size:24px;width:150px;flex:none}
+.who-wide{font-size:24px;width:280px;flex:none}
+.track{flex:1;height:28px;background:#E2DCD0;border-radius:6px;overflow:hidden;display:flex}
+.fill{height:28px}
+.fill-cot{background:#E0814F}
+.fill-react{background:#1F6F62}
+.fill-refl{background:#4B3FA0}
+.fill-gray{background:#8A93A3}
+.val{font-size:24px;width:84px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.note{font-size:24px;line-height:1.5;color:#4A5568}
+.stats{display:flex;gap:24px}
+.stat{flex:1;background:#FCFBF8;border:2px solid #DDD6C8;border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:4px}
+.stat-n{font-size:56px;font-weight:700;line-height:1.1}
+
+.cards3{display:flex;align-items:stretch;gap:24px;margin-top:40px}
+.cards3 .arw{align-self:center}
+.pcard{box-sizing:border-box;width:480px;background:#FCFBF8;border:2px solid #C8C1B3;border-radius:16px;padding:0 0 24px;overflow:hidden;display:flex;flex-direction:column}
+.pcard-h{padding:16px 24px;font-size:32px;font-weight:700;color:#FAF8F3}
+.row{padding:12px 24px 0}
+.row-k{font-size:24px;font-weight:500;color:#5A6474}
+.row-v{font-size:28px;line-height:1.45;font-weight:500}
+.banner{margin-top:32px;background:#16213A;color:#F3F1EA;border-radius:16px;padding:20px 32px;font-size:28px;line-height:1.5}
+
+.drow{display:flex;align-items:stretch;gap:24px;margin-top:48px}
+.drow .arw{align-self:center;background:#6B7790}
+.dnode{box-sizing:border-box;width:480px;background:#22304F;border:2px solid #4FC1A9;border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:6px}
+.dtag{font-size:24px;font-weight:700}
+.dnt{font-size:32px;font-weight:700;color:#F3F1EA}
+.dns{font-size:24px;line-height:1.4;color:#C7CEDB}
+.takeaways{display:flex;gap:48px;margin-top:64px}
+.tk{flex:1;border-top:3px solid #7FD1C0;border-radius:0;padding-top:16px}
+.tk-t{font-size:32px;font-weight:700}
+.tk-b{font-size:24px;line-height:1.5;color:#C7CEDB;margin-top:8px}
+
+.cot-t{color:#B84A22}
+.react-t{color:#1F6F62}
+.refl-t{color:#4B3FA0}
+.d-cot{color:#F08A5D}
+.d-react{color:#4FC1A9}
+.d-refl{color:#A99FEE}
+
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.rise{animation:rise 500ms ease-out both;animation-delay:calc(var(--i,0) * 120ms)}
+
+.two{display:flex;gap:40px;margin-top:40px;align-items:stretch}
+.panel-card{flex:1;box-sizing:border-box;background:#FCFBF8;border:2px solid #DDD6C8;border-radius:16px;padding:28px 32px;display:flex;flex-direction:column;gap:14px}
+.kv{display:flex;gap:20px;align-items:baseline}
+.kv-k{font-size:26px;font-weight:700;width:150px;flex:none}
+.kv-v{font-size:28px;line-height:1.45}
+.panel .node{padding:14px 24px}
+.panel .node .ns{font-size:26px;color:#16213A}
+.panel .nt{font-size:28px}
+.mx{border-collapse:separate;border-spacing:8px 8px;margin-top:24px;margin-left:-8px}
+.mx th{font-size:26px;font-weight:700;padding:4px 8px;text-align:center}
+.mx th.qh{text-align:left;color:#5A6474}
+.mx td.q{font-size:25px;line-height:1.35;width:640px;padding:6px 8px}
+.mx td.q span{color:#5A6474;font-size:24px}
+.mx td.c{width:186px;height:86px;border-radius:12px;text-align:center;font-size:34px;font-weight:700;line-height:1.1}
+.mx td.c small{display:block;font-size:22px;font-weight:500;margin-top:4px}
+.mx td.o{background:#DCEFE0;color:#2F6E3F}
+.mx td.x{background:#F3E2E2;color:#9C3B3B}
+.mx tr.tot td{font-size:34px;font-weight:700;text-align:center;border-top:3px solid #16213A;padding-top:10px}
+.mx tr.tot td.q{text-align:left;font-size:28px}
+.mx tr.ref td{font-size:26px;text-align:center;color:#5A6474}
+.mx tr.ref td.q{text-align:left}
+.mx td.c{height:80px}
+.cards3 .row-v{font-size:28px}
+.lanes2{display:flex;gap:48px;margin-top:36px}
+.lane2{flex:1;display:flex;flex-direction:column;gap:10px}
+.lane2 .node .ns{font-size:25px}
+.lane2 .nt{font-size:28px}
+.cards3 .pcard{width:auto;flex:1}
+.cards3 .row-v{font-size:26px}
+.cmp{display:flex;gap:20px;padding:10px 0;border-top:1px solid #E2DCD0}
+.cmp-k{font-size:28px;font-weight:700;width:150px;flex:none}
+.cmp-v{font-size:26px;line-height:1.55}
+.lim{display:flex;gap:20px;align-items:center;padding:8px 0}
+.lim-n{font-size:44px;font-weight:700;width:130px;flex:none;color:#9C3B3B}
+.lim-t{font-size:26px;line-height:1.45}
+x-shape{display:block}
+x-shape[kind=arrow-right]{clip-path:polygon(0 30%,60% 30%,60% 0,100% 50%,60% 100%,60% 70%,0 70%)}
+x-shape[kind=arrow-down]{clip-path:polygon(30% 0,70% 0,70% 58%,100% 58%,50% 100%,0 58%,30% 58%)}
+x-connector{display:none}
+.lane3 .arw-d,.lane2 .arw-d,.panel .arw-d{width:24px;height:28px}
+
+html,body{margin:0;height:100%;background:#0D1220;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#stage>section{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0;visibility:hidden;transition:opacity .3s}
+#stage>section.on{opacity:1;visibility:visible}
+#stage>section:not(.on) .rise{animation:none}
+section aside{display:none}
+.pageno{position:absolute;right:56px;bottom:40px;font-size:22px;color:#8A93A3}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:rgba(13,18,32,.94);color:#E8ECF3;font:16px/1.7 'Noto Sans KR',sans-serif;padding:16px 24px;display:none;z-index:9}
+#notes.show{display:block}
+#hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(13,18,32,.85);color:#E8ECF3;font:14px 'Noto Sans KR',sans-serif;padding:8px 16px;border-radius:20px;transition:opacity 1s;z-index:8}
+#bar{position:fixed;left:0;top:0;height:4px;background:#4FC1A9;z-index:9;transition:width .3s}
+html.nojs,html.nojs body{overflow:auto;height:auto;background:#fff}
+html.nojs #stage{position:static;transform:none!important;zoom:.5}
+html.nojs #stage>section{position:relative;opacity:1;visibility:visible;margin-bottom:24px}
+@media print{
+ @page{size:1920px 1080px;margin:0}
+ html,body{overflow:visible;height:auto;background:none}
+ #stage{position:static;transform:none!important}
+ #stage>section{position:relative;opacity:1;visibility:visible;page-break-after:always;break-after:page}
+ #stage>section .rise{animation:none}
+ #notes,#hint,#bar{display:none}
+}
+</style></head>
+<body><div id="bar"></div>
+<div id="stage">
+<section id="cover" class="dark cover" data-transition="fade">
+<p class="cover-eyebrow">논문 리뷰 · LLM 추론과 에이전트</p>
+<h1 class="cover-title">CoT · ReAct · Reflexion</h1>
+<p class="cover-sub">생각하고, 행동하고, 반성하는 언어 모델 · llama3.1:8b 재현 실험</p>
+<div class="cover-chain rise" style="--i:1">
+<p class="pill" style="border-color:#F08A5D">CoT · 생각을 풀어쓴다</p>
+<x-shape kind="arrow-right" class="arw" style="background:#6B7790"></x-shape>
+<p class="pill" style="border-color:#4FC1A9">ReAct · 세계와 상호작용한다</p>
+<x-shape kind="arrow-right" class="arw" style="background:#6B7790"></x-shape>
+<p class="pill" style="border-color:#A99FEE">Reflexion · 실패에서 배운다</p>
+</div>
+<p class="presenter">[발표자 이름] · [발표 날짜]</p>
+<aside>오늘은 LLM 추론과 에이전트 분야의 세 논문, CoT, ReAct, Reflexion을 소개합니다. 세 논문은 각각 생각을 풀어쓰는 법, 바깥 세계와 상호작용하며 생각하는 법, 실패에서 배우는 법을 다룹니다. 세 논문 모두 모델의 가중치를 바꾸지 않고, 모델을 어떻게 호출하고 조립하느냐만으로 성능을 끌어올린다는 공통점이 있습니다.</aside>
+</section>
+
+<section id="overview" class="alt" data-transition="fade">
+<p class="eyebrow">한 장으로 보기</p>
+<h2 class="title">세 논문은 서로를 감싸는 세 겹이다</h2>
+<p class="lede">진화의 순서가 아니라, 다루는 피드백의 시간 범위가 다른 층이다.</p>
+<div class="ring ring-outer rise" style="--i:2">
+<p class="ring-label refl-t">Reflexion · 여러 시도 사이에서 배운다</p>
+<div class="ring-row">
+<div class="ring ring-inner rise" style="--i:1">
+<p class="ring-label react-t">ReAct · 한 번의 시도 안에서 행동한다</p>
+<div class="chain">
+<div class="node cot wide rise" style="--i:0"><p class="nt">CoT = Thought</p><p class="ns">단계별로 추론한다</p></div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="node"><p class="nt">Action</p><p class="ns">검색·도구 호출</p></div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="node"><p class="nt">Observation</p><p class="ns">결과를 읽는다</p></div>
+</div>
+<p class="loop-note">↺ Observation이 다음 Thought의 입력이 된다</p>
+</div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="side">
+<div class="node"><p class="nt">Evaluator</p><p class="ns">성공·실패 판정</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node"><p class="nt">반성 메모리</p><p class="ns">실패 교훈 1~3개</p></div>
+</div>
+</div>
+<p class="loop-note">↺ 반성문을 다음 시도의 프롬프트에 넣는다 · 가중치는 바뀌지 않는다</p>
+</div>
+<aside>세 논문을 하나의 그림으로 보면 서로를 감싸는 구조입니다. 가장 안쪽의 CoT는 한 번의 생각입니다. ReAct는 그 생각을 Thought로 쓰고, 행동과 관찰을 번갈아 하며 한 번의 시도를 진행합니다. Reflexion은 시도가 끝나면 평가자가 성공과 실패를 판정하고, 실패하면 원인을 반성문으로 써서 다음 시도에 넘깁니다. 바깥 겹일수록 더 긴 시간 범위의 피드백을 다룹니다. 단, 진화 계보는 아닙니다. 세 논문은 2022년에서 2023년 사이에 거의 함께 나왔고, Reflexion의 코딩 실험처럼 안쪽 층이 ReAct가 아닌 경우도 있습니다.</aside>
+</section>
+
+<section id="cot" data-transition="fade">
+<p class="eyebrow cot-t">1 · Chain-of-Thought (Wei et al., NeurIPS 2022)</p>
+<h2 class="title">CoT: 답 앞에 풀이를 쓰게 한다</h2>
+<p class="lede">표준 프롬프팅은 질문 → 답. CoT는 질문 → 중간 단계 → 답으로 바꾼다.</p>
+<div class="body">
+<!-- P 0,0,840,80  T1 0,140,320,110  T2 520,140,320,110  Tn 520,420,320,110  A 0,420,320,110 -->
+<div class="host rise" style="--i:0">
+<div class="node pin-short" style="left:0;top:0;width:840px"><p class="nt">프롬프트 = 풀이가 담긴 예시 8개 + 질문</p></div>
+<div class="node cot pin" style="left:0;top:140px"><p class="nt">Thought 1</p><p class="ns">문제를 작은 단계로</p></div>
+<div class="node cot pin" style="left:520px;top:140px"><p class="nt">Thought 2</p><p class="ns">앞 결과를 이어받기</p></div>
+<div class="node cot pin" style="left:520px;top:420px"><p class="nt">Thought n</p><p class="ns">마지막 계산</p></div>
+<div class="node pin" style="left:0;top:420px"><p class="nt">답</p><p class="ns">풀이 다음에 출력</p></div>
+<x-connector x1="160" y1="80" x2="160" y2="140" style="color:#5A6474;border-width:3px"></x-connector>
+<x-connector x1="320" y1="195" x2="520" y2="195" style="color:#B84A22;border-width:3px"></x-connector>
+<x-connector x1="680" y1="250" x2="680" y2="420" style="color:#B84A22;border-width:3px"></x-connector>
+<x-connector x1="520" y1="475" x2="320" y2="475" style="color:#B84A22;border-width:3px"></x-connector>
+<p class="pin-label" style="left:180px;top:317px;width:480px">필요한 만큼 단계를 이어 쓴다</p>
+</div>
+<div class="facts rise" style="--i:1">
+<div class="fact"><p class="fact-n cot-t">~100B</p><p class="fact-k">이 크기부터 효과<br>(창발적 능력)</p></div>
+<div class="fact"><p class="fact-n cot-t">2배+</p><p class="fact-k">GSM8K 성능 향상</p></div>
+<div class="fact"><p class="fact-n cot-t">순서</p><p class="fact-k">풀이가 답 앞에 와야 한다</p></div>
+</div>
+</div>
+<aside>CoT의 구조는 한 줄짜리 사슬입니다. 프롬프트에 풀이가 담긴 예시 8개와 질문을 넣으면, 모델이 그 형식을 따라 Thought 1, Thought 2처럼 중간 단계를 차례로 쓰고, 마지막에 답을 냅니다. 각 단계는 앞 단계의 결과를 문장에서 이어받습니다. 표준 프롬프팅은 이 사슬 없이 질문에서 곧바로 답을 냅니다. 뒤에 나올 ReAct와 Reflexion은 이 사슬에 고리를 더합니다. ReAct는 외부 관찰이 다음 생각으로 돌아오는 고리, Reflexion은 실패한 시도가 다음 시도로 돌아오는 고리입니다. 핵심 발견은 세 가지입니다. 첫째, 약 1000억 파라미터 이상에서만 효과가 나는 창발적 능력입니다. 둘째, 어려운 문제일수록 이득이 큽니다. GSM8K에서 PaLM 540B는 예시 8개만으로 최고 성능을 냈습니다. 셋째, ablation에서 수식만 쓰거나, 같은 길이의 점만 출력하거나, 답을 먼저 쓰게 하면 효과가 없었습니다. 계산량이 아니라 자연어 중간 단계가 답 앞에 있다는 점이 중요합니다.</aside>
+</section>
+
+<section id="react" class="alt" data-transition="fade">
+<p class="eyebrow react-t">2 · ReAct (Yao et al., ICLR 2023)</p>
+<h2 class="title">ReAct: 생각과 행동을 번갈아 한다</h2>
+<p class="lede">행동 공간에 언어(생각)를 더해, 외부 근거로 추론을 계속 보정한다.</p>
+<div class="body">
+<!-- Q 0,0,320,80  F 520,0,320,80  T 0,140,320,110  A 520,140,320,110  E 520,420,320,110  O 0,420,320,110 -->
+<div class="host rise" style="--i:0">
+<div class="node pin-short" style="left:0;top:0"><p class="nt">질문</p></div>
+<div class="node pin-short" style="left:520px;top:0"><p class="nt">답 (finish)</p></div>
+<div class="node cot pin" style="left:0;top:140px"><p class="nt">Thought</p><p class="ns">CoT식 추론</p></div>
+<div class="node react pin" style="left:520px;top:140px"><p class="nt">Action</p><p class="ns">검색·조회·종료</p></div>
+<div class="node pin" style="left:520px;top:420px"><p class="nt">외부 환경</p><p class="ns">Wikipedia API</p></div>
+<div class="node react pin" style="left:0;top:420px"><p class="nt">Observation</p><p class="ns">결과를 읽는다</p></div>
+<x-connector x1="160" y1="80" x2="160" y2="140" style="color:#5A6474;border-width:3px"></x-connector>
+<x-connector x1="320" y1="195" x2="520" y2="195" style="color:#1F6F62;border-width:3px"></x-connector>
+<x-connector x1="680" y1="140" x2="680" y2="80" style="color:#5A6474;border-width:3px"></x-connector>
+<x-connector x1="680" y1="250" x2="680" y2="420" style="color:#1F6F62;border-width:3px"></x-connector>
+<x-connector x1="520" y1="475" x2="320" y2="475" style="color:#1F6F62;border-width:3px"></x-connector>
+<x-connector x1="160" y1="420" x2="160" y2="250" style="color:#1F6F62;border-width:3px"></x-connector>
+<p class="pin-label" style="left:696px;top:92px;width:130px">충분하면</p>
+<p class="pin-label" style="left:345px;top:317px;width:150px">↺ 반복</p>
+</div>
+<div class="facts rise" style="--i:1">
+<div class="fact"><p class="fact-n react-t">0%</p><p class="fact-k">실패 중 환각<br>(CoT 56%)</p></div>
+<div class="fact"><p class="fact-n react-t">47%</p><p class="fact-k">실패 중 추론 오류·루프<br>(CoT 16%)</p></div>
+<div class="fact"><p class="fact-n react-t">71%</p><p class="fact-k">ALFWorld 성공률<br>(Act 45%)</p></div>
+</div>
+</div>
+<aside>ReAct는 CoT의 생각에 행동을 더합니다. 형식적으로는 에이전트의 행동 공간에 언어 공간을 추가한 것이고, 생각은 환경을 바꾸지 않고 맥락만 갱신합니다. 루프는 Thought, Action, 외부 환경, Observation 순서로 돌고, 정보가 충분하면 finish 행동으로 답을 냅니다. 행동은 Wikipedia의 search, lookup, finish 세 가지뿐입니다. 오른쪽은 HotpotQA 오류 분석입니다. CoT 실패의 56%가 환각인데 ReAct는 0%입니다. 대신 ReAct는 같은 행동을 반복하는 루프 같은 추론 오류와 검색 실패가 늘었습니다. 저자들은 이를 사실성과 유연성의 트레이드오프라고 부르고, 그래서 ReAct와 CoT-SC를 결합하는 방식을 제안합니다. 의사결정 과제에서는 ALFWorld 71%로 행동만 하는 Act의 45%를 크게 앞섰습니다.</aside>
+</section>
+
+<section id="reflexion" data-transition="fade">
+<p class="eyebrow refl-t">3 · Reflexion (Shinn et al., 2023)</p>
+<h2 class="title">Reflexion: 실패를 글로 반성하고 다시 시도한다</h2>
+<p class="lede">가중치 대신 반성문을 쌓는 &#8216;언어적 강화학습&#8217;이다.</p>
+<div class="body">
+<!-- Task 0,0,320,80  Done 520,0,320,80  Actor 0,140,320,110  Eval 520,140,320,110  SR 520,420,320,110  Mem 0,420,320,110 -->
+<div class="host rise" style="--i:0">
+<div class="node pin-short" style="left:0;top:0"><p class="nt">과제</p></div>
+<div class="node pin-short" style="left:520px;top:0"><p class="nt">종료 · 답 제출</p></div>
+<div class="node react pin" style="left:0;top:140px"><p class="nt">Actor</p><p class="ns">ReAct·CoT로 시도</p></div>
+<div class="node pin" style="left:520px;top:140px"><p class="nt">Evaluator</p><p class="ns">성공·실패 판정</p></div>
+<div class="node refl pin" style="left:520px;top:420px"><p class="nt">자기 성찰</p><p class="ns">Self-Reflection</p></div>
+<div class="node refl pin" style="left:0;top:420px"><p class="nt">반성 메모리</p><p class="ns">장기 메모리 1~3개</p></div>
+<x-connector x1="160" y1="80" x2="160" y2="140" style="color:#5A6474;border-width:3px"></x-connector>
+<x-connector x1="320" y1="195" x2="520" y2="195" style="color:#4B3FA0;border-width:3px"></x-connector>
+<x-connector x1="680" y1="140" x2="680" y2="80" style="color:#5A6474;border-width:3px"></x-connector>
+<x-connector x1="680" y1="250" x2="680" y2="420" style="color:#4B3FA0;border-width:3px"></x-connector>
+<x-connector x1="520" y1="475" x2="320" y2="475" style="color:#4B3FA0;border-width:3px"></x-connector>
+<x-connector x1="160" y1="420" x2="160" y2="250" style="color:#4B3FA0;border-width:3px"></x-connector>
+<p class="pin-label" style="left:696px;top:92px;width:100px">성공</p>
+<p class="pin-label" style="left:696px;top:317px;width:100px">실패</p>
+<p class="pin-label" style="left:176px;top:317px;width:320px">반성문을 다음 프롬프트에</p>
+</div>
+<div class="facts rise" style="--i:1">
+<div class="fact"><p class="fact-n refl-t">91%</p><p class="fact-k">HumanEval pass@1<br>(GPT-4 80%)</p></div>
+<div class="fact"><p class="fact-n refl-t">130/134</p><p class="fact-k">ALFWorld 과제 완료</p></div>
+<div class="fact"><p class="fact-n refl-t">0.52</p><p class="fact-k">테스트 없이 반성만 하면<br>기준선 0.60보다 하락</p></div>
+</div>
+</div>
+<aside>Reflexion은 시도와 시도 사이에서 배웁니다. Actor가 ReAct나 CoT로 시도하면 Evaluator가 성공과 실패를 판정합니다. 실패하면 자기 성찰 모델이 무엇이 왜 틀렸는지를 글로 쓰고, 이를 장기 메모리에 쌓아 다음 시도의 프롬프트에 넣습니다. 가중치는 전혀 바뀌지 않습니다. 결과로 HumanEval pass@1 91%로 당시 GPT-4의 80%를 넘었고, ALFWorld에서는 134개 중 130개를 완료했습니다. 오른쪽 ablation이 중요합니다. 단위 테스트 없이 반성만 하면 오히려 0.52로 떨어지고, 테스트만 있고 반성이 없으면 기준선과 같습니다. 둘이 함께 있어야 0.68로 오릅니다. 그리고 MBPP Python에서는 스스로 만든 테스트가 틀린 코드를 통과시키는 거짓 양성이 16%나 되어 GPT-4보다 낮았습니다. 평가 신호의 품질이 Reflexion의 상한이라는 뜻입니다.</aside>
+</section>
+
+<section id="example" class="alt" data-transition="fade">
+<p class="eyebrow">같은 질문, 세 가지 방식</p>
+<h2 class="title">“John Lanchester와 Alan Dean Foster의 공통 직업은?”</h2>
+<p class="lede">HotpotQA 질문 · CoT와 Reflexion 흐름은 Reflexion 부록 D.2에서 가져왔다.</p>
+<div class="lanes3">
+<div class="lane3 rise" style="--i:0">
+<p class="lane3-h" style="background:#B84A22">CoT</p>
+<div class="node"><p class="nt">Thought</p><p class="ns">L: 소설가·기자·비평가<br>F: 소설가·시나리오 작가</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node bad"><p class="nt">답: 소설가와 시나리오 작가</p><p class="ns">오답 · 공통이 아닌 직업까지 포함</p></div>
+</div>
+<div class="lane3 rise" style="--i:1">
+<p class="lane3-h" style="background:#1F6F62">ReAct (설명용 구성)</p>
+<div class="node react"><p class="nt">Search[John Lanchester]</p><p class="ns">→ 소설가·기자·비평가</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node react"><p class="nt">Search[Alan Dean Foster]</p><p class="ns">→ 소설가·시나리오 작가</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node"><p class="nt">답: 소설가</p><p class="ns">관찰한 근거끼리 비교</p></div>
+</div>
+<div class="lane3 rise" style="--i:2">
+<p class="lane3-h" style="background:#4B3FA0">Reflexion (CoT + 반성)</p>
+<div class="node bad"><p class="nt">시도 1: 오답</p><p class="ns">“소설가와 시나리오 작가”</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node refl"><p class="nt">반성</p><p class="ns">두 사람의 직업이 같다고<br>잘못 가정했다</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node good"><p class="nt">시도 2: 소설가 · 정답</p></div>
+</div>
+</div>
+<aside>세 방법을 같은 질문 하나로 비교해 보겠습니다. 두 작가의 공통 직업을 묻는 HotpotQA 질문입니다. CoT는 두 사람의 직업을 내부 지식으로 떠올린 뒤 한 번에 답하는데, 공통이 아닌 시나리오 작가까지 답에 넣어 틀립니다. 이 흐름은 Reflexion 논문 부록 D.2의 첫 번째 시도 그대로입니다. 가운데 ReAct 열은 논문에 실린 예시가 아니라 설명을 위해 구성한 흐름입니다. 두 사람을 각각 검색하고, 관찰한 결과끼리 비교해 답합니다. 오른쪽 Reflexion은 부록 D.2의 두 번째 시도까지입니다. 첫 시도가 오답 판정을 받자, 두 사람의 직업이 같다고 잘못 가정했다는 반성문을 쓰고, 다음 시도에서 소설가라는 정답을 냅니다. 같은 모델이라도 외부 근거를 가져오느냐, 실패를 다음 시도로 넘기느냐에 따라 결과가 달라진다는 점을 보여 줍니다.</aside>
+</section>
+
+<section id="compare" class="alt" data-transition="fade">
+<p class="eyebrow">비교</p>
+<h2 class="title">한 겹씩 더할 때마다 약점의 종류가 바뀐다</h2>
+<div class="cards3">
+<div class="pcard rise" style="--i:0;border-color:#B84A22">
+<p class="pcard-h" style="background:#B84A22">CoT</p>
+<div class="row"><p class="row-k">피드백 범위</p><p class="row-v">생각 한 번</p></div>
+<div class="row"><p class="row-k">지식 출처</p><p class="row-v">모델 내부 지식만</p></div>
+<div class="row"><p class="row-k">강점</p><p class="row-v">단순하고 싸다, 추론 형식이 자유롭다</p></div>
+<div class="row"><p class="row-k">주된 실패</p><p class="row-v">환각 (실패의 56%)</p></div>
+</div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="pcard rise" style="--i:1;border-color:#1F6F62">
+<p class="pcard-h" style="background:#1F6F62">ReAct</p>
+<div class="row"><p class="row-k">피드백 범위</p><p class="row-v">시도 한 번</p></div>
+<div class="row"><p class="row-k">지식 출처</p><p class="row-v">내부 + 외부 도구</p></div>
+<div class="row"><p class="row-k">강점</p><p class="row-v">근거 있는 답, 환각 0%</p></div>
+<div class="row"><p class="row-k">주된 실패</p><p class="row-v">행동 루프, 검색 실패</p></div>
+</div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="pcard rise" style="--i:2;border-color:#4B3FA0">
+<p class="pcard-h" style="background:#4B3FA0">Reflexion</p>
+<div class="row"><p class="row-k">피드백 범위</p><p class="row-v">여러 시도</p></div>
+<div class="row"><p class="row-k">지식 출처</p><p class="row-v">+ 평가 신호와 반성 메모리</p></div>
+<div class="row"><p class="row-k">강점</p><p class="row-v">재시도로 개선, 파인튜닝 불필요</p></div>
+<div class="row"><p class="row-k">주된 실패</p><p class="row-v">평가가 약하면 틀린 교훈</p></div>
+</div>
+</div>
+<p class="banner rise" style="--i:3">경쟁이 아니라 결합: HotpotQA 최고는 ReAct → CoT-SC (35.1, CoT-SC 단독 33.4)</p>
+<aside>세 방법을 같은 기준으로 놓으면, 한 겹을 더할 때마다 약점의 종류가 바뀝니다. CoT는 단순하고 싸지만 내부 지식만 써서 환각으로 실패합니다. ReAct는 외부 도구로 환각을 없애지만, 형식 제약 때문에 같은 행동을 반복하는 루프나 검색 실패로 틀립니다. 실제로 HotpotQA에서는 CoT가 29.4로 ReAct 27.4보다 약간 높았습니다. Reflexion은 여러 시도에 걸쳐 개선하지만, 평가 신호가 약하면 틀린 교훈을 쌓습니다. 그래서 어느 한쪽이 우월하다기보다 결합이 가장 좋습니다. ReAct 논문에서도 ReAct가 막히면 CoT-SC로 넘어가는 방식이 HotpotQA 최고 점수를 냈습니다.</aside>
+</section>
+
+<section id="impl" data-transition="fade">
+<p class="eyebrow">4 · 재현 실험</p>
+<h2 class="title">논문 설정 그대로, 모델만 8B로 바꿨다</h2>
+<p class="lede">실행 오류는 막아서 기록하고, 모델의 오답은 고치지 않았다.</p>
+<div class="two">
+<div class="panel-card rise" style="--i:0">
+<p class="panel-h">논문에서 그대로 가져온 것</p>
+<div class="kv"><p class="kv-k cot-t">CoT</p><p class="kv-v">수학 예시 8개 (논문 Table 20)</p></div>
+<div class="kv"><p class="kv-k react-t">ReAct</p><p class="kv-v">지시문 · 예시 6개 · search / lookup / finish · 최대 7스텝</p></div>
+<div class="kv"><p class="kv-k refl-t">Reflexion</p><p class="kv-v">성찰 프롬프트 · 정확 일치(EM) 평가자 · 최근 반성 3개</p></div>
+<div class="kv"><p class="kv-k">문제</p><p class="kv-v">HotpotQA dev (ReAct 코드와 같은 순서) · GSM8K test</p></div>
+</div>
+<div class="panel-card rise" style="--i:1">
+<p class="panel-h">바꾼 것 두 가지</p>
+<div class="kv"><p class="kv-k">모델</p><p class="kv-v">PaLM-540B · GPT → <b>llama3.1:8b</b> (Ollama, temperature 0)</p></div>
+<div class="kv"><p class="kv-k">위키 접속</p><p class="kv-v">웹 스크래핑 → MediaWiki API (반환 규칙은 동일)</p></div>
+<p class="panel-h" style="margin-top:20px">실험 규모</p>
+<div class="kv"><p class="kv-k">수학</p><p class="kv-v">8문제 × Standard · CoT, 숫자 일치로 채점</p></div>
+<div class="kv"><p class="kv-k">HotpotQA</p><p class="kv-v">5문제 × 5가지 방법, EM으로 채점</p></div>
+</div>
+</div>
+<aside>여기부터는 직접 재현한 실험입니다. 원칙은 하나였습니다. 논문과 공식 코드의 프롬프트, 예시, 루프, 평가 방식을 그대로 쓰고, 모델만 바꿨습니다. CoT는 논문 Table 20의 수학 예시 8개, ReAct는 공식 저장소의 지시문과 예시 6개, 세 가지 행동, 최대 7스텝, Reflexion은 공식 저장소의 성찰 프롬프트와 정확 일치 평가자, 최근 반성 3개를 썼습니다. 바꾼 것은 두 가지입니다. 모델은 PaLM-540B나 GPT 대신 로컬에서 돌리는 Llama 3.1 8B이고, Wikipedia는 웹 페이지를 긁는 대신 API로 접속하되 돌려주는 내용의 규칙은 논문 코드와 같게 했습니다. 그리고 통신 실패나 형식 오류 같은 실행 오류는 막아서 기록했지만, 모델이 틀린 답을 내는 것은 고치지 않았습니다. 틀린 답에 맞춰 보정 장치를 붙이면 그 결과가 논문 방법의 효과인지 보정의 효과인지 구분할 수 없기 때문입니다. 규모는 작습니다. 수학 8문제, HotpotQA 5문제입니다.</aside>
+</section>
+
+<section id="r-cot" class="alt" data-transition="fade">
+<p class="eyebrow cot-t">결과 1 · CoT</p>
+<h2 class="title">풀이를 쓰게 하자 8문제 중 4문제를 더 맞혔다</h2>
+<p class="lede">GSM8K 8문제. 같은 예시 8개에서 풀이가 있느냐 없느냐만 다르다.</p>
+<div class="body" style="align-items:flex-start">
+<div class="panel rise" style="--i:0;flex:none;width:760px">
+<p class="panel-h">재현 · llama3.1:8b</p>
+<div class="bar-row"><p class="who">Standard</p><div class="track"><div class="fill fill-gray" style="width:25%"></div></div><p class="val">2 / 8</p></div>
+<div class="bar-row"><p class="who">CoT</p><div class="track"><div class="fill fill-cot" style="width:75%"></div></div><p class="val">6 / 8</p></div>
+<p class="panel-h" style="margin-top:28px">논문 · PaLM 540B (GSM8K)</p>
+<div class="bar-row"><p class="who">Standard</p><div class="track"><div class="fill fill-gray" style="width:17.9%"></div></div><p class="val">17.9</p></div>
+<div class="bar-row"><p class="who">CoT</p><div class="track"><div class="fill fill-cot" style="width:56.9%"></div></div><p class="val">56.9</p></div>
+<p class="note" style="margin-top:16px">CoT가 틀린 2문제는 모두 문제의 뜻을 잘못 읽었다 (수익 계산, 다운로드 재시작).</p>
+</div>
+<div class="panel rise" style="--i:1">
+<p class="panel-h">예: 세 도시의 양은 모두 몇 마리인가 (정답 260)</p>
+<div class="node bad"><p class="ns"><b>Standard</b> &nbsp;The answer is 120.</p></div>
+<div class="node good"><p class="ns"><b>CoT</b> &nbsp;4 x 20 = 80. Charleston has 80 sheep. 2 x 80 = 160. Toulouse has 160 sheep. 20 + 80 + 160 = 260. The answer is 260.</p></div>
+<p class="note">풀이는 질문의 관계를 한 줄씩 옮겨 적고, 앞 줄의 결과를 다음 줄이 이어받는다.</p>
+</div>
+</div>
+<aside>첫 번째 결과는 CoT입니다. 같은 예시 8개를 쓰되 Standard는 예시에 답만 있고, CoT는 풀이까지 있습니다. 8B 모델에서 Standard는 8문제 중 2문제, CoT는 6문제를 맞혔습니다. 논문의 PaLM 540B도 GSM8K에서 17.9에서 56.9로 크게 올랐으니 방향은 같습니다. 다만 논문은 약 1000억 파라미터 이하에서는 효과가 없다고 보고했는데, 여기서는 8B에서도 효과가 났습니다. 두 가지를 감안해야 합니다. 첫째, 8문제는 너무 적어서 우연일 수 있습니다. 둘째, 이것은 제 해석인데, 2022년의 작은 모델과 달리 요즘 모델은 학습 단계에서 풀이 데이터를 많이 봤을 가능성이 큽니다. 그래서 창발 크기 자체가 내려왔다고 단정할 수는 없습니다. CoT가 틀린 두 문제는 집을 고쳐 판 수익 계산과 다운로드 재시작 문제였는데, 둘 다 계산 실수가 아니라 문제의 뜻을 잘못 읽은 경우였습니다.</aside>
+</section>
+
+<section id="r-hotpot" data-transition="fade">
+<p class="eyebrow react-t">결과 2 · HotpotQA</p>
+<h2 class="title">5문제에서는 방법 간 차이가 한 문제 이내였다</h2>
+<p class="lede">한 문제가 20%p다. 순위보다 어떻게 틀렸는지를 봐야 한다.</p>
+<table class="mx rise" style="--i:0">
+<tr><th class="qh">질문 (정답)</th><th>Standard</th><th class="cot-t">CoT</th><th>Act</th><th class="react-t">ReAct</th><th class="refl-t">Reflexion</th></tr>
+<tr><td class="q">Irene Jacob이 Stuart Bird 감독 영화 전에 찍은 영화 <span>(Beyond the Clouds)</span></td><td class="c x">✕</td><td class="c x">✕</td><td class="c x">✕</td><td class="c x">✕<small>반복 루프</small></td><td class="c x">✕</td></tr>
+<tr><td class="q">Francine 목소리 배우가 나오는 쇼의 제작자 <span>(Seth MacFarlane)</span></td><td class="c x">✕</td><td class="c x">✕</td><td class="c o">○</td><td class="c x">✕<small>표기 불일치</small></td><td class="c x">✕</td></tr>
+<tr><td class="q">QF 6파운더가 막으려던 배가 싣고 다닌 것 <span>(torpedoes)</span></td><td class="c o">○</td><td class="c o">○<small>근거 오류</small></td><td class="c x">✕</td><td class="c x">✕<small>통신 실패 후</small></td><td class="c x">✕</td></tr>
+<tr><td class="q">Danny Green과 James Worthy 중 연장자 <span>(James Worthy)</span></td><td class="c o">○</td><td class="c o">○<small>근거 오류</small></td><td class="c o">○</td><td class="c o">○</td><td class="c o">○</td></tr>
+<tr><td class="q">David Chanoff와 협업한 제독은 누구 정부의 주영 대사? <span>(Bill Clinton)</span></td><td class="c x">✕</td><td class="c o">○<small>근거 오류</small></td><td class="c x">✕<small>통신 실패 포함</small></td><td class="c o">○</td><td class="c o">○</td></tr>
+<tr class="tot"><td class="q">재현 정답 수 (5문제 중)</td><td>2</td><td class="cot-t">3</td><td>2</td><td class="react-t">2</td><td class="refl-t">2</td></tr>
+<tr class="ref"><td class="q">논문 · PaLM-540B, EM % (500문제)</td><td>28.7</td><td>29.4</td><td>25.7</td><td>27.4</td><td>—</td></tr>
+</table>
+<aside>두 번째 결과는 HotpotQA 5문제를 다섯 가지 방법으로 푼 표입니다. 정답 수는 Standard 2, CoT 3, Act 2, ReAct 2, Reflexion 2입니다. 논문에서도 PaLM-540B 기준으로 CoT 29.4가 ReAct 27.4보다 약간 높았으니, 순서만 보면 비슷합니다. 하지만 5문제라 한 문제가 20퍼센트포인트입니다. 그래서 이 표는 순위표가 아니라 사례표로 봐야 합니다. 칸 아래 작은 글씨가 틀린 방식입니다. 다음 두 장에서 CoT의 정답 3개와 ReAct의 실패 3개를 하나씩 보겠습니다. 미리 말씀드리면, 통신 실패라고 표시한 두 칸은 Wikipedia 접속이 일시적으로 실패한 경우라 모델 탓만은 아닙니다.</aside>
+</section>
+
+<section id="r-ground" class="alt" data-transition="fade">
+<p class="eyebrow">사례 1 · 정답이어도 근거는 다르다</p>
+<h2 class="title">CoT가 맞힌 3문제는 풀이 속 사실이 틀렸다</h2>
+<p class="lede">EM은 답만 보고 채점한다. 논문이 말한 거짓 양성(CoT 14%, ReAct 6%)이 이런 경우다.</p>
+<div class="body" style="align-items:flex-start;gap:48px">
+<div class="panel rise" style="--i:0;flex:none;width:820px">
+<p class="lane3-h" style="background:#B84A22">CoT · 내부 지식만</p>
+<div class="node bad"><p class="nt">Chanoff는 Bobby Ray Inman 제독과 협업했다</p><p class="ns">→ 답 Bill Clinton ○ &nbsp;·&nbsp; 실제 협업자는 William J. Crowe</p></div>
+<div class="node bad"><p class="nt">James Worthy는 1961년 2월 30일생</p><p class="ns">→ 답 James Worthy ○ &nbsp;·&nbsp; 존재하지 않는 날짜</p></div>
+<div class="node bad"><p class="nt">6파운더는 어뢰를 막으려고 도입됐다</p><p class="ns">→ 답 torpedoes ○ &nbsp;·&nbsp; 위키 원문은 &#8216;어뢰정 같은 작고 빠른 배&#8217;</p></div>
+</div>
+<div class="panel rise" style="--i:1">
+<p class="lane3-h" style="background:#1F6F62">ReAct · 같은 Chanoff 질문</p>
+<div class="node react"><p class="nt">Search[David Chanoff]</p><p class="ns">협업자 목록에 &#8220;William J. Crowe&#8221;</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node react"><p class="nt">Search[William J. Crowe]</p><p class="ns">&#8220;ambassador to the United Kingdom &#8230; under President Bill Clinton&#8221;</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node good"><p class="nt">Finish[Bill Clinton]</p><p class="ns">답의 근거가 궤적에 그대로 남는다</p></div>
+</div>
+</div>
+<aside>CoT가 맞힌 세 문제의 풀이를 열어 보면 셋 다 사실이 틀렸습니다. Chanoff 문제에서는 협업한 제독을 Bobby Ray Inman이라고 썼는데, 실제 협업자는 William Crowe입니다. 그래도 대통령 이름은 우연히 맞았습니다. James Worthy는 2월 30일생이라고 했는데, 그런 날짜는 없습니다. 6파운더 문제는 어뢰를 막으려고 도입됐다고 했지만, 위키 원문은 어뢰정 같은 작고 빠른 배를 막으려 했다고 씁니다. 정확 일치 채점은 답만 보니까 이 셋이 모두 정답으로 세어집니다. ReAct 논문은 이런 경우를 거짓 양성이라 부르고, 성공 사례 가운데 CoT는 14퍼센트, ReAct는 6퍼센트라고 보고했습니다. 오른쪽은 같은 Chanoff 질문을 ReAct가 푼 과정입니다. 검색 결과에서 Crowe를 찾고, Crowe 문서에서 Clinton 정부 때 대사였다는 문장을 읽고 답합니다. 정답 수는 비슷해도 근거를 확인할 수 있다는 점이 다릅니다.</aside>
+</section>
+
+<section id="r-react" data-transition="fade">
+<p class="eyebrow react-t">사례 2 · ReAct가 틀린 방식</p>
+<h2 class="title">근거를 보고도 같은 행동을 반복하고, 맞는 답을 다르게 적었다</h2>
+<p class="lede">두 실패 모두 ReAct 논문 오류 분석에 있는 유형이다.</p>
+<div class="lanes2">
+<div class="lane2 rise" style="--i:0">
+<p class="lane3-h" style="background:#1F6F62">반복 루프 · 논문: ReAct 실패의 47%가 추론 오류</p>
+<div class="node react"><p class="nt">Search[Irene Jacob]</p><p class="ns">출연작: &#8230; Beyond the Clouds (1995), U.S. Marshals (1998) &#8230;</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node bad"><p class="nt">Search[Stuart Bird] → Search[Stuart Bird (film)] ×2</p><p class="ns">모두 &#8220;Could not find&#8221;</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node bad"><p class="nt">Lookup[&#8230;] ×3 → 7스텝 소진, 답 없음</p><p class="ns">질문의 &#8216;Bird&#8217;는 철자 오류(감독 Stuart Baird). 근거는 1스텝에 이미 있었다</p></div>
+</div>
+<div class="lane2 rise" style="--i:1">
+<p class="lane3-h" style="background:#5A6474">표기 불일치 · 논문: ReAct 실패의 29%</p>
+<div class="node react"><p class="nt">Search[American Dad!]</p><p class="ns">&#8220;created by Seth MacFarlane, Mike Barker and Matt Weitzman&#8221;</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node"><p class="nt">Finish[Seth MacFarlane, Mike Barker and Matt Weitzman]</p><p class="ns">사실로는 맞다</p></div>
+<x-shape kind="arrow-down" class="arw-d"></x-shape>
+<div class="node bad"><p class="nt">정답 표기 &#8220;Seth MacFarlane&#8221; → EM 오답</p><p class="ns">같은 문제에서 Act는 한 명만 적어 정답</p></div>
+</div>
+</div>
+<aside>ReAct가 틀린 방식은 두 가지였고, 둘 다 논문의 오류 분석에 있는 유형입니다. 왼쪽은 반복 루프입니다. 첫 검색에서 Irene Jacob 문서에 이미 Beyond the Clouds와 U.S. Marshals가 연도와 함께 나왔습니다. 질문의 Stuart Bird는 철자가 틀린 이름이고 실제 감독은 Stuart Baird입니다. 모델은 이 연결을 못 하고 없는 이름을 계속 검색하고, 같은 lookup을 반복하다 7스텝을 다 썼습니다. 논문에서도 ReAct 실패의 47퍼센트가 이런 반복을 포함한 추론 오류였습니다. 오른쪽은 표기 불일치입니다. 공동 제작자 세 명을 모두 적어서 사실로는 맞지만, 정답 표기가 한 명이라 정확 일치에서 오답이 됩니다. 논문에서도 ReAct 실패의 29퍼센트가 이 유형이었습니다. 표의 세 번째 실패는 Wikipedia 통신이 한 번 실패한 뒤 같은 lookup을 반복한 경우여서 따로 표시했습니다.</aside>
+</section>
+
+<section id="r-refl" class="alt" data-transition="fade">
+<p class="eyebrow refl-t">결과 3 · Reflexion</p>
+<h2 class="title">8B는 반성해도 정답이 늘지 않았다 (1차 2개 → 최종 2개)</h2>
+<p class="lede">틀린 3문제는 3번씩 시도했지만 끝내 못 맞혔다. 그중 2문제는 마지막 시도에서 답도 내지 못했다.</p>
+<div class="cards3" style="margin-top:32px">
+<div class="pcard rise" style="--i:0;border-color:#4B3FA0">
+<p class="pcard-h" style="background:#4B3FA0">반성문이 예시와 거의 같다</p>
+<div class="row"><p class="row-k">모델의 반성</p><p class="row-v">&#8220;I got stuck in a loop where I kept trying to search &#8216;Stuart Bird&#8217; but the page could not be found&#8230;&#8221;</p></div>
+<div class="row"><p class="row-k">프롬프트 예시의 반성</p><p class="row-v">&#8220;I got stuck in a loop where I kept trying to search &#8216;The Prince &amp; Me&#8230;&#8217; &#8230;&#8221;</p></div>
+</div>
+<div class="pcard rise" style="--i:1;border-color:#4B3FA0">
+<p class="pcard-h" style="background:#4B3FA0">원인 진단이 빗나갔다</p>
+<div class="row"><p class="row-k">실제 원인</p><p class="row-v">제작자 3명을 모두 적은 답 표기</p></div>
+<div class="row"><p class="row-k">모델의 진단</p><p class="row-v">&#8220;American Dad!를 먼저 검색했어야 했다&#8221;</p></div>
+<div class="row"><p class="row-k">결과</p><p class="row-v">시도 2는 같은 답, 시도 3은 답 없음</p></div>
+</div>
+<div class="pcard rise" style="--i:2;border-color:#4B3FA0">
+<p class="pcard-h" style="background:#4B3FA0">논문 부록에도 같은 결과가 있다</p>
+<div class="row"><p class="row-k">약한 모델</p><p class="row-v">starchat-beta HumanEval 0.26 → 0.26</p></div>
+<div class="row"><p class="row-k">HotpotQA ReAct</p><p class="row-v">gpt-3.5 0.26 → 0.38<br>davinci-003 0.30 → 0.55</p></div>
+<div class="row"><p class="row-k">저자 결론</p><p class="row-v">자기 교정은 큰 모델에서 나타난다</p></div>
+</div>
+</div>
+<aside>세 번째는 Reflexion입니다. 1차 시도에서 맞힌 2문제는 그대로 맞았고, 틀린 3문제는 반성을 두 번 거쳐 세 번씩 시도했지만 끝내 못 맞혔습니다. 반성문을 보면 이유가 보입니다. 먼저 반성문이 프롬프트에 들어 있는 예시 반성과 거의 같습니다. 예시의 검색어 자리에 Stuart Bird만 바꿔 넣은 문장입니다. 다음으로 원인 진단이 빗나갔습니다. 제작자 문제는 답에 세 명을 다 적어서 틀린 건데, 모델은 검색 순서가 문제였다고 진단했습니다. 그래서 다음 시도도 같은 답을 냈고, 마지막 시도에서는 답을 내지 못했습니다. 이 결과는 논문 부록과 같은 방향입니다. 약한 모델인 starchat-beta는 반성을 해도 HumanEval 0.26 그대로였고, 저자들은 자기 교정 능력이 더 크고 강한 모델에서 나타난다고 정리했습니다. 반면 같은 HotpotQA ReAct 설정에서 gpt-3.5는 0.26에서 0.38로, davinci-003은 0.30에서 0.55로 올랐습니다.</aside>
+</section>
+
+<section id="r-sum" data-transition="fade">
+<p class="eyebrow">재현 정리</p>
+<h2 class="title">논문과 같은 것, 다른 것, 그리고 이 실험의 한계</h2>
+<div class="two" style="margin-top:36px">
+<div class="panel-card rise" style="--i:0">
+<p class="panel-h">논문과 비교</p>
+<div class="cmp"><p class="cmp-k cot-t">CoT</p><p class="cmp-v"><b>같음</b> 풀이가 정답률을 크게 올렸다<br><b>다름</b> 8B에서도 효과 (논문: ~100B 이상)</p></div>
+<div class="cmp"><p class="cmp-k react-t">ReAct</p><p class="cmp-v"><b>같음</b> 정답 수는 CoT와 비슷, 대신 근거가 남는다<br><b>같음</b> 실패 유형: 반복 루프, 표기 불일치</p></div>
+<div class="cmp"><p class="cmp-k refl-t">Reflexion</p><p class="cmp-v"><b>다름</b> 개선 0 (논문: gpt-3.5에서 +12%p)<br><b>같음</b> 약한 모델에서 효과 없음 (논문 부록)</p></div>
+</div>
+<div class="panel-card rise" style="--i:1">
+<p class="panel-h">한계</p>
+<div class="lim"><p class="lim-n">5 · 8</p><p class="lim-t">문제 수가 적다. 한 문제가 20%p · 12.5%p</p></div>
+<div class="lim"><p class="lim-n">1회</p><p class="lim-t">temperature 0인데도 같은 프롬프트의 출력이 실행마다 갈렸다 (Reflexion 1차 시도 ≠ 단독 ReAct)</p></div>
+<div class="lim"><p class="lim-n">2건</p><p class="lim-t">Wikipedia 통신 실패가 결과에 섞였다 (ReAct 1건, Act 1건)</p></div>
+<p class="note" style="margin-top:8px">다음 실험: 30문제 · 3회 반복 · 통신 재시도 보강 · 더 큰 모델 비교</p>
+</div>
+</div>
+<aside>재현 결과를 정리하겠습니다. CoT는 풀이가 정답률을 크게 올린다는 점에서 논문과 같았지만, 8B에서도 효과가 났다는 점이 달랐습니다. ReAct는 정답 수가 CoT와 비슷했고, 실패 유형이 반복 루프와 표기 불일치로 논문 분석과 같았습니다. 그리고 근거가 궤적에 남는다는 장점도 확인했습니다. Reflexion은 개선이 없었는데, 이는 논문 본문의 결과와는 다르지만 약한 모델에서는 효과가 없다는 논문 부록과는 맞습니다. 한계도 분명합니다. 문제 수가 5개와 8개뿐이라 한 문제가 20퍼센트포인트와 12.5퍼센트포인트입니다. 또 temperature를 0으로 두었는데도 같은 프롬프트에서 출력이 갈린 경우가 있었습니다. Reflexion의 1차 시도는 반성이 없어서 단독 ReAct와 프롬프트가 완전히 같은데도 다른 궤적이 나왔습니다. 그래서 한 번 실행한 결과로는 결론을 낼 수 없습니다. 마지막으로 Wikipedia 통신 실패가 두 건 섞였습니다. 다음 실험은 문제를 30개로 늘리고, 세 번씩 반복하고, 통신 재시도를 보강하고, A100에서 더 큰 모델과 비교하는 것입니다.</aside>
+</section>
+
+<section id="wrapup" class="dark">
+<p class="cover-eyebrow">정리</p>
+<h2 class="title">에이전틱 코딩 루프로 다시 보면</h2>
+<div class="drow">
+<div class="dnode rise" style="--i:0;border-color:#F08A5D"><p class="dtag d-cot">CoT</p><p class="dnt">계획 세우기</p><p class="dns">문제를 작은 단계로 쪼갠다</p></div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="dnode rise" style="--i:1;border-color:#4FC1A9"><p class="dtag d-react">ReAct</p><p class="dnt">도구 사용 루프</p><p class="dns">파일 읽기, 명령 실행, 출력 확인</p></div>
+<x-shape kind="arrow-right" class="arw"></x-shape>
+<div class="dnode rise" style="--i:2;border-color:#A99FEE"><p class="dtag d-refl">Reflexion</p><p class="dnt">실패에서 재시도</p><p class="dns">테스트 실패 원인을 정리해 다음 시도에 반영</p></div>
+</div>
+<div class="takeaways rise" style="--i:3">
+<div class="tk"><p class="tk-t">가중치는 그대로</p><p class="tk-b">세 논문 모두 모델을 학습시키지 않고, 추론 시점의 설계만 바꿨다.</p></div>
+<div class="tk"><p class="tk-t">정답보다 근거</p><p class="tk-b">재현에서 CoT의 정답 3개는 모두 틀린 사실 위에 있었다. 확인할 수 있는 궤적이 ReAct의 가치다.</p></div>
+<div class="tk"><p class="tk-t">평가와 모델이 상한</p><p class="tk-b">반성은 평가 신호가 명확하고 모델이 충분히 강할 때만 효과가 있다. 8B의 반성은 예시를 베꼈다.</p></div>
+</div>
+<aside>마지막으로 세 논문을 오늘날의 코딩 에이전트에 대응시켜 보겠습니다. 계획을 세우고 단계로 쪼개는 부분이 CoT, 파일을 읽고 명령을 실행하고 출력을 보며 다음 행동을 정하는 부분이 ReAct, 테스트가 실패하면 원인을 정리해 다시 시도하는 부분이 Reflexion입니다. 논문과 재현을 함께 보고 세 가지를 정리하겠습니다. 첫째, 세 논문 모두 가중치를 건드리지 않고 추론 시점의 설계만으로 성능을 올렸습니다. 둘째, 정답률만으로는 부족합니다. 재현에서 CoT가 맞힌 세 문제는 모두 틀린 사실 위에 서 있었습니다. 근거를 확인할 수 있는 궤적이 ReAct의 실제 가치입니다. 셋째, 반성은 평가 신호가 명확하고 모델이 충분히 강할 때만 작동합니다. 8B 모델의 반성은 예시를 베끼는 수준이었습니다. 감사합니다.</aside>
+</section>
+
+</div>
+<div id="notes"></div>
+<div id="hint">← → 이동 · N 발표자 노트 · F 전체 화면 · 인쇄하면 PDF</div>
+<script>
+(function(){
+try{
+const stage=document.getElementById('stage');
+const S=[...stage.querySelectorAll(':scope>section')];
+const notes=document.getElementById('notes'), bar=document.getElementById('bar');
+S.forEach((s,i)=>{const p=document.createElement('p');p.className='pageno';p.textContent=(i+1)+' / '+S.length;if(s.classList.contains('dark')||s.classList.contains('cover'))p.style.color='#6B7790';s.appendChild(p);});
+// x-connector -> svg lines with arrowheads
+document.querySelectorAll('.host').forEach((h,k)=>{
+ const cs=[...h.querySelectorAll('x-connector')]; if(!cs.length) return;
+ const ns='http://www.w3.org/2000/svg', svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('width',h.offsetWidth||840);svg.setAttribute('height',h.offsetHeight||540);
+ svg.style.cssText='position:absolute;left:0;top:0;overflow:visible;pointer-events:none';
+ const defs=document.createElementNS(ns,'defs');svg.appendChild(defs);const seen={};
+ cs.forEach(c=>{
+  const col=c.style.color||'#5A6474', w=parseFloat(c.style.borderWidth)||3, id='m'+k+'_'+col.replace(/[^a-z0-9]/gi,'');
+  if(!seen[id]){seen[id]=1;const m=document.createElementNS(ns,'marker');m.setAttribute('id',id);m.setAttribute('viewBox','0 0 10 10');m.setAttribute('refX','9');m.setAttribute('refY','5');m.setAttribute('markerWidth','5');m.setAttribute('markerHeight','5');m.setAttribute('orient','auto');const p=document.createElementNS(ns,'path');p.setAttribute('d','M0,0 L10,5 L0,10 z');p.setAttribute('fill',col);m.appendChild(p);defs.appendChild(m);}
+  const l=document.createElementNS(ns,'line');['x1','y1','x2','y2'].forEach(a=>l.setAttribute(a,c.getAttribute(a)));
+  l.setAttribute('stroke',col);l.setAttribute('stroke-width',w);l.setAttribute('marker-end','url(#'+id+')');svg.appendChild(l);
+ });
+ h.appendChild(svg);
+});
+let cur=0;
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='translate('+(innerWidth-1920*k)/2+'px,'+(innerHeight-1080*k)/2+'px) scale('+k+')';}
+function show(i){cur=Math.max(0,Math.min(S.length-1,i));S.forEach((s,j)=>s.classList.toggle('on',j===cur));
+ const a=S[cur].querySelector('aside');notes.textContent=(cur+1)+'. '+(a?a.textContent:'(노트 없음)');
+ bar.style.width=((cur+1)/S.length*100)+'%';try{history.replaceState(null,'','#'+(cur+1));}catch(_){}}
+addEventListener('resize',fit);
+addEventListener('keydown',e=>{
+ if(['ArrowRight','PageDown',' ','Enter','ArrowDown'].includes(e.key)){e.preventDefault();show(cur+1);}
+ else if(['ArrowLeft','PageUp','Backspace','ArrowUp'].includes(e.key)){e.preventDefault();show(cur-1);}
+ else if(e.key==='Home')show(0); else if(e.key==='End')show(S.length-1);
+ else if(e.key==='n'||e.key==='N')notes.classList.toggle('show');
+ else if(e.key==='f'||e.key==='F'){try{if(!document.fullscreenElement){const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();r&&r.catch&&r.catch(()=>{});}else document.exitFullscreen();}catch(_){}}
+});
+let tx=null;addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)show(cur+(d<0?1:-1));tx=null;});
+stage.addEventListener('click',e=>{if(e.clientX>innerWidth*0.66)show(cur+1);else if(e.clientX<innerWidth*0.2)show(cur-1);});
+fit();let h=NaN;try{h=parseInt(location.hash.slice(1));}catch(_){}show(isNaN(h)?0:h-1);
+setTimeout(()=>{const t=document.getElementById('hint');t.style.opacity=0;},4000);
+}catch(err){document.documentElement.classList.add('nojs');console.warn('slide runtime failed',err);}
+})();
+</script>
+</body></html>
