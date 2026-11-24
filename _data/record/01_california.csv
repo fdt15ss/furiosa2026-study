@@ -48,3 +48,7 @@
 2026-11-03 17:52:29,m05_all_estimators2_kfold.py,"(16512, 8)",333,,TheilSenRegressor,TheilSenRegressor(random_state=None),,,,,0,14.148,,,0,-3.9927683080259886,0,,
 2026-11-03 17:52:30,m05_all_estimators2_kfold.py,"(16512, 8)",333,,TransformedTargetRegressor,TransformedTargetRegressor,,,,,0,0.021,,,0,0.2885673743147177,0,,
 2026-11-03 17:52:30,m05_all_estimators2_kfold.py,"(16512, 8)",333,,TweedieRegressor,TweedieRegressor,,,,,0,0.095,,,0,0.3920699996769502,0,,
+2026-11-24 13:53:24,m15_Bagging01_california.py,"(20640, 8)",42,,RandomForestRegressor,"RandomForestRegressor(max_depth=None, n_estimators=100, random_state=None)",squared_error,,,,0,5.962,,,0,0.8056664286126021,0,,
+2026-11-24 15:10:22,m16_Voting02_california.py,"(20640, 8)",42,,VotingRegressor,VotingRegressor,,,,,0,9.143,,,0,0.8441402106485351,0,,
+2026-11-24 16:25:19,m17_Stacking_생코딩02_california.py,"(20640, 8)",42,,RandomForestRegressor,"RandomForestRegressor(max_depth=None, n_estimators=100, random_state=None)",squared_error,,,,0,2.376,,,0,0.7889033907573431,0,,
+2026-11-24 16:48:23,m18_Stacking02_california.py,"(20640, 8)",42,,StackingRegressor,StackingRegressor,,,,,0,26.742,,,0,0.8451121656031145,0,,
