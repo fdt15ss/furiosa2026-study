@@ -1,0 +1,839 @@
+<div class="summary-box">
+  <strong>핵심 요약 (한눈에 보기)</strong>
+  <p>
+    <strong>YOLOv10</strong>은 기존 YOLO 계열 객체 탐지기의 두 가지 고질적 병목인 <strong>후처리 비최대 억제(NMS) 의존성</strong>과 <strong>모델 아키텍처 내 연산 중복성</strong>을 동시에 해결하여, 실시간 종단간(Real-Time End-to-End) 객체 탐지의 성능-효율성 한계를 한 단계 끌어올린 차세대 모델입니다.
+  </p>
+  <ul>
+    <li><strong>NMS-free 학습을 위한 일관된 이중 할당(Consistent Dual Assignments):</strong> 학습 시에는 풍부한 지도 신호를 제공하는 일대다(One-to-Many) 헤드와 높은 추론 효율을 지닌 일대일(One-to-One) 헤드를 함께 학습하되, 일관된 매칭 지표(Consistent Matching Metric)로 두 헤드 간의 지도 격차(Supervision Gap)를 최소화합니다. 추론 시에는 일대다 헤드를 제거하고 일대일 헤드만 사용하여 추가 연산 비용 없이 NMS가 불필요한 종단간 추론을 수행합니다.</li>
+    <li><strong>총체적 효율성-정확도 기반 모델 설계(Holistic Efficiency-Accuracy Driven Model Design):</strong>
+      <ul>
+        <li><em>효율성 중심 설계:</em> 경량 분류 헤드(Lightweight Classification Head), 공간-채널 분리 다운샘플링(Spatial-Channel Decoupled Downsampling), 콤팩트 역전 블록(CIB)을 활용한 랭크 기반 블록 설계(Rank-Guided Block Design)를 통해 불필요한 파라미터와 FLOPs를 대폭 감축했습니다.</li>
+        <li><em>정확도 중심 설계:</em> 소형 모델 대상 대형 커널 합성곱(Large-Kernel Convolution, 7&times;7)과 최소 비용으로 전역 문맥을 포착하는 부분 자기주의(PSA, Partial Self-Attention) 모듈을 도입했습니다.</li>
+      </ul>
+    </li>
+    <li><strong>주요 벤치마크 성과 (COCO val):</strong> YOLOv10-N/S/M/B/L/X 전 스케일에서 최첨단(SOTA) 성능-지연 시간 트레이드오프를 달성했습니다. 예컨대 <strong>YOLOv10-S</strong>는 유사한 AP(46.3% vs. 46.5%)에서 RT-DETR-R18 대비 <strong>1.8&times; 더 빠른 추론 속도</strong>와 <strong>2.8&times; 더 적은 파라미터 및 FLOPs</strong>를 기록했고, <strong>YOLOv10-B</strong>는 YOLOv9-C와 동일한 52.5% AP에서 <strong>지연 시간 46% 감소</strong> 및 <strong>파라미터 25% 절감</strong>을 달성했습니다.</li>
+  </ul>
+</div>
+
+<h2>초록 (Abstract)</h2>
+<p>
+  지난 수년간 YOLO 계열 모델은 연산 비용과 탐지 성능 사이의 효과적인 균형 덕분에 실시간 객체 탐지(Real-Time Object Detection) 분야의 지배적인 패러다임으로 자리매김해 왔다. 연구자들은 YOLO의 아키텍처 설계, 최적화 목적 함수, 데이터 증강(Data Augmentation) 전략 등을 꾸준히 탐구하여 괄목할 만한 발전을 이루어 왔다. 그러나 후처리 단계에서 비최대 억제(NMS, Non-Maximum Suppression)에 의존하는 구조는 YOLO의 종단간(End-to-End) 배포를 저해하고 추론 지연 시간(Inference Latency)에 악영향을 미친다. 또한, YOLO 내부의 다양한 구성 요소 설계에 대한 포괄적이고 철저한 점검이 부족하여 상당한 연산 중복성(Computational Redundancy)이 발생하고 모델의 표현력이 제한된다. 이로 인해 효율성이 최적에 미치지 못하며, 성능 개선의 여지도 크게 남아 있다.
+</p>
+<p>
+  본 연구에서는 후처리(Post-Processing)와 모델 아키텍처 양쪽 측면에서 YOLO의 성능-효율성 경계를 한층 더 확장하고자 한다. 이를 위해 먼저 YOLO의 NMS-free 학습을 위한 <strong>일관된 이중 할당(Consistent Dual Assignments)</strong> 기법을 제안하여 경쟁력 있는 성능과 낮은 추론 지연 시간을 동시에 달성한다. 나아가 YOLO를 위한 <strong>총체적 효율성-정확도 기반 모델 설계(Holistic Efficiency-Accuracy Driven Model Design)</strong> 전략을 도입한다. 효율성과 정확도 관점 모두에서 YOLO의 다양한 구성 요소를 종합적으로 최적화함으로써 연산 오버헤드를 크게 줄이고 모델 역량을 강화한다. 이러한 노력의 결실로 실시간 종단간 객체 탐지를 위한 새로운 세대의 YOLO 시리즈인 <strong>YOLOv10</strong>을 선보인다. 광범위한 실험을 통해 YOLOv10이 다양한 모델 규모(스케일) 전반에 걸쳐 최첨단(State-of-the-Art) 성능과 효율성을 달성함이 입증되었다. 예를 들어, COCO 데이터셋에서 YOLOv10-S는 유사한 AP 조건에서 RT-DETR-R18보다 1.8&times; 더 빠르며 파라미터 수와 FLOPs는 2.8&times; 더 적다. 또한 YOLOv10-B는 YOLOv9-C 대비 동일한 성능에서 지연 시간을 46%, 파라미터 수를 25% 줄였다. 코드와 모델은 <a href="https://github.com/THU-MIG/yolov10" target="_blank" rel="noopener">https://github.com/THU-MIG/yolov10</a>에 공개되어 있다.
+</p>
+
+<h2>1. 서론 (Introduction)</h2>
+<p>
+  실시간 객체 탐지는 컴퓨터 비전 분야에서 항상 핵심적인 연구 주제였으며, 낮은 지연 시간 내에 이미지 속 객체의 범주(Category)와 위치(Position)를 정확히 예측하는 것을 목표로 한다. 이는 자율 주행(Autonomous Driving), 로봇 내비게이션(Robot Navigation), 객체 추적(Object Tracking) 등 다양한 실제 응용 분야에 폭넓게 활용되고 있다. 최근 몇 년간 연구자들은 실시간 탐지를 달성하기 위해 CNN 기반 객체 탐지기(Object Detector) 설계에 집중해 왔으며, 그중에서도 YOLO 계열은 성능과 효율성 간의 뛰어난 균형으로 인해 점차 큰 인기를 얻었다. YOLO의 탐지 파이프라인은 <strong>모델 순전파 과정(Forward Process)</strong>과 <strong>NMS 후처리</strong>의 두 부분으로 구성된다. 하지만 이 두 부분 모두 여전히 결함을 지니고 있어 최적의 정확도-지연 시간 경계를 달성하지 못하고 있다.
+</p>
+<p>
+  구체적으로, YOLO는 학습 과정에서 하나의 정답 객체(Ground-Truth Object)에 여러 개의 양성 샘플(Positive Sample)을 대응시키는 일대다(One-to-Many) 레이블 할당 전략을 주로 사용한다. 이 방식은 우수한 성능을 이끌어내지만, 추론 시 최적의 양성 예측을 선별하기 위해 반드시 NMS를 거쳐야 한다. 이로 인해 추론 속도가 느려지고 성능이 NMS 하이퍼파라미터에 민감해져, YOLO가 최적의 종단간 배포를 달성하는 데 걸림돌이 된다. 이 문제를 해결하기 위한 한 가지 접근법은 최근 도입된 종단간 DETR(DEtection TRansformer) 아키텍처를 채택하는 것이다. 예를 들어 RT-DETR은 효율적인 하이브리드 인코더(Hybrid Encoder)와 불확실성 최소화 쿼리 선택(Uncertainty-Minimal Query Selection)을 제안하여 DETR을 실시간 응용 영역으로 끌어올렸다. 그럼에도 불구하고 배포 시 모델의 순전파 과정만 놓고 비교하면 DETR의 효율성은 여전히 YOLO 대비 개선의 여지가 있다. 또 다른 접근법은 CNN 기반 탐지기에서 종단간 탐지를 모색하는 것으로, 주로 일대일(One-to-One) 할당 전략을 통해 중복 예측을 억제한다. 그러나 이러한 방식들은 대개 추가적인 추론 오버헤드를 유발하거나 YOLO에서 최적에 미치지 못하는 성능에 그치는 한계가 있다.
+</p>
+<p>
+  나아가 모델 아키텍처 설계 역시 YOLO의 정확도와 속도에 지대한 영향을 미치는 근본적인 과제로 남아 있다. 보다 효율적이고 효과적인 아키텍처를 구축하기 위해 연구자들은 다양한 설계 전략을 탐구해 왔다. 백본(Backbone)에서는 특징 추출 능력을 높이기 위해 DarkNet, CSPNet, EfficientRep, ELAN 등 다양한 기본 연산 단위가 제안되었으며, 넥(Neck)에서는 다중 스케일 특징 융합(Multi-Scale Feature Fusion)을 강화하기 위해 PAN, BiC, GD, RepGFPN 등이 연구되었다. 또한 모델 스케일링(Model Scaling) 전략과 재파라미터화(Re-parameterization) 기법도 활발히 검토되었다. 이러한 노력들이 눈에 띄는 진전을 이루었음에도, 효율성과 정확도 양면에서 YOLO의 각 구성 요소에 대한 포괄적인 점검은 여전히 부재한 상태다. 그 결과 YOLO 내부에는 상당한 연산 중복성이 잔존하여 파라미터 활용이 비효율적이고 최적의 효율성에 도달하지 못하고 있다. 게다가 이로 인해 제한된 모델 역량은 미흡한 성능으로 이어져, 정확도를 향상할 여지가 여전히 크게 남아 있다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_1.png" alt="그림 1" />
+  <figcaption><strong>그림 1.</strong> 지연 시간-정확도(왼쪽) 및 모델 크기-정확도(오른쪽) 트레이드오프에 대한 타 모델과의 비교. 종단간 지연 시간(End-to-End Latency)은 공식 사전 학습 모델(Pre-trained Models)을 사용하여 측정하였다.</figcaption>
+</figure>
+
+<p>
+  본 연구에서는 이러한 문제들을 해결하여 YOLO의 정확도-속도 경계를 한 단계 더 확장하고자 하며, 탐지 파이프라인 전반에 걸쳐 후처리와 모델 아키텍처를 모두 개선한다. 이를 위해 첫째, 이중 레이블 할당(Dual Label Assignments)과 일관된 매칭 지표(Consistent Matching Metric)를 결합한 <strong>NMS-free YOLO를 위한 일관된 이중 할당 전략</strong>을 제시하여 후처리 과정의 중복 예측 문제를 해결한다. 이 전략을 통해 모델은 학습 중 풍부하고 조화로운 지도를 받을 수 있으며, 추론 시에는 NMS가 불필요해져 높은 효율성과 경쟁력 있는 성능을 모두 확보한다. 둘째, YOLO의 다양한 구성 요소를 포괄적으로 점검하여 아키텍처를 위한 <strong>총체적 효율성-정확도 기반 모델 설계 전략</strong>을 제안한다. 효율성 측면에서는 경량 분류 헤드(Lightweight Classification Head), 공간-채널 분리 다운샘플링(Spatial-Channel Decoupled Downsampling), 랭크 기반 블록 설계(Rank-Guided Block Design)를 제안하여 명백한 연산 중복성을 줄이고 더 효율적인 아키텍처를 구현한다. 정확도 측면에서는 대형 커널 합성곱(Large-Kernel Convolution)을 탐구하고 효과적인 부분 자기주의(Partial Self-Attention, PSA) 모듈을 제시하여 적은 비용으로 모델의 표현력을 높이고 성능 향상의 잠재력을 이끌어낸다.
+</p>
+<p>
+  이러한 접근법을 바탕으로 서로 다른 모델 규모(YOLOv10-N / S / M / B / L / X)를 갖춘 새로운 실시간 종단간 탐지기 패밀리를 성공적으로 구축하였다. 객체 탐지의 표준 벤치마크인 COCO 데이터셋에서 수행한 광범위한 실험을 통해 YOLOv10이 다양한 모델 스케일에 걸쳐 연산-정확도 트레이드오프 측면에서 기존 최첨단 모델들을 크게 능가함이 입증되었다. 그림 1에서 확인할 수 있듯이, YOLOv10-S와 YOLOv10-X는 유사한 성능 수준에서 각각 RT-DETR-R18과 R101보다 1.8&times; 및 1.3&times; 더 빠르다. YOLOv9-C와 비교하면 YOLOv10-B는 동일한 성능으로 지연 시간을 46% 단축한다. 더욱이 YOLOv10은 매우 높은 파라미터 활용 효율을 보여준다. YOLOv10-L / X는 YOLOv8-L / X보다 각각 0.3 AP 및 0.5 AP 더 높은 성능을 달성하면서도 파라미터 수는 각각 1.8&times; 및 2.3&times; 더 적다. YOLOv10-M은 YOLOv9-M / YOLO-MS와 유사한 AP를 기록하면서도 파라미터 수는 각각 23% / 31% 더 적다. 본 연구가 해당 분야의 후속 연구와 발전에 영감을 주기를 기대한다.
+</p>
+
+<h2>2. 관련 연구 (Related Work)</h2>
+<p>
+  <strong>실시간 객체 탐지기 (Real-time object detectors).</strong> 실시간 객체 탐지는 낮은 지연 시간 내에 객체를 분류하고 위치를 찾는 것을 목표로 하며, 실제 응용 환경에서 핵심적인 역할을 한다. 지난 수년간 효율적인 탐지기를 개발하기 위해 막대한 노력이 기울여졌으며, 특히 YOLO 시리즈가 주류로 자리 잡았다. YOLOv1, YOLOv2, YOLOv3는 백본(Backbone), 넥(Neck), 헤드(Head)의 세 부분으로 구성된 전형적인 탐지 아키텍처를 정립하였다. YOLOv4와 YOLOv5는 DarkNet을 대체하는 CSPNet 설계를 도입하고 데이터 증강 전략, 향상된 PAN, 다양한 모델 스케일 등을 결합하였다. YOLOv6는 넥과 백본에 각각 BiC와 SimCSPSPPF를 제시하고 앵커 보조 학습(Anchor-Aided Training) 및 자기 증류(Self-Distillation) 전략을 적용하였다. YOLOv7은 풍부한 기울기 흐름 경로(Gradient Flow Path)를 위한 E-ELAN을 도입하고 다양한 학습 가능한 Bag-of-Freebies 기법을 탐구하였다. YOLOv8은 효과적인 특징 추출 및 융합을 위한 C2f 빌딩 블록을 제시하였다. Gold-YOLO는 다중 스케일 특징 융합 능력을 높이기 위한 진보된 GD(Gather-and-Distribute) 메커니즘을 제공하였다. YOLOv9은 아키텍처 개선을 위한 GELAN과 학습 과정을 보강하는 PGI(Programmable Gradient Information)를 제안하였다.
+</p>
+<p>
+  <strong>종단간 객체 탐지기 (End-to-end object detectors).</strong> 종단간 객체 탐지는 간소화된 아키텍처를 제공하며 기존 파이프라인에서 벗어난 패러다임 전환을 이끌어 왔다. DETR은 트랜스포머(Transformer) 아키텍처를 도입하고 헝가리안 손실(Hungarian Loss)을 채택해 일대일 매칭 예측을 달성함으로써 수작업으로 설계된 구성 요소와 후처리를 제거하였다. 이후 성능과 효율성을 높이기 위한 다양한 DETR 변형 모델들이 제안되었다. Deformable-DETR은 수렴 속도를 가속하기 위해 다중 스케일 변형 어텐션(Multi-Scale Deformable Attention) 모듈을 활용하였다. DINO는 대조적 디노이징(Contrastive Denoising), 혼합 쿼리 선택(Mix Query Selection), Look-Forward-Twice 기법을 DETR에 통합하였다. RT-DETR은 효율적인 하이브리드 인코더를 설계하고 불확실성 최소화 쿼리 선택을 제안하여 정확도와 지연 시간을 모두 개선하였다. 종단간 객체 탐지를 달성하기 위한 또 다른 갈래는 CNN 탐지기에 기반을 둔다. Learnable NMS와 Relation Networks는 중복 예측을 제거하기 위한 별도의 네트워크를 제시하였다. OneNet과 DeFCN은 완전 합성곱 네트워크(FCN)에서 종단간 객체 탐지를 가능하게 하는 일대일 매칭 전략을 제안하였다. FCOS<sub>pss</sub>는 예측을 위한 최적의 샘플을 고르는 양성 샘플 선택기(Positive Sample Selector)를 도입하였다.
+</p>
+
+<h2>3. 방법론 (Methodology)</h2>
+
+<h3>3.1 NMS-free 학습을 위한 일관된 이중 할당 (Consistent Dual Assignments for NMS-free Training)</h3>
+<p>
+  학습 과정에서 기존 YOLO 계열 모델들은 각 인스턴스(Instance)에 여러 개의 양성 샘플을 할당하기 위해 주로 TAL(Task-Aligned Learning)을 활용한다. 일대다 할당을 채택하면 풍부한 지도 신호가 생성되어 최적화가 용이해지고 우수한 성능을 얻을 수 있다. 그러나 이는 YOLO가 NMS 후처리에 의존하게 만들어 배포 시 추론 효율성이 저하되는 원인이 된다. 선행 연구들이 중복 예측을 억제하기 위해 일대일 매칭을 탐구해 왔으나, 대개 추가적인 추론 오버헤드를 유발하거나 최적에 미치지 못하는 성능에 그쳤다. 본 연구에서는 이중 레이블 할당과 일관된 매칭 지표를 결합한 YOLO용 NMS-free 학습 전략을 제시하여 높은 효율성과 경쟁력 있는 성능을 동시에 달성한다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_2.png" alt="그림 2" />
+  <figcaption><strong>그림 2.</strong> (a) NMS-free 학습을 위한 일관된 이중 할당 구조. (b) 기본 설정($\alpha_{o2m}=0.5$, $\beta_{o2m}=6$)을 사용하는 YOLOv8-S에서 일대다 결과의 상위 1/5/10개(Top-1/5/10) 내에 일대일 할당 결과가 포함되는 빈도. 일관된(Consistency) 설정은 $\alpha_{o2o}=0.5, \beta_{o2o}=6$이며, 비일관적(Inconsistency) 설정은 $\alpha_{o2o}=0.5, \beta_{o2o}=2$이다.</figcaption>
+</figure>
+
+<p>
+  <strong>이중 레이블 할당 (Dual label assignments).</strong> 일대다 할당과 달리 일대일 매칭은 각 정답(Ground Truth)에 단 하나의 예측만을 할당하므로 NMS 후처리를 피할 수 있다. 하지만 이는 약한 지도 신호를 초래하여 정확도와 수렴 속도가 저하되는 문제를 낳는다. 다행히 이러한 결함은 일대다 할당을 통해 보완할 수 있다. 이를 실현하기 위해 두 전략의 장점을 결합한 YOLO용 이중 레이블 할당을 도입한다. 구체적으로 그림 2.(a)와 같이 YOLO에 또 하나의 일대일 헤드(One-to-One Head)를 추가한다. 이 헤드는 기존의 일대다 분기(Branch)와 동일한 구조 및 최적화 목적 함수를 유지하되, 레이블 할당을 수행할 때 일대일 매칭을 사용한다. 학습 중에는 두 헤드가 모델과 함께 공동으로 최적화(Jointly Optimized)되므로, 백본과 넥은 일대다 할당이 제공하는 풍부한 지도 신호를 그대로 활용할 수 있다. 추론 시에는 일대다 헤드를 폐기하고 일대일 헤드만 사용하여 예측을 수행한다. 이를 통해 YOLO는 추가적인 추론 비용 없이 종단간 배포가 가능해진다. 또한 일대일 매칭에서는 상위 1개 선택(Top-One Selection) 방식을 채택하여, 헝가리안 매칭과 동일한 성능을 유지하면서도 추가 학습 시간을 줄였다.
+</p>
+<p>
+  <strong>일관된 매칭 지표 (Consistent matching metric).</strong> 할당 과정에서 일대일과 일대다 방식 모두 예측과 인스턴스 간의 일치도를 정량적으로 평가하는 지표를 사용한다. 두 분기 모두에서 예측 인지형 매칭(Prediction-Aware Matching)을 수행하기 위해 다음과 같이 통일된 매칭 지표를 정의한다:
+</p>
+$$m(\alpha, \beta) = s \cdot p^{\alpha} \cdot \text{IoU}(\hat{b}, b)^{\beta}, \tag{1}$$
+<p>
+  여기서 $p$는 분류 점수(Classification Score)이며, $\hat{b}$와 $b$는 각각 예측과 인스턴스의 경계 상자(Bounding Box)를 나타낸다. $s$는 예측의 앵커 포인트(Anchor Point)가 인스턴스 내부에 있는지 여부를 나타내는 공간 사전 정보(Spatial Prior)이다. $\alpha$와 $\beta$는 의미적 예측(분류) 과제와 위치 회귀 과제의 영향력을 균형 있게 조절하는 두 개의 핵심 하이퍼파라미터이다. 일대다 및 일대일 매칭 지표는 각각 $m_{o2m} = m(\alpha_{o2m}, \beta_{o2m})$과 $m_{o2o} = m(\alpha_{o2o}, \beta_{o2o})$로 표기하며, 이 지표들이 두 헤드의 레이블 할당과 지도 정보에 영향을 미친다.
+</p>
+<p>
+  이중 레이블 할당에서 일대다 분기는 일대일 분기보다 훨씬 풍부한 지도 신호를 제공한다. 직관적으로 일대일 헤드의 지도 신호를 일대다 헤드의 지도 신호와 조화시킬 수 있다면, 일대일 헤드가 일대다 헤드의 최적화 방향을 따라 학습되도록 유도할 수 있다. 그 결과 추론 시 일대일 헤드가 더 높은 품질의 샘플을 제공하게 되어 성능 향상으로 이어진다. 이를 위해 먼저 두 헤드 간의 지도 격차(Supervision Gap)를 분석한다. 학습 중 발생하는 무작위성을 배제하고 분석하기 위해, 초기 시점에 두 헤드가 동일한 값으로 초기화되어 각 예측-인스턴스 쌍에 대해 동일한 $p$와 $\text{IoU}$를 생성한다고 가정하자. 매칭된 예측은 동일한 타깃을 공유하고 매칭되지 않은 예측은 무시되므로, 두 분기의 회귀 타깃(Regression Targets)은 충돌하지 않는다. 따라서 지도 격차는 서로 다른 분류 타깃(Classification Targets)에서 비롯된다. 어떤 인스턴스가 주어졌을 때 예측들과의 최대 IoU를 $u^*$라 하고, 최대 일대다 및 일대일 매칭 점수를 각각 $m^*_{o2m}$ 및 $m^*_{o2o}$라 하자. 일대다 분기가 양성 샘플 집합 $\Omega$를 생성하고 일대일 분기가 지표 $m_{o2o,i} = m^*_{o2o}$를 만족하는 $i$번째 예측을 선택한다고 가정하면, 기존 연구들의 Task-Aligned Loss에 따라 분류 타깃을 $t_{o2m,j} = u^* \cdot \frac{m_{o2m,j}}{m^*_{o2m}} \le u^*$ ($j \in \Omega$) 및 $t_{o2o,i} = u^* \cdot \frac{m_{o2o,i}}{m^*_{o2o}} = u^*$로 유도할 수 있다. 이에 따라 두 분기 간의 지도 격차는 서로 다른 분류 목적 간의 1-Wasserstein 거리로 다음과 같이 도출된다:
+</p>
+$$A = t_{o2o,i} - \mathbb{I}(i \in \Omega)t_{o2m,i} + \sum_{k \in \Omega \setminus \{i\}} t_{o2m,k}, \tag{2}$$
+<p>
+  여기서 $t_{o2m,i}$가 커질수록, 즉 $i$가 $\Omega$ 내에서 더 높은 순위를 차지할수록 격차 $A$가 감소함을 알 수 있다. 따라서 그림 2.(a)에서 보듯 $t_{o2m,i} = u^*$일 때, 즉 $i$가 $\Omega$ 내에서 가장 우수한 양성 샘플일 때 격차가 최솟값에 도달한다. 이를 달성하기 위해 본 연구에서는 <strong>일관된 매칭 지표(Consistent Matching Metric)</strong>, 즉 $\alpha_{o2o} = r \cdot \alpha_{o2m}$ 및 $\beta_{o2o} = r \cdot \beta_{o2m}$을 제시한다. 이는 $m_{o2o} = m_{o2m}^r$임을 의미한다. 따라서 일대다 헤드에서 가장 우수한 양성 샘플은 일대일 헤드에서도 가장 우수한 샘플이 된다. 결과적으로 두 헤드는 일관되고 조화롭게 최적화될 수 있다. 단순화를 위해 기본적으로 $r=1$, 즉 $\alpha_{o2o} = \alpha_{o2m}$ 및 $\beta_{o2o} = \beta_{o2m}$으로 설정한다. 지도 정렬(Supervision Alignment) 개선을 검증하기 위해 학습 후 일대다 결과의 상위 1 / 5 / 10개 내에 속하는 일대일 매칭 쌍의 수를 집계하였다. 그림 2.(b)에 나타나듯 일관된 매칭 지표를 적용했을 때 정렬도가 향상되었다. 보다 상세한 수학적 증명은 부록 A.2에서 확인할 수 있다.
+</p>
+<p>
+  <strong>타 연구와의 비교 논의 (Discussion with other counter-parts).</strong> 이와 유사하게, 선행 연구들도 다양한 네트워크의 학습 수렴을 가속하고 성능을 개선하기 위해 여러 할당 방식을 탐구해 왔다. 예를 들어 H-DETR, Group-DETR, MS-DETR은 DETR을 개선하기 위해 하이브리드 또는 다중 그룹 레이블 할당을 통해 기존 일대일 매칭에 일대다 매칭을 병행 도입하였다. 해당 DETR 기반 기법들은 일대다 매칭을 구현하기 위해 주로 추가 쿼리를 도입하거나 이분 매칭(Bipartite Matching)용 정답을 복제하며, 혹은 매칭 점수가 높은 상위 쿼리들을 선택한다. 이와 달리 본 연구는 공간 사전 정보를 통합한 예측 인지형 할당을 채택한다. 또한 LRANet은 학습에 밀집 할당(Dense Assignment)과 희소 할당(Sparse Assignment) 분기를 사용하는데, 이는 모두 일대다 할당에 속한다. 반면 본 연구는 일대다 분기와 일대일 분기를 함께 채택한다. DEYO는 1단계에서 합성곱 인코더를 위한 일대다 매칭, 2단계에서 트랜스포머 디코더를 위한 일대일 매칭을 사용하는 단계별 학습을 탐구하였으나, 본 연구는 종단간 추론에서 트랜스포머 디코더를 배제한다. CNN 기반 탐지기에 이중 할당을 통합한 선행 연구(DATE, FCOS<sub>pss</sub>)와 비교했을 때, 본 연구는 두 헤드 간의 지도 격차를 추가로 분석하고 이론적 지도 격차를 줄이는 YOLO용 일관된 매칭 지표를 제시함으로써 더 나은 지도 정렬을 통해 성능을 높이고 번거로운 하이퍼파라미터 튜닝의 필요성을 없앴다.
+</p>
+
+<h3>3.2 총체적 효율성-정확도 기반 모델 설계 (Holistic Efficiency-Accuracy Driven Model Design)</h3>
+<p>
+  후처리 외에도 YOLO의 모델 아키텍처 역시 효율성-정확도 트레이드오프에 큰 과제를 제기한다. 선행 연구들이 다양한 설계 전략을 탐구해 왔으나, YOLO의 각 구성 요소에 대한 포괄적 점검은 여전히 부족한 실정이다. 그 결과 모델 아키텍처에 무시할 수 없는 연산 중복성이 존재하고 모델 역량이 제약되어, 높은 효율성과 성능을 달성하는 데 걸림돌이 된다. 여기서는 효율성과 정확도 관점 모두에서 YOLO의 모델 설계를 총체적으로 수행하고자 한다.
+</p>
+
+<h4>효율성 기반 모델 설계 (Efficiency driven model design)</h4>
+<p>
+  YOLO의 구성 요소는 스템(Stem), 다운샘플링 계층(Downsampling Layers), 기본 빌딩 블록을 포함한 스테이지(Stages), 그리고 헤드(Head)로 이루어진다. 스템은 연산 비용이 거의 들지 않으므로 나머지 세 부분에 대해 효율성 기반 모델 설계를 수행한다.
+</p>
+<ul>
+  <li>
+    <strong>(1) 경량 분류 헤드 (Lightweight classification head):</strong> 기존 YOLO에서는 분류 헤드와 회귀 헤드가 대개 동일한 아키텍처를 공유한다. 그러나 둘의 연산 오버헤드에는 상당한 차이가 존재한다. 예를 들어 YOLOv8-S에서 분류 헤드의 FLOPs(5.95G)와 파라미터 수(1.51M)는 회귀 헤드(2.34G / 0.64M)의 각각 2.5&times; 및 2.4&times;에 달한다. 하지만 분류 오차와 회귀 오차가 미치는 영향을 분석한 결과(표 6 참조), YOLO의 성능에는 회귀 헤드가 훨씬 더 큰 비중을 차지함을 확인하였다. 따라서 성능의 큰 저하 없이 분류 헤드의 오버헤드를 줄일 수 있다. 이에 분류 헤드에 3&times;3 깊이별 분리 합성곱(Depthwise Separable Convolution) 2개와 뒤이은 1&times;1 합성곱으로 구성된 경량 아키텍처를 채택하였다.
+  </li>
+  <li>
+    <strong>(2) 공간-채널 분리 다운샘플링 (Spatial-channel decoupled downsampling):</strong> 기존 YOLO는 일반적으로 스트라이드(Stride)가 2인 일반적인 3&times;3 표준 합성곱을 사용하여 공간 다운샘플링($H \times W \rightarrow \frac{H}{2} \times \frac{W}{2}$)과 채널 변환($C \rightarrow 2C$)을 동시에 수행한다. 이는 $\mathcal{O}(\frac{9}{2}HWC^2)$의 적지 않은 연산 비용과 $\mathcal{O}(18C^2)$의 파라미터 수를 유발한다. 대신 본 연구에서는 공간 축소 연산과 채널 확장 연산을 분리(Decouple)하여 더 효율적인 다운샘플링을 제안한다. 구체적으로 먼저 점별 합성곱(Pointwise Convolution, 1&times;1)으로 채널 차원을 조절한 뒤, 깊이별 합성곱(Depthwise Convolution, 3&times;3, stride 2)으로 공간 다운샘플링을 수행한다. 이를 통해 연산 비용은 $\mathcal{O}(2HWC^2 + \frac{9}{2}HWC)$로, 파라미터 수는 $\mathcal{O}(2C^2 + 18C)$로 감소한다. 동시에 다운샘플링 과정에서의 정보 손실을 최소화(정보 보존 극대화)하여 지연 시간을 줄이면서도 경쟁력 있는 성능을 유지한다.
+  </li>
+  <li>
+    <strong>(3) 랭크 기반 블록 설계 (Rank-guided block design):</strong> 기존 YOLO는 모든 스테이지에 동일한 기본 빌딩 블록(예: YOLOv8의 보틀넥 블록)을 사용하는 경향이 있다. 이러한 균일한 설계(Homogeneous Design)를 철저히 검증하기 위해 본 연구에서는 각 스테이지의 중복성(낮은 랭크는 높은 중복성을, 높은 랭크는 응축된 정보를 의미함)을 분석하는 도구로 <strong>내재적 랭크(Intrinsic Rank)</strong>를 활용한다. 구체적으로 각 스테이지의 마지막 기본 블록 내 마지막 합성곱 계층의 수치적 랭크(임계값보다 큰 특잇값의 개수)를 계산한다. 그림 3.(a)는 YOLOv8에서의 분석 결과를 보여주며, <strong>깊은 스테이지(Deep Stages)와 대형 모델(Large Models)일수록 더 낮은 내재적 랭크 값, 즉 더 많은 중복성을 보이는 경향</strong>을 뚜렷하게 드러낸다. 이러한 관찰은 모든 스테이지에 동일한 블록 설계를 일률적으로 적용하는 것이 최적의 용량-효율성 트레이드오프를 달성하는 데 한계가 있음을 시사한다. 이를 해결하기 위해 중복성이 확인된 스테이지의 복잡도를 콤팩트한 아키텍처로 낮추는 랭크 기반 블록 설계 방안을 제안한다. 먼저 공간 혼합(Spatial Mixing)을 위한 저렴한 깊이별 합성곱과 채널 혼합(Channel Mixing)을 위한 비용 효율적인 점별 합성곱을 채택한 <strong>콤팩트 역전 블록(CIB, Compact Inverted Block)</strong> 구조를 제안한다(그림 3.(b)). 이는 ELAN 구조 등에 내장되는 효율적인 기본 빌딩 블록으로 활용된다. 이어서 경쟁력 있는 용량을 유지하면서 최상의 효율을 얻기 위해 <strong>랭크 기반 블록 할당(Rank-Guided Block Allocation)</strong> 전략을 채택한다. 구체적으로 주어진 모델의 모든 스테이지를 내재적 랭크 기준 오름차순으로 정렬한 뒤, 가장 앞선 스테이지의 기본 블록을 CIB로 교체했을 때의 성능 변화를 점검한다. 기존 모델 대비 성능 저하가 없다면 다음 스테이지의 교체를 계속 진행하고, 성능이 하락하면 즉시 중단한다. 결과적으로 스테이지와 모델 스케일에 맞춘 적응형 콤팩트 블록 설계를 구현하여 성능 손실 없이 더 높은 효율성을 달성한다. 알고리즘의 세부 사항은 부록(알고리즘 1)에 수록하였다.
+  </li>
+</ul>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_3.png" alt="그림 3" />
+  <figcaption><strong>그림 3.</strong> (a) YOLOv8의 스테이지 및 모델별 내재적 랭크(Intrinsic Rank). 백본과 넥의 스테이지는 모델 순전파 순서대로 번호를 매겼다. y축의 수치적 랭크 $r$은 출력 채널 수 $C_o$에 대해 $r/C_o$로 정규화하였으며, 임계값은 기본적으로 최대 특잇값 $\lambda_{\max}$의 절반인 $\lambda_{\max}/2$로 설정하였다. 깊은 스테이지와 대형 모델에서 더 낮은 내재적 랭크 값이 나타남을 확인할 수 있다. (b) 콤팩트 역전 블록(CIB). (c) 부분 자기주의 모듈(PSA).</figcaption>
+</figure>
+
+<h4>정확도 기반 모델 설계 (Accuracy driven model design)</h4>
+<p>
+  최소한의 비용으로 성능을 끌어올리기 위해 정확도 기반 설계로서 대형 커널 합성곱과 자기주의(Self-Attention) 메커니즘을 추가로 탐구하였다.
+</p>
+<ul>
+  <li>
+    <strong>(1) 대형 커널 합성곱 (Large-kernel convolution):</strong> 대형 커널 깊이별 합성곱을 사용하는 것은 수용 영역(Receptive Field)을 넓히고 모델의 표현력을 강화하는 효과적인 방법이다. 그러나 이를 모든 스테이지에 단순히 적용하면 작은 객체 탐지에 사용되는 얕은 특징(Shallow Features)이 훼손될 수 있으며, 고해상도 스테이지에서 상당한 I/O 오버헤드와 지연 시간을 초래한다. 따라서 본 연구에서는 깊은 스테이지 내부의 CIB에 대형 커널 깊이별 합성곱을 적용할 것을 제안한다. 구체적으로 ConvNeXt를 따라 CIB 내 두 번째 3&times;3 깊이별 합성곱의 커널 크기를 7&times;7로 확대한다. 아울러 추론 오버헤드 없이 최적화 문제를 완화하기 위해 구조적 재파라미터화(Structural Reparameterization) 기법을 적용하여 또 하나의 3&times;3 깊이별 합성곱 분기를 병렬로 추가한다. 또한 모델 크기가 커질수록 수용 영역이 자연스럽게 확장되므로 대형 커널 합성곱의 이점은 점차 감소한다. 이에 대형 커널 합성곱은 소형 모델 스케일(YOLOv10-N / S)에만 채택하였다.
+  </li>
+  <li>
+    <strong>(2) 부분 자기주의 (PSA, Partial Self-Attention):</strong> 자기주의는 뛰어난 전역 모델링(Global Modeling) 능력 덕분에 다양한 비전 과제에서 널리 쓰이지만, 높은 연산 복잡도와 큰 메모리 사용량을 수반한다. 이를 해결하기 위해 어텐션 헤드(Attention Head)에 만연한 중복성에 착안하여 그림 3.(c)와 같은 효율적인 <strong>부분 자기주의(PSA)</strong> 모듈을 설계하였다. 구체적으로 1&times;1 합성곱 이후 특징 맵을 채널 방향으로 두 부분으로 균등하게 분할(Split)한다. 이 중 한쪽 부분만 다중 헤드 자기주의(MHSA)와 피드포워드 네트워크(FFN)로 구성된 $N_{\text{PSA}}$개의 블록에 통과시킨 뒤, 두 부분을 다시 연결(Concatenate)하고 1&times;1 합성곱으로 융합한다. 또한 LeViT를 참고하여 MHSA에서 Query와 Key의 차원을 Value 차원의 절반으로 할당하고, 빠른 추론을 위해 LayerNorm을 BatchNorm으로 대체하였다. 나아가 자기주의의 이차(Quadratic) 연산 복잡도로 인한 과도한 오버헤드를 피하기 위해, PSA는 해상도가 가장 낮은 Stage 4 뒤(SPPF 이후)에만 배치한다. 이러한 방식으로 적은 연산 비용으로도 전역 표현 학습 능력을 YOLO에 통합하여 모델 역량과 성능을 효과적으로 향상시킨다.
+  </li>
+</ul>
+
+<h2>4. 실험 (Experiments)</h2>
+
+<h3>4.1 구현 세부 사항 (Implementation Details)</h3>
+<p>
+  우수한 지연 시간-정확도 균형을 갖추고 있고 다양한 모델 크기를 제공하는 YOLOv8을 베이스라인 모델로 선정하였다. 이를 기반으로 NMS-free 학습을 위한 일관된 이중 할당을 적용하고 총체적 효율성-정확도 기반 모델 설계를 수행하여 YOLOv10 모델들을 도출하였다. YOLOv10은 YOLOv8과 동일한 변형 라인업(N / S / M / L / X)을 갖추며, 여기에 YOLOv10-M의 너비 스케일링 계수(Width Scale Factor)를 키워 새로운 변형인 <strong>YOLOv10-B</strong>를 추가로 구성하였다. 제안된 탐지기는 기존 연구와 동일한 처음부터 학습(Training-from-Scratch) 설정으로 COCO 데이터셋에서 검증하였다. 또한 모든 모델의 지연 시간은 RT-DETR을 따라 NVIDIA T4 GPU에서 TensorRT FP16 환경으로 측정하였다.
+</p>
+
+<h3>4.2 최신 기법과의 비교 (Comparison with state-of-the-arts)</h3>
+<p>
+  표 1에 제시된 바와 같이, YOLOv10은 다양한 모델 스케일에 걸쳐 최첨단(SOTA) 성능과 종단간 지연 시간을 달성하였다. 먼저 베이스라인 모델인 YOLOv8과 비교하면, N / S / M / L / X 다섯 가지 변형에서 YOLOv10은 각각 1.2% / 1.4% / 0.5% / 0.3% / 0.5% AP 향상을 달성하는 동시에, 파라미터 수는 28% / 36% / 41% / 44% / 57% 적고 연산량(FLOPs)은 23% / 24% / 25% / 27% / 38% 적으며, 지연 시간은 70% / 65% / 50% / 41% / 37% 더 낮다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 1. 최신 기법(SOTA)과의 비교. 지연 시간(Latency)은 공식 사전 학습 모델을 사용하여 측정하였다. $\text{Latency}^f$는 후처리(Post-Processing)를 제외한 모델 순전파 과정의 지연 시간을 의미한다. &dagger;는 NMS를 사용하는 기존의 일대다(One-to-Many) 학습 방식으로 얻은 YOLOv10의 결과를 뜻한다. 아래의 모든 결과는 공정한 비교를 위해 지식 증류(Knowledge Distillation)나 PGI 같은 추가적인 고급 학습 기법을 적용하지 않은 수치이다.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>#Param. (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+        <th>$\text{Latency}^f$ (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-3.0-N [29]</td><td>4.7</td><td>11.4</td><td>37.0</td><td>2.69</td><td>1.76</td></tr>
+      <tr><td>Gold-YOLO-N [60]</td><td>5.6</td><td>12.1</td><td>39.6</td><td>2.92</td><td>1.82</td></tr>
+      <tr><td>YOLOv8-N [21]</td><td>3.2</td><td>8.7</td><td>37.3</td><td>6.16</td><td>1.77</td></tr>
+      <tr><td><strong>YOLOv10-N (Ours)</strong></td><td><strong>2.3</strong></td><td><strong>6.7</strong></td><td><strong>38.5 / 39.5&dagger;</strong></td><td><strong>1.84</strong></td><td><strong>1.79</strong></td></tr>
+      <tr><td>YOLOv6-3.0-S [29]</td><td>18.5</td><td>45.3</td><td>44.3</td><td>3.42</td><td>2.35</td></tr>
+      <tr><td>Gold-YOLO-S [60]</td><td>21.5</td><td>46.0</td><td>45.4</td><td>3.82</td><td>2.73</td></tr>
+      <tr><td>YOLO-MS-XS [8]</td><td>4.5</td><td>17.4</td><td>43.4</td><td>8.23</td><td>2.80</td></tr>
+      <tr><td>YOLO-MS-S [8]</td><td>8.1</td><td>31.2</td><td>46.2</td><td>10.12</td><td>4.83</td></tr>
+      <tr><td>YOLOv8-S [21]</td><td>11.2</td><td>28.6</td><td>44.9</td><td>7.07</td><td>2.33</td></tr>
+      <tr><td>YOLOv9-S [65]</td><td>7.1</td><td>26.4</td><td>46.7</td><td>-</td><td>-</td></tr>
+      <tr><td>RT-DETR-R18 [78]</td><td>20.0</td><td>60.0</td><td>46.5</td><td>4.58</td><td>4.49</td></tr>
+      <tr><td><strong>YOLOv10-S (Ours)</strong></td><td><strong>7.2</strong></td><td><strong>21.6</strong></td><td><strong>46.3 / 46.8&dagger;</strong></td><td><strong>2.49</strong></td><td><strong>2.39</strong></td></tr>
+      <tr><td>YOLOv6-3.0-M [29]</td><td>34.9</td><td>85.8</td><td>49.1</td><td>5.63</td><td>4.56</td></tr>
+      <tr><td>Gold-YOLO-M [60]</td><td>41.3</td><td>87.5</td><td>49.8</td><td>6.38</td><td>5.45</td></tr>
+      <tr><td>YOLO-MS [8]</td><td>22.2</td><td>80.2</td><td>51.0</td><td>12.41</td><td>7.30</td></tr>
+      <tr><td>YOLOv8-M [21]</td><td>25.9</td><td>78.9</td><td>50.6</td><td>9.50</td><td>5.09</td></tr>
+      <tr><td>YOLOv9-M [65]</td><td>20.0</td><td>76.3</td><td>51.1</td><td>-</td><td>-</td></tr>
+      <tr><td>RT-DETR-R34 [78]</td><td>31.0</td><td>92.0</td><td>48.9</td><td>6.32</td><td>6.21</td></tr>
+      <tr><td>RT-DETR-R50m [78]</td><td>36.0</td><td>100.0</td><td>51.3</td><td>6.90</td><td>6.84</td></tr>
+      <tr><td><strong>YOLOv10-M (Ours)</strong></td><td><strong>15.4</strong></td><td><strong>59.1</strong></td><td><strong>51.1 / 51.3&dagger;</strong></td><td><strong>4.74</strong></td><td><strong>4.63</strong></td></tr>
+      <tr><td>YOLOv6-3.0-L [29]</td><td>59.6</td><td>150.7</td><td>51.8</td><td>9.02</td><td>7.90</td></tr>
+      <tr><td>Gold-YOLO-L [60]</td><td>75.1</td><td>151.7</td><td>51.8</td><td>10.65</td><td>9.78</td></tr>
+      <tr><td>YOLOv9-C [65]</td><td>25.3</td><td>102.1</td><td>52.5</td><td>10.57</td><td>6.13</td></tr>
+      <tr><td><strong>YOLOv10-B (Ours)</strong></td><td><strong>19.1</strong></td><td><strong>92.0</strong></td><td><strong>52.5 / 52.7&dagger;</strong></td><td><strong>5.74</strong></td><td><strong>5.67</strong></td></tr>
+      <tr><td>YOLOv8-L [21]</td><td>43.7</td><td>165.2</td><td>52.9</td><td>12.39</td><td>8.06</td></tr>
+      <tr><td>RT-DETR-R50 [78]</td><td>42.0</td><td>136.0</td><td>53.1</td><td>9.20</td><td>9.07</td></tr>
+      <tr><td><strong>YOLOv10-L (Ours)</strong></td><td><strong>24.4</strong></td><td><strong>120.3</strong></td><td><strong>53.2 / 53.4&dagger;</strong></td><td><strong>7.28</strong></td><td><strong>7.21</strong></td></tr>
+      <tr><td>YOLOv8-X [21]</td><td>68.2</td><td>257.8</td><td>53.9</td><td>16.86</td><td>12.83</td></tr>
+      <tr><td>RT-DETR-R101 [78]</td><td>76.0</td><td>259.0</td><td>54.3</td><td>13.71</td><td>13.58</td></tr>
+      <tr><td><strong>YOLOv10-X (Ours)</strong></td><td><strong>29.5</strong></td><td><strong>160.4</strong></td><td><strong>54.4 / 54.4&dagger;</strong></td><td><strong>10.70</strong></td><td><strong>10.60</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  다른 YOLO 계열 모델과 비교하더라도 YOLOv10은 정확도와 연산 비용 사이에서 월등히 뛰어난 트레이드오프를 보인다. 구체적으로, 경량 및 소형 모델 구간에서 YOLOv10-N / S는 YOLOv6-3.0-N / S보다 각각 1.5 AP 및 2.0 AP 더 높은 성능을 내면서도 파라미터는 51% / 61% 적고 연산량은 41% / 52% 더 적다. 중형 모델 구간에서는 YOLOv9-C / YOLO-MS와 비교해 YOLOv10-B / M이 동일하거나 더 나은 성능에서 각각 46% / 62%의 지연 시간 단축을 달성하였다. 대형 모델 구간에서는 Gold-YOLO-L 대비 YOLOv10-L이 파라미터 68% 절감, 지연 시간 32% 단축과 함께 1.4% AP의 유의미한 성능 향상을 이루었다. 나아가 RT-DETR과 비교해도 YOLOv10은 성능과 지연 시간 모두에서 상당한 개선을 보여준다. 특히 YOLOv10-S / X는 유사한 성능 조건에서 RT-DETR-R18 / R101보다 각각 1.8&times; 및 1.3&times; 더 빠른 추론 속도를 달성하였다. 이러한 결과는 실시간 종단간 탐지기로서 YOLOv10의 우수성을 잘 입증한다.
+</p>
+<p>
+  또한 기존의 일대다 학습 방식을 사용한 YOLOv10과 다른 YOLO 모델들의 비교도 수행하였다. 이 경우 선행 연구를 따라 모델 순전파 과정의 지연 시간($\text{Latency}^f$)과 성능을 함께 평가하였다. 표 1에서 보듯 YOLOv10은 이 조건에서도 모든 모델 스케일에 걸쳐 최첨단 성능과 효율성을 나타내며, 본 연구의 아키텍처 설계가 효과적임을 뒷받침한다.
+</p>
+
+<h3>4.3 모델 분석 (Model Analyses)</h3>
+<p>
+  <strong>절제 연구 (Ablation study).</strong> YOLOv10-S와 YOLOv10-M을 기반으로 한 절제 연구 결과를 표 2에 제시하였다. 일관된 이중 할당을 적용한 NMS-free 학습은 YOLOv10-S의 종단간 지연 시간을 4.63ms만큼 대폭 단축하면서도 44.3% AP의 경쟁력 있는 성능을 유지함을 알 수 있다. 또한 효율성 기반 모델 설계는 YOLOv10-M에서 11.8M개의 파라미터와 20.8 GFLOPs를 줄이고 지연 시간을 0.65ms나 단축하여 그 효과를 입증하였다. 나아가 정확도 기반 모델 설계는 YOLOv10-S와 YOLOv10-M에 대해 각각 0.18ms와 0.17ms의 극히 미미한 지연 시간 추가만으로 1.8 AP 및 0.7 AP라는 괄목할 만한 성능 향상을 이끌어내며 우수성을 증명하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 2. COCO 데이터셋에서의 YOLOv10-S 및 YOLOv10-M 절제 연구(Ablation Study).</caption>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>모델</th>
+        <th>NMS-free</th>
+        <th>효율성 설계 (Efficiency)</th>
+        <th>정확도 설계 (Accuracy)</th>
+        <th>#Param. (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td rowspan="4">YOLOv10-S</td><td></td><td></td><td></td><td>11.2</td><td>28.6</td><td>44.9</td><td>7.07</td></tr>
+      <tr><td>2</td><td>&check;</td><td></td><td></td><td>11.2</td><td>28.6</td><td>44.3</td><td>2.44</td></tr>
+      <tr><td>3</td><td>&check;</td><td>&check;</td><td></td><td>6.2</td><td>20.8</td><td>44.5</td><td>2.31</td></tr>
+      <tr><td>4</td><td>&check;</td><td>&check;</td><td>&check;</td><td>7.2</td><td>21.6</td><td>46.3</td><td>2.49</td></tr>
+      <tr><td>5</td><td rowspan="4">YOLOv10-M</td><td></td><td></td><td></td><td>25.9</td><td>78.9</td><td>50.6</td><td>9.50</td></tr>
+      <tr><td>6</td><td>&check;</td><td></td><td></td><td>25.9</td><td>78.9</td><td>50.3</td><td>5.22</td></tr>
+      <tr><td>7</td><td>&check;</td><td>&check;</td><td></td><td>14.1</td><td>58.1</td><td>50.4</td><td>4.57</td></tr>
+      <tr><td>8</td><td>&check;</td><td>&check;</td><td>&check;</td><td>15.4</td><td>59.1</td><td>51.1</td><td>4.74</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 3. 이중 레이블 할당(Dual Assignments) 효과 비교 (YOLOv8-S 기반).</caption>
+    <thead>
+      <tr>
+        <th>o2m</th>
+        <th>o2o</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>&check;</td><td></td><td>44.9</td><td>7.07</td></tr>
+      <tr><td></td><td>&check;</td><td>43.4</td><td>2.44</td></tr>
+      <tr><td>&check;</td><td>&check;</td><td><strong>44.3</strong></td><td><strong>2.44</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 4. 매칭 지표 하이퍼파라미터 비교 ($\alpha_{o2m}=0.5, \beta_{o2m}=6.0$ 기준).</caption>
+    <thead>
+      <tr>
+        <th>$\alpha_{o2o}$</th>
+        <th>$\beta_{o2o}$</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>$\alpha_{o2o}$</th>
+        <th>$\beta_{o2o}$</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>0.5</td><td>2.0</td><td>42.7</td><td>0.25</td><td>3.0</td><td><strong>44.3</strong></td></tr>
+      <tr><td>0.5</td><td>4.0</td><td>44.2</td><td>0.25</td><td>6.0</td><td>43.5</td></tr>
+      <tr><td>0.5</td><td>6.0</td><td><strong>44.3</strong></td><td>1.0</td><td>6.0</td><td>43.9</td></tr>
+      <tr><td>0.5</td><td>8.0</td><td>44.0</td><td>1.0</td><td>12.0</td><td><strong>44.3</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 5. YOLOv10-S / M에 대한 효율성 기반 설계 단계별 효과.</caption>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>모델 구성</th>
+        <th>#Param. (M) (S / M)</th>
+        <th>FLOPs (G) (S / M)</th>
+        <th>$\text{AP}^{val}$ (%) (S / M)</th>
+        <th>Latency (ms) (S / M)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>base.</td><td>11.2 / 25.9</td><td>28.6 / 78.9</td><td>44.3 / 50.3</td><td>2.44 / 5.22</td></tr>
+      <tr><td>2</td><td>+cls. (경량 분류 헤드)</td><td>9.9 / 23.2</td><td>23.5 / 67.7</td><td>44.2 / 50.2</td><td>2.39 / 5.07</td></tr>
+      <tr><td>3</td><td>+downs. (분리 다운샘플링)</td><td>8.0 / 19.7</td><td>22.2 / 65.0</td><td>44.4 / 50.4</td><td>2.36 / 4.97</td></tr>
+      <tr><td>4</td><td>+block. (랭크 기반 블록)</td><td>6.2 / 14.1</td><td>20.8 / 58.1</td><td>44.5 / 50.4</td><td>2.31 / 4.57</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>NMS-free 학습에 대한 분석 (Analyses for NMS-free training)</h4>
+<ul>
+  <li>
+    <strong>이중 레이블 할당 (Dual label assignments):</strong> NMS-free YOLO를 위해 제안한 이중 레이블 할당은 학습 중 일대다(o2m) 분기의 풍부한 지도와 추론 중 일대일(o2o) 분기의 높은 효율성을 모두 제공한다. 표 2의 #1인 YOLOv8-S를 기반으로 o2m 분기만 학습한 경우와 o2o 분기만 학습한 경우를 비교하였다. 표 3에서 볼 수 있듯 이중 레이블 할당 방식이 최상의 AP-지연 시간 트레이드오프를 달성한다.
+  </li>
+  <li>
+    <strong>일관된 매칭 지표 (Consistent matching metric):</strong> 일대일 헤드가 일대다 헤드와 더욱 조화롭게 작동하도록 일관된 매칭 지표를 도입하였다. 표 2의 #1(YOLOv8-S, $\alpha_{o2m}=0.5, \beta_{o2m}=6.0$)을 기준으로 다양한 $\alpha_{o2o}$ 및 $\beta_{o2o}$ 설정을 검증하였다. 표 4에 나타난 바와 같이 $\alpha_{o2o} = r \cdot \alpha_{o2m}$ 및 $\beta_{o2o} = r \cdot \beta_{o2m}$을 만족하는 일관된 매칭 지표(예: $(0.5, 6.0)$, $(0.25, 3.0)$, $(1.0, 12.0)$)가 최적의 성능(44.3% AP)을 거두었다. 이러한 향상은 식 (2)의 지도 격차 감소로 두 분기 간 지도 정렬이 개선된 데 기인한다. 게다가 일관된 매칭 지표는 번거로운 하이퍼파라미터 튜닝을 불필요하게 만들어 실용적인 환경에서도 매우 매력적이다.
+  </li>
+  <li>
+    <strong>일대다 학습과의 성능 격차 (Performance gap compared with one-to-many training):</strong> NMS-free 학습으로 뛰어난 종단간 성능을 달성했음에도 불구하고, 표 3과 표 1에서 보듯 NMS를 사용하는 기존 일대다 학습 대비 여전히 약간의 성능 격차가 존재한다. 또한 모델 크기가 커질수록 이 격차가 줄어든다는 점에 주목할 수 있다. 따라서 이러한 격차는 모델 용량(Capability)의 한계에서 비롯된 것으로 합리적으로 결론지을 수 있다. 특히 NMS를 쓰는 기존 일대다 학습과 달리, NMS-free 학습은 일대일 매칭을 위해 <strong>더욱 변별력 있는(Discriminative) 특징</strong>을 필요로 한다. YOLOv10-N 모델의 경우 제한된 용량 때문에 추출된 특징의 변별력이 충분하지 않아 1.0% AP의 비교적 큰 격차가 발생한다. 반면 더 강한 용량과 변별력 있는 특징을 갖춘 YOLOv10-X 모델에서는 두 학습 전략 간 성능 격차가 전혀 나타나지 않는다(54.4% vs. 54.4%). 그림 4는 COCO val 세트에서 각 앵커 포인트가 추출한 특징과 다른 모든 앵커 포인트 특징 간의 평균 코사인 유사도(Cosine Similarity)를 시각화한 것이다. 모델 크기가 커질수록 앵커 포인트 간 특징 유사도가 감소하는 추세를 보이며, 이는 일대일 매칭에 유리하게 작용한다. 이러한 통찰을 바탕으로 향후 연구에서 이 격차를 더욱 줄이고 더 높은 종단간 성능을 달성하는 방안을 탐구할 것이다.
+  </li>
+</ul>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_4.png" alt="그림 4" />
+  <figcaption><strong>그림 4.</strong> 각 앵커 포인트(Anchor Point)에서 추출된 특징과 다른 모든 앵커 포인트 특징 간의 평균 코사인 유사도(Average Cosine Similarity). 모델 규모가 커질수록 앵커 간 유사도가 낮아져 일대일 매칭에 필요한 특징 변별력이 높아짐을 보여준다.</figcaption>
+</figure>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 6. 분류 헤드 경량화 결과 ($\text{AP}^{val}_{w/o\ c}$: 분류 오차 제거, $\text{AP}^{val}_{w/o\ r}$: 회귀 오차 제거).</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>$\text{AP}^{val}_{w/o\ c}$ (%)</th>
+        <th>$\text{AP}^{val}_{w/o\ r}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>base.</td><td>44.3</td><td>59.9</td><td>64.5</td></tr>
+      <tr><td>+cls.</td><td>44.2</td><td>59.9</td><td>64.2</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 7. 다운샘플링(Downsampling) 순서 비교 결과.</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>base. (DW &rarr; PW)</td><td>43.7</td><td>2.33</td></tr>
+      <tr><td><strong>ours (PW &rarr; DW)</strong></td><td><strong>44.4</strong></td><td><strong>2.36</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 8. 콤팩트 역전 블록(CIB) 구조 비교 결과.</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>IRB</td><td>43.7</td><td>2.30</td></tr>
+      <tr><td>IRB-DW</td><td>44.2</td><td>2.30</td></tr>
+      <tr><td><strong>ours (CIB)</strong></td><td><strong>44.5</strong></td><td><strong>2.31</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 9. 랭크 기반 블록 교체(Rank-guided) 실험 결과.</caption>
+    <thead>
+      <tr>
+        <th>CIB 적용 스테이지</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>empty (미적용)</td><td>44.4</td></tr>
+      <tr><td>8</td><td>44.5</td></tr>
+      <tr><td>8, 4</td><td><strong>44.5</strong></td></tr>
+      <tr><td>8, 4, 7</td><td>44.3</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>효율성 기반 모델 설계에 대한 분석 (Analyses for efficiency driven model design)</h4>
+<p>
+  YOLOv10-S/M을 기반으로 효율성 중심 설계 요소들을 순차적으로 적용하는 실험을 수행하였다. 베이스라인은 효율성-정확도 기반 설계를 적용하기 전의 YOLOv10-S/M 모델(표 2의 #2/#6)이다. 표 5에서 보듯 경량 분류 헤드, 공간-채널 분리 다운샘플링, 랭크 기반 블록 설계의 각 구성 요소가 모두 파라미터 수, FLOPs, 지연 시간을 줄이는 데 기여하며, 동시에 경쟁력 있는 성능을 유지한다.
+</p>
+<ul>
+  <li>
+    <strong>경량 분류 헤드 (Lightweight classification head):</strong> 표 5의 #1과 #2 YOLOv10-S를 대상으로 예측의 분류 오차와 위치 회귀 오차가 성능에 미치는 영향을 분석하였다. 구체적으로 일대일 할당으로 예측을 인스턴스에 매칭한 뒤, 예측된 분류 점수를 정답 레이블로 대체해 분류 오차가 없는 $\text{AP}^{val}_{w/o\ c}$를 구하고, 예측된 위치를 정답 위치로 대체해 회귀 오차가 없는 $\text{AP}^{val}_{w/o\ r}$를 구하였다. 표 6에서 확인되듯 $\text{AP}^{val}_{w/o\ r}$가 $\text{AP}^{val}_{w/o\ c}$보다 훨씬 높으며, 이는 회귀 오차를 제거할 때 더 큰 성능 향상이 일어남을 뜻한다. 즉, 성능 병목은 분류보다 회귀 과제에 더 크게 놓여 있다. 따라서 경량 분류 헤드를 채택하면 성능 저하 없이 더 높은 효율성을 얻을 수 있다.
+  </li>
+  <li>
+    <strong>공간-채널 분리 다운샘플링 (Spatial-channel decoupled downsampling):</strong> 효율성을 위해 다운샘플링 연산을 분리하여, 먼저 점별 합성곱(PW)으로 채널 차원을 키운 뒤 깊이별 합성곱(DW)으로 해상도를 줄여 정보 보존을 극대화하였다. 표 5의 #3 YOLOv10-S를 기준으로, 먼저 DW로 공간을 축소한 뒤 PW로 채널을 조절하는 방식(base.)과 비교하였다. 표 7에서 보듯 본 연구의 다운샘플링 전략(PW &rarr; DW)은 다운샘플링 과정의 정보 손실을 줄임으로써 0.7% AP 향상을 달성하였다.
+  </li>
+  <li>
+    <strong>콤팩트 역전 블록 (CIB, Compact inverted block):</strong> 표 5의 #4 YOLOv10-S를 바탕으로 CIB의 효과를 검증하였다. 먼저 역전 잔차 블록(IRB, Inverted Residual Block)을 베이스라인으로 두었을 때 표 8과 같이 43.7% AP를 기록하였다. 그 뒤에 3&times;3 깊이별 합성곱을 하나 추가한 "IRB-DW"는 0.5% AP 향상을 가져왔다. 이와 비교해 본 연구의 CIB는 앞부분에 또 하나의 DW를 배치하여 최소한의 오버헤드만으로 0.3% AP를 추가로 개선하며 우수성을 입증하였다.
+  </li>
+  <li>
+    <strong>랭크 기반 블록 설계 (Rank-guided block design):</strong> 표 5의 #3 YOLOv10-S를 기반으로 랭크 기반 블록 설계의 이점을 검증하였다. 그림 3.(a)와 같이 내재적 랭크 오름차순으로 정렬한 스테이지 순서는 Stage 8-4-7-3-5-1-6-2이다. 표 9에 나타난 것처럼 각 스테이지의 보틀넥 블록을 효율적인 CIB로 순차 교체할 때 Stage 7부터 성능 저하(44.5% &rarr; 44.3%)가 관측되었다. 따라서 내재적 랭크가 낮고 중복성이 큰 Stage 8과 Stage 4에서는 성능 저하 없이 효율적인 블록 설계를 채택할 수 있다. 이 결과는 랭크 기반 블록 설계가 모델 효율성을 높이는 효과적인 전략임을 보여준다.
+  </li>
+</ul>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 10. YOLOv10-S / M에 대한 정확도 기반 설계 단계별 효과.</caption>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>모델 구성</th>
+        <th>$\text{AP}^{val}$ (%) (S / M)</th>
+        <th>Latency (ms) (S / M)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>base.</td><td>44.5 / 50.4</td><td>2.31 / 4.57</td></tr>
+      <tr><td>2</td><td>+L.k. (대형 커널)</td><td>44.9 / -</td><td>2.34 / -</td></tr>
+      <tr><td>3</td><td>+PSA (부분 자기주의)</td><td>46.3 / 51.1</td><td>2.49 / 4.74</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 11. 대형 커널 합성곱(L.k.) 커널 크기 및 재파라미터화 비교.</caption>
+    <thead>
+      <tr>
+        <th>모델 설정</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>k.s. = 5</td><td>44.7</td><td>2.32</td></tr>
+      <tr><td><strong>k.s. = 7</strong></td><td><strong>44.9</strong></td><td><strong>2.34</strong></td></tr>
+      <tr><td>k.s. = 9</td><td>44.9</td><td>2.37</td></tr>
+      <tr><td>w/o rep. (재파라미터화 제외)</td><td>44.8</td><td>2.34</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 12. 모델 스케일별 대형 커널 합성곱(L.k.) 적용 효과 ($\text{AP}^{val}$, %).</caption>
+    <thead>
+      <tr>
+        <th>스케일</th>
+        <th>w/o L.k.</th>
+        <th>w/ L.k.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>N</td><td>36.3</td><td><strong>36.6</strong></td></tr>
+      <tr><td>S</td><td>44.5</td><td><strong>44.9</strong></td></tr>
+      <tr><td>M</td><td>50.4</td><td>50.4</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 13. 부분 자기주의(PSA) 아키텍처 및 블록 수 비교.</caption>
+    <thead>
+      <tr>
+        <th>모델 설정</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>PSA</strong></td><td><strong>46.3</strong></td><td><strong>2.49</strong></td></tr>
+      <tr><td>Trans. (표준 Transformer)</td><td>46.0</td><td>2.54</td></tr>
+      <tr><td>$N_{\text{PSA}} = 1$</td><td>46.3</td><td>2.49</td></tr>
+      <tr><td>$N_{\text{PSA}} = 2$</td><td>46.5</td><td>2.59</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>정확도 기반 모델 설계에 대한 분석 (Analyses for accuracy driven model design)</h4>
+<p>
+  효율성 기반 설계를 반영한 YOLOv10-S/M(표 2의 #3/#7)을 베이스라인으로 삼아 정확도 기반 설계 요소를 순차적으로 통합한 결과를 표 10에 정리하였다. 대형 커널 합성곱과 PSA 모듈을 도입함으로써 YOLOv10-S에서 각각 0.03ms 및 0.15ms라는 최소한의 지연 시간 증가만으로 0.4% AP 및 1.4% AP라는 상당한 성능 개선을 달성하였다. (YOLOv10-M에는 대형 커널 합성곱을 적용하지 않음, 표 12 참조.)
+</p>
+<ul>
+  <li>
+    <strong>대형 커널 합성곱 (Large-kernel convolution):</strong> 표 10의 #2 YOLOv10-S를 기준으로 다양한 커널 크기의 영향을 조사하였다. 표 11에서 보듯 커널 크기가 커질수록 성능이 향상되다가 7&times;7 부근에서 정체되며, 이는 넓은 수용 영역의 이점을 확인시켜 준다. 또한 학습 중 재파라미터화(Reparameterization) 분기를 제거하면 0.1% AP 하락이 발생하여 최적화 측면에서의 효용을 뒷받침한다. 더불어 YOLOv10-N / S / M을 대상으로 모델 스케일별 효과를 점검한 결과(표 12), 대형 모델인 YOLOv10-M에서는 본래 수용 영역이 충분히 넓기 때문에 추가 개선이 나타나지 않았다. 이에 따라 대형 커널 합성곱은 소형 모델인 YOLOv10-N과 S에만 적용하였다.
+  </li>
+  <li>
+    <strong>부분 자기주의 (PSA, Partial self-attention):</strong> 최소 비용으로 전역 모델링 능력을 통합해 성능을 높이기 위해 PSA를 도입하였다. 표 10의 #3 YOLOv10-S를 기반으로 MHSA 뒤에 FFN이 따르는 일반 트랜스포머 블록("Trans.")을 베이스라인으로 설정해 비교하였다. 표 13에서 확인되듯 PSA는 "Trans." 대비 지연 시간을 0.05ms 줄이면서도 0.3% AP 향상을 이끌어냈다. 이러한 성능 개선은 어텐션 헤드의 중복성을 완화함으로써 자기주의의 최적화 문제를 경감한 데 기인한 것으로 해석된다. 아울러 $N_{\text{PSA}}$의 영향을 살핀 결과, $N_{\text{PSA}}$를 2로 늘리면 0.2% AP가 오르지만 0.1ms의 지연 시간이 추가되므로, 높은 효율성과 모델 역량의 균형을 위해 기본적으로 $N_{\text{PSA}} = 1$로 설정하였다.
+  </li>
+</ul>
+
+<h2>5. 결론 (Conclusion)</h2>
+<p>
+  본 논문에서는 YOLO 탐지 파이프라인 전반에 걸쳐 후처리와 모델 아키텍처를 모두 겨냥한 개선을 수행하였다. 후처리 측면에서는 NMS-free 학습을 위한 일관된 이중 할당(Consistent Dual Assignments)을 제안하여 효율적인 종단간 객체 탐지를 달성하였다. 모델 아키텍처 측면에서는 총체적 효율성-정확도 기반 모델 설계(Holistic Efficiency-Accuracy Driven Model Design) 전략을 도입하여 성능-효율성 트레이드오프를 크게 향상시켰다. 이러한 연구 결과를 집대성하여 새로운 실시간 종단간 객체 탐지기인 <strong>YOLOv10</strong>을 제안하였다. 광범위한 실험은 YOLOv10이 기존의 진보된 탐지기들과 비교해 최첨단 성능과 지연 시간을 달성함을 입증하며 그 우수성을 명확히 보여준다.
+</p>
+
+<h2>6. 감사의 글 (Acknowledgments)</h2>
+<p>
+  본 연구는 중국 국가자연과학기금(National Natural Science Foundation of China, 과제 번호 61925107, 62271281) 및 베이징 자연과학기금(Beijing Natural Science Foundation, 과제 번호 L223023)의 지원을 받아 수행되었다.
+</p>
+
+<h2>참고 문헌 (References)</h2>
+<p>
+  원 논문에는 총 82편의 참고 문헌([1]–[82])이 수록되어 있으며, 그중 핵심 기반 연구 및 주요 선행 문헌은 다음과 같다.
+</p>
+<ul>
+  <li><strong>YOLO 계열 및 실시간 탐지기:</strong> [48] Redmon et al., <em>You only look once</em> (CVPR 2016); [49] Redmon &amp; Farhadi, <em>YOLO9000</em> (CVPR 2017); [50] Redmon &amp; Farhadi, <em>YOLOv3</em> (2018); [2] Bochkovskiy et al., <em>YOLOv4</em> (2020); [20] Glenn, <em>YOLOv5</em> (2022); [29] Li et al., <em>YOLOv6 v3.0</em> (2023); [62] Wang et al., <em>YOLOv7</em> (CVPR 2023); [21] Glenn, <em>YOLOv8</em> (2023); [65] Wang et al., <em>YOLOv9</em> (2024); [60] Wang et al., <em>Gold-YOLO</em> (NeurIPS 2024); [8] Chen et al., <em>YOLO-MS</em> (2023); [70] Xu et al., <em>PP-YOLOE</em> (2022); [71] Xu et al., <em>DAMO-YOLO</em> (2022); [41] Lyu et al., <em>RTMDet</em> (2022).</li>
+  <li><strong>종단간 객체 탐지 및 레이블 할당:</strong> [4] Carion et al., <em>DETR</em> (ECCV 2020); [81] Zhu et al., <em>Deformable DETR</em> (2020); [73] Zhang et al., <em>DINO</em> (2022); [78] Zhao et al., <em>RT-DETR</em> (2023); [45] Ouyang, <em>DEYO</em> (2024); [15] Feng et al., <em>TOOD</em> (ICCV 2021); [6] Chen et al., <em>DATE</em> (2022); [55] Sun et al., <em>OneNet</em> (ICML 2021); [66] Wang et al., <em>DeFCN</em> (CVPR 2021); [80] Zhou &amp; Yu, <em>FCOS<sub>pss</sub></em> (IEEE TMM 2023); [28] Jia et al., <em>H-DETR</em> (CVPR 2023); [5] Chen et al., <em>Group DETR</em> (ICCV 2023); [77] Zhao et al., <em>MS-DETR</em> (CVPR 2024).</li>
+  <li><strong>아키텍처 설계, 합성곱, 어텐션 및 벤치마크:</strong> [10] Ding et al., <em>RepLKNet (31&times;31)</em> (CVPR 2022); [11] Ding et al., <em>RepVGG</em> (CVPR 2021); [39] Liu et al., <em>ConvNeXt</em> (CVPR 2022); [51] Sandler et al., <em>MobileNetV2</em> (CVPR 2018); [22] Graham et al., <em>LeViT</em> (ICCV 2021); [58] Vaswani et al., <em>Attention Is All You Need</em> (NeurIPS 2017); [33] Lin et al., <em>Zen-NAS / Rank analysis</em> (2020); [16] Feng et al., <em>Rank Diminishing</em> (NeurIPS 2022); [35] Lin et al., <em>Microsoft COCO</em> (ECCV 2014).</li>
+</ul>
+
+<h2>부록 (Appendix)</h2>
+
+<h3>A.1 구현 세부 사항 (Implementation Details)</h3>
+<p>
+  기존 연구([21, 62, 65])를 따라 모든 YOLOv10 모델은 SGD 옵티마이저를 사용하여 처음부터 500 에포크(Epoch) 동안 학습하였다. SGD 모멘텀(Momentum)과 가중치 감쇠(Weight Decay)는 각각 0.937과 $5 \times 10^{-4}$로 설정하였다. 초기 학습률(Learning Rate)은 $1 \times 10^{-2}$이며 선형적으로 $1 \times 10^{-4}$까지 감쇠한다. 데이터 증강으로는 Mosaic, Mixup, Copy-Paste 증강 등을 채택하였다. 상세한 하이퍼파라미터는 표 14에 정리하였다. 모든 모델은 8대의 NVIDIA 3090 GPU에서 학습하였다. 또한 YOLOv10-M의 너비 스케일링 계수를 1.0으로 늘려 YOLOv10-B를 구성하였다. PSA는 SPPF 모듈 뒤에 배치하였으며 FFN의 확장 계수(Expansion Factor)는 2로 설정하였다. CIB 역시 역전 보틀넥 블록 구조의 확장 비율(Expansion Ratio)을 2로 채택하였다. COCO 데이터셋에서의 표준 평균 정밀도(AP)를 다양한 객체 크기 및 IoU 임계값에 걸쳐 보고한다.
+</p>
+<p>
+  아울러 RT-DETR([78])을 따라 종단간 속도 벤치마크를 구축하였다. NMS 실행 시간은 입력 이미지에 따라 달라지므로, 배치 크기(Batch Size) 1로 COCO val 세트 전체에 대한 지연 시간을 측정하였다. 검증 시 탐지기가 사용하는 것과 동일한 NMS 하이퍼파라미터를 적용하였으며, 후처리를 위해 TensorRT <code>efficientNMSPlugin</code>을 부착하고 I/O 오버헤드는 제외하였다. 모든 이미지에 대한 평균 지연 시간을 보고한다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 14. YOLOv10의 학습 하이퍼파라미터 설정.</caption>
+    <thead>
+      <tr>
+        <th>하이퍼파라미터 (Hyper-parameter)</th>
+        <th>YOLOv10-N / S / M / B / L / X</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>epochs</td><td>500</td></tr>
+      <tr><td>optimizer</td><td>SGD</td></tr>
+      <tr><td>momentum</td><td>0.937</td></tr>
+      <tr><td>weight decay</td><td>$5 \times 10^{-4}$</td></tr>
+      <tr><td>warm-up epochs</td><td>3</td></tr>
+      <tr><td>warm-up momentum</td><td>0.8</td></tr>
+      <tr><td>warm-up bias learning rate</td><td>0.1</td></tr>
+      <tr><td>initial learning rate</td><td>$10^{-2}$</td></tr>
+      <tr><td>final learning rate</td><td>$10^{-4}$</td></tr>
+      <tr><td>learning rate schedule</td><td>linear decay</td></tr>
+      <tr><td>box loss gain</td><td>7.5</td></tr>
+      <tr><td>class loss gain</td><td>0.5</td></tr>
+      <tr><td>DFL loss gain</td><td>1.5</td></tr>
+      <tr><td>HSV saturation augmentation</td><td>0.7</td></tr>
+      <tr><td>HSV value augmentation</td><td>0.4</td></tr>
+      <tr><td>HSV hue augmentation</td><td>0.015</td></tr>
+      <tr><td>translation augmentation</td><td>0.1</td></tr>
+      <tr><td>scale augmentation</td><td>0.5 / 0.5 / 0.9 / 0.9 / 0.9 / 0.9</td></tr>
+      <tr><td>mosaic augmentation</td><td>1.0</td></tr>
+      <tr><td>Mixup augmentation</td><td>0.0 / 0.0 / 0.1 / 0.1 / 0.15 / 0.15</td></tr>
+      <tr><td>copy-paste augmentation</td><td>0.0 / 0.0 / 0.1 / 0.1 / 0.3 / 0.3</td></tr>
+      <tr><td>close mosaic epochs</td><td>10</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>A.2 일관된 매칭 지표의 상세 유도 (Details of Consistent Matching Metric)</h3>
+<p>
+  본 절에서는 일관된 매칭 지표(Consistent Matching Metric)의 상세한 수리적 유도를 제공한다. 본문에서 기술한 바와 같이 일대다 양성 샘플 집합을 $\Omega$라 하고, 일대일 분기가 $i$번째 예측을 선택한다고 가정하자. Task Alignment Learning을 위한 분류 타깃을 구하기 위해 정규화된 지표를 활용하면, $j \in \Omega$에 대해 $t_{o2m,j} = u^* \cdot \frac{m_{o2m,j}}{m^*_{o2m}} \le u^*$이고 $t_{o2o,i} = u^* \cdot \frac{m_{o2o,i}}{m^*_{o2o}} = u^*$를 얻는다. 따라서 두 분기 간의 지도 격차(Supervision Gap)는 서로 다른 분류 타깃 간의 1-Wasserstein 거리로 다음과 같이 유도된다:
+</p>
+$$
+\begin{aligned}
+A &= |(1 - t_{o2o,i}) - (1 - \mathbb{I}(i \in \Omega)t_{o2m,i})| + \sum_{k \in \Omega \setminus \{i\}} |1 - (1 - t_{o2m,k})| \\
+&= |t_{o2o,i} - \mathbb{I}(i \in \Omega)t_{o2m,i}| + \sum_{k \in \Omega \setminus \{i\}} t_{o2m,k} \\
+&= t_{o2o,i} - \mathbb{I}(i \in \Omega)t_{o2m,i} + \sum_{k \in \Omega \setminus \{i\}} t_{o2m,k},
+\end{aligned} \tag{3}
+$$
+<p>
+  여기서 $\mathbb{I}(\cdot)$는 지시 함수(Indicator Function)이다. $\Omega$에 속한 예측들의 분류 타깃을 내림차순으로 $\{\hat{t}_1, \hat{t}_2, \dots, \hat{t}_{|\Omega|}\}$ ($\hat{t}_1 \ge \hat{t}_2 \ge \dots \ge \hat{t}_{|\Omega|}$)로 표기하고, $t_{o2o,i}$를 $u^*$로 치환하면 다음을 얻는다:
+</p>
+$$
+\begin{aligned}
+A &= u^* - \mathbb{I}(i \in \Omega)t_{o2m,i} + \sum_{k \in \Omega \setminus \{i\}} t_{o2m,k} \\
+&= u^* + \sum_{k \in \Omega} t_{o2m,k} - 2 \cdot \mathbb{I}(i \in \Omega)t_{o2m,i} \\
+&= u^* + \sum_{k=1}^{|\Omega|} \hat{t}_k - 2 \cdot \mathbb{I}(i \in \Omega)t_{o2m,i}.
+\end{aligned} \tag{4}
+$$
+<p>
+  이제 두 가지 시나리오로 나누어 지도 격차를 살펴보자:
+</p>
+<ol>
+  <li>
+    $i \notin \Omega$인 경우:
+    $$A = u^* + \sum_{k=1}^{|\Omega|} \hat{t}_k \tag{5}$$
+  </li>
+  <li>
+    $i \in \Omega$인 경우, $t_{o2m,i} = \hat{t}_n$으로 표기하면 다음을 얻는다:
+    $$A = u^* + \sum_{k=1}^{|\Omega|} \hat{t}_k - 2 \cdot \hat{t}_n \tag{6}$$
+  </li>
+</ol>
+<p>
+  $\hat{t}_n \ge 0$이므로 두 번째 경우가 더 작은 지도 격차를 만든다. 또한 $\hat{t}_n$이 커질수록 $A$가 감소함을 알 수 있으며, 이는 $n$이 작아지고 $\Omega$ 내에서 $i$의 순위가 높아짐을 의미한다. $\hat{t}_n \le \hat{t}_1$이므로, $A$는 $\hat{t}_n = \hat{t}_1$일 때 최솟값을 가진다. 즉, $i$가 $m_{o2m,i} = m^*_{o2m}$ 및 $t_{o2m,i} = u^* \cdot \frac{m_{o2m,i}}{m^*_{o2m}} = u^*$를 만족하는 $\Omega$ 내 최선의 양성 샘플일 때 최소가 된다.
+</p>
+<p>
+  나아가 일관된 매칭 지표를 통해 최소화된 지도 격차를 달성할 수 있음을 증명한다. 기존 연구들에서 일반적으로 쓰이는 $\alpha_{o2m} \gt 0$ 및 $\beta_{o2m} \gt 0$을 가정하고, 마찬가지로 $\alpha_{o2o} \gt 0$ 및 $\beta_{o2o} \gt 0$을 가정하자. $r_1 = \frac{\alpha_{o2o}}{\alpha_{o2m}} \gt 0$과 $r_2 = \frac{\beta_{o2o}}{\beta_{o2m}} \gt 0$으로 두면 $m_{o2o}$를 다음과 같이 전개할 수 있다:
+</p>
+$$
+\begin{aligned}
+m_{o2o} &= s \cdot p^{\alpha_{o2o}} \cdot \text{IoU}(\hat{b}, b)^{\beta_{o2o}} \\
+&= s \cdot p^{r_1 \cdot \alpha_{o2m}} \cdot \text{IoU}(\hat{b}, b)^{r_2 \cdot \beta_{o2m}} \\
+&= s \cdot (p^{\alpha_{o2m}} \cdot \text{IoU}(\hat{b}, b)^{\beta_{o2m}})^{r_1} \cdot \text{IoU}(\hat{b}, b)^{(r_2 - r_1) \cdot \beta_{o2m}} \\
+&= m_{o2m}^{r_1} \cdot \text{IoU}(\hat{b}, b)^{(r_2 - r_1) \cdot \beta_{o2m}}.
+\end{aligned} \tag{7}
+$$
+<p>
+  $m_{o2m,i} = m^*_{o2m}$과 $m_{o2o,i} = m^*_{o2o}$가 동시에 성립하도록 하기 위해 $(r_2 - r_1) = 0$으로 설정하여 $m_{o2o}$가 $m_{o2m}$에 대해 단조 증가하도록 만들 수 있다:
+</p>
+$$m_{o2o} = m_{o2m}^{r_1} \cdot \text{IoU}(\hat{b}, b)^{0 \cdot \beta_{o2m}} = m_{o2m}^{r_1}. \tag{8}$$
+<p>
+  $r_1 = r_2 = r$이라 두면 일관된 매칭 지표, 즉 $\alpha_{o2o} = r \cdot \alpha_{o2m}$ 및 $\beta_{o2o} = r \cdot \beta_{o2m}$이 도출된다. 단순하게 $r = 1$을 취하면 $\alpha_{o2o} = \alpha_{o2m}$ 및 $\beta_{o2o} = \beta_{o2m}$을 얻는다.
+</p>
+
+<h3>A.3 랭크 기반 블록 설계 세부 사항 (Details of Rank-Guided Block Design)</h3>
+<p>
+  랭크 기반 블록 설계 알고리즘의 세부 절차를 Algorithm 1에 제시하였다. 또한 합성곱 계층의 수치적 랭크(Numerical Rank)를 계산하기 위해, 가중치 텐서를 $(C_o, K^2 \times C_i)$ 형태로 재구성(Reshape)하였다. 여기서 $C_o$와 $C_i$는 각각 출력 및 입력 채널 수이며, $K$는 커널 크기이다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>Algorithm 1. 랭크 기반 블록 설계 (Rank-guided block design).</caption>
+    <thead>
+      <tr>
+        <th>절차 및 의사코드</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <strong>입력(Input):</strong> 모든 스테이지 $S$에 대한 내재적 랭크 $R$; 원본 네트워크 $\Theta$; CIB 블록 $\theta_{\text{cib}}$<br />
+          <strong>출력(Output):</strong> 특정 스테이지에 CIB가 적용된 새로운 네트워크 $\Theta^*$
+<pre style="margin: 0.6em 0 0; white-space: pre-wrap;">1: t &larr; 0;
+2: &Theta;<sub>0</sub> &larr; &Theta;; &Theta;* &larr; &Theta;<sub>0</sub>;
+3: ap<sub>0</sub> &larr; AP(T(&Theta;<sub>0</sub>));  // T: 네트워크 학습; AP: AP 성능 평가
+4: while S &ne; &empty; do
+5:     s<sub>t</sub> &larr; argmin<sub>s &isin; S</sub> R;
+6:     &Theta;<sub>t+1</sub> &larr; Replace(&Theta;<sub>t</sub>, &theta;<sub>cib</sub>, s<sub>t</sub>);  // &Theta;<sub>t</sub>의 스테이지 s<sub>t</sub> 블록을 CIB &theta;<sub>cib</sub>로 교체
+7:     ap<sub>t+1</sub> &larr; AP(T(&Theta;<sub>t+1</sub>));
+8:     if ap<sub>t+1</sub> &ge; ap<sub>0</sub> then
+9:         &Theta;* &larr; &Theta;<sub>t+1</sub>; S &larr; S \ {s<sub>t</sub>};
+10:    else
+11:        return &Theta;*;
+12:    end
+13: end
+14: return &Theta;*;</pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>A.4 학습 비용 분석 (Training Cost Analyses)</h3>
+<p>
+  추론 효율성 분석과 더불어 YOLOv10 모델들의 학습 비용도 조사하였다. 공식 코드베이스를 사용하여 8대의 NVIDIA 3090 GPU에서 타 YOLO 변형 모델들과 학습 처리량(Training Throughput)을 비교하였다. 중형(Medium) 모델 스케일을 기준으로 한 비교 결과를 표 15에 제시하였다. 500 에포크를 학습함에도 불구하고 YOLOv10은 높은 학습 처리량을 달성하여 학습 비용이 충분히 감당 가능한 수준임을 확인할 수 있다. 또한 NMS-free 학습 시 일대다 헤드가 YOLOv10에 추가 오버헤드를 유발한다는 점에 주목하여, 일대일 헤드만 사용한 "YOLOv10-o2o"의 학습 비용을 측정하였다. 표 15에서 보듯 YOLOv10-M은 "YOLOv10-M-o2o" 대비 에포크당 약 18초의 소폭 증가만 보여 감당할 수 있는 수준이다. NMS-free 학습에서 일대다 헤드의 이점을 공정하게 검증하기 위해 "YOLOv10-M-o2o"를 더 긴 550 에포크 동안 학습시켜 보았으나, 비슷한 학습 시간(29.3시간 vs. 29.1시간)을 소요하고도 YOLOv10-M 대비 여전히 열등한 성능(48.9% vs. 51.1% AP)을 기록하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 15. 8대의 NVIDIA 3090 GPU에서의 학습 비용 비교 분석.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>Epoch</th>
+        <th>속도 (epoch/hour)</th>
+        <th>소요 시간 (hour)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-3.0-M</td><td>300</td><td>7.2</td><td>41.7</td></tr>
+      <tr><td>YOLOv8-M</td><td>500</td><td>18.3</td><td>27.3</td></tr>
+      <tr><td>YOLOv9-M</td><td>500</td><td>12.3</td><td>40.7</td></tr>
+      <tr><td>Gold-YOLO-M</td><td>300</td><td>4.7</td><td>63.8</td></tr>
+      <tr><td>YOLO-MS</td><td>300</td><td>7.1</td><td>42.3</td></tr>
+      <tr><td>YOLOv10-M-o2o</td><td>500</td><td>18.8</td><td>26.7</td></tr>
+      <tr><td><strong>YOLOv10-M</strong></td><td><strong>500</strong></td><td><strong>17.2</strong></td><td><strong>29.1</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 16. NMS를 포함한 일대다(One-to-Many) YOLOv10의 지연 시간.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv10-N</td><td>6.19</td></tr>
+      <tr><td>YOLOv10-S</td><td>7.15</td></tr>
+      <tr><td>YOLOv10-M</td><td>9.03</td></tr>
+      <tr><td>YOLOv10-B</td><td>10.04</td></tr>
+      <tr><td>YOLOv10-L</td><td>11.52</td></tr>
+      <tr><td>YOLOv10-X</td><td>14.67</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>A.5 COCO 데이터셋 추가 실험 결과 (More Results on COCO)</h3>
+<p>
+  NMS를 사용하는 기존 일대다 학습 방식에서의 YOLOv10 지연 시간을 측정하여 표 16에 수록하였다. 또한 다양한 IoU 임계값($\text{AP}^{val}_{50}$, $\text{AP}^{val}_{75}$) 및 객체 크기별($\text{AP}^{val}_{small}$, $\text{AP}^{val}_{medium}$, $\text{AP}^{val}_{large}$) 세부 성능을 표 17에 보고하였다. 아울러 DAMO-YOLO, YOLOv7, DEYO 등 더 많은 경량 탐지기들과의 비교 결과를 표 18에 제시하였으며, 여기서도 YOLOv10이 우수한 성능-효율성 트레이드오프를 달성함을 보여준다. 더불어 본문 실험에서는 선행 연구([21, 65])를 따라 모델을 500 에포크 학습하였으나, 300 에포크를 채택하는 YOLOv6, Gold-YOLO, YOLO-MS와의 공정한 비교를 위해 300 에포크 학습 실험도 수행하여 표 19에 정리하였다. YOLOv10은 300 에포크 조건에서도 더 나은 성능과 추론 지연 시간을 보인다. 또한 표 15에서 확인되듯 500 에포크를 학습하더라도 YOLOv10의 실제 학습 시간 비용은 해당 비교 모델들보다 오히려 더 적다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 17. COCO 데이터셋에서의 YOLOv10 세부 성능 지표.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>$\text{AP}^{val}_{50}$ (%)</th>
+        <th>$\text{AP}^{val}_{75}$ (%)</th>
+        <th>$\text{AP}^{val}_{small}$ (%)</th>
+        <th>$\text{AP}^{val}_{medium}$ (%)</th>
+        <th>$\text{AP}^{val}_{large}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv10-N</td><td>38.5</td><td>53.8</td><td>41.7</td><td>18.9</td><td>42.4</td><td>54.6</td></tr>
+      <tr><td>YOLOv10-S</td><td>46.3</td><td>63.0</td><td>50.4</td><td>26.8</td><td>51.0</td><td>63.8</td></tr>
+      <tr><td>YOLOv10-M</td><td>51.1</td><td>68.1</td><td>55.8</td><td>33.8</td><td>56.5</td><td>67.0</td></tr>
+      <tr><td>YOLOv10-B</td><td>52.5</td><td>69.6</td><td>57.2</td><td>35.1</td><td>57.8</td><td>68.5</td></tr>
+      <tr><td>YOLOv10-L</td><td>53.2</td><td>70.1</td><td>58.1</td><td>35.8</td><td>58.5</td><td>69.4</td></tr>
+      <tr><td>YOLOv10-X</td><td>54.4</td><td>71.3</td><td>59.3</td><td>37.0</td><td>59.8</td><td>70.9</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 18. 추가 경량 탐지기(DAMO-YOLO, YOLOv7, DEYO)와의 비교.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>#Param. (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>DEYO-tiny [45]</td><td>4.0</td><td>8.0</td><td>37.6</td><td>2.01</td></tr>
+      <tr><td><strong>YOLOv10-N</strong></td><td><strong>2.3</strong></td><td><strong>6.7</strong></td><td><strong>38.5</strong></td><td><strong>1.84</strong></td></tr>
+      <tr><td>DAMO-YOLO-T [71]</td><td>8.5</td><td>18.1</td><td>42.0</td><td>2.21</td></tr>
+      <tr><td>DAMO-YOLO-S [71]</td><td>16.3</td><td>37.8</td><td>46.0</td><td>3.18</td></tr>
+      <tr><td>DEYO-S [45]</td><td>14.0</td><td>26.0</td><td>45.8</td><td>3.34</td></tr>
+      <tr><td><strong>YOLOv10-S</strong></td><td><strong>7.2</strong></td><td><strong>21.6</strong></td><td><strong>46.3</strong></td><td><strong>2.49</strong></td></tr>
+      <tr><td>DAMO-YOLO-M [71]</td><td>28.2</td><td>61.8</td><td>49.2</td><td>4.57</td></tr>
+      <tr><td>DAMO-YOLO-L [71]</td><td>42.1</td><td>97.3</td><td>50.8</td><td>6.48</td></tr>
+      <tr><td>DEYO-M [45]</td><td>33.0</td><td>78.0</td><td>50.7</td><td>7.14</td></tr>
+      <tr><td><strong>YOLOv10-M</strong></td><td><strong>15.4</strong></td><td><strong>59.1</strong></td><td><strong>51.1</strong></td><td><strong>4.74</strong></td></tr>
+      <tr><td>YOLOv7 [62]</td><td>36.9</td><td>104.7</td><td>51.2</td><td>17.03</td></tr>
+      <tr><td><strong>YOLOv10-B</strong></td><td><strong>19.1</strong></td><td><strong>92.0</strong></td><td><strong>52.5</strong></td><td><strong>5.74</strong></td></tr>
+      <tr><td>YOLOv7-X [62]</td><td>71.3</td><td>189.9</td><td>52.9</td><td>21.45</td></tr>
+      <tr><td>DEYO-L [45]</td><td>51.0</td><td>155.0</td><td>52.7</td><td>10.00</td></tr>
+      <tr><td><strong>YOLOv10-L</strong></td><td><strong>24.4</strong></td><td><strong>120.3</strong></td><td><strong>53.2</strong></td><td><strong>7.28</strong></td></tr>
+      <tr><td>DEYO-X [45]</td><td>78.0</td><td>242.0</td><td>53.7</td><td>15.38</td></tr>
+      <tr><td><strong>YOLOv10-X</strong></td><td><strong>29.5</strong></td><td><strong>160.4</strong></td><td><strong>54.4</strong></td><td><strong>10.70</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 19. 300 에포크 학습 조건에서의 성능 비교.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>#Param. (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{val}$ (%)</th>
+        <th>Latency (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-3.0-N [29]</td><td>4.7</td><td>11.4</td><td>37.0</td><td>2.69</td></tr>
+      <tr><td>Gold-YOLO-N [60]</td><td>5.6</td><td>12.1</td><td>39.6</td><td>2.92</td></tr>
+      <tr><td><strong>YOLOv10-N (Ours)</strong></td><td><strong>2.3</strong></td><td><strong>6.7</strong></td><td><strong>37.7</strong></td><td><strong>1.84</strong></td></tr>
+      <tr><td>YOLOv6-3.0-S [29]</td><td>18.5</td><td>45.3</td><td>44.3</td><td>3.42</td></tr>
+      <tr><td>Gold-YOLO-S [60]</td><td>21.5</td><td>46.0</td><td>45.4</td><td>3.82</td></tr>
+      <tr><td>YOLO-MS-XS [8]</td><td>4.5</td><td>17.4</td><td>43.4</td><td>8.23</td></tr>
+      <tr><td><strong>YOLOv10-S (Ours)</strong></td><td><strong>7.2</strong></td><td><strong>21.6</strong></td><td><strong>45.6</strong></td><td><strong>2.49</strong></td></tr>
+      <tr><td>YOLOv6-3.0-M [29]</td><td>34.9</td><td>85.8</td><td>49.1</td><td>5.63</td></tr>
+      <tr><td>Gold-YOLO-M [60]</td><td>41.3</td><td>87.5</td><td>49.8</td><td>6.38</td></tr>
+      <tr><td><strong>YOLOv10-M (Ours)</strong></td><td><strong>15.4</strong></td><td><strong>59.1</strong></td><td><strong>50.3</strong></td><td><strong>4.74</strong></td></tr>
+      <tr><td>YOLOv6-3.0-L [29]</td><td>59.6</td><td>150.7</td><td>51.8</td><td>9.02</td></tr>
+      <tr><td>Gold-YOLO-L [60]</td><td>75.1</td><td>151.7</td><td>51.8</td><td>10.65</td></tr>
+      <tr><td>YOLO-MS [8]</td><td>22.2</td><td>80.2</td><td>51.0</td><td>12.41</td></tr>
+      <tr><td><strong>YOLOv10-B (Ours)</strong></td><td><strong>19.1</strong></td><td><strong>92.0</strong></td><td><strong>51.6</strong></td><td><strong>5.74</strong></td></tr>
+      <tr><td><strong>YOLOv10-L (Ours)</strong></td><td><strong>24.4</strong></td><td><strong>120.3</strong></td><td><strong>52.4</strong></td><td><strong>7.28</strong></td></tr>
+      <tr><td><strong>YOLOv10-X (Ours)</strong></td><td><strong>29.5</strong></td><td><strong>160.4</strong></td><td><strong>53.6</strong></td><td><strong>10.70</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>A.6 CPU 환경에서의 추론 효율성 비교 (Inference Efficiency Comparison on CPU)</h3>
+<p>
+  OpenVINO를 사용하여 CPU 환경(Intel Xeon Skylake, IBRS)에서 측정한 YOLOv10과 타 모델 간의 속도 비교 결과를 그림 5에 제시하였다. CPU 환경에서도 YOLOv10은 성능과 효율성 측면에서 최첨단 트레이드오프를 보여준다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_5.png" alt="그림 5" />
+  <figcaption><strong>그림 5.</strong> CPU 환경에서의 성능 및 효율성 비교.</figcaption>
+</figure>
+
+<h3>A.7 총체적 효율성-정확도 기반 모델 설계에 대한 추가 분석 (More Analyses for Holistic Efficiency-Accuracy Driven Model Design)</h3>
+<p>
+  YOLOv10-S(표 2의 #2)는 모델 스케일이 작기 때문에 지연 시간을 추가로 줄이는 것이 특히 까다롭다. 그럼에도 불구하고 표 2에서 보듯 본 연구의 효율성 기반 모델 설계는 성능 저하 없이 지연 시간을 5.3% 단축하였다. 이는 이후 정확도 기반 모델 설계를 적용할 수 있는 견고한 토대를 마련해 준다. 결과적으로 YOLOv10-S는 총체적 효율성-정확도 기반 모델 설계를 통해 단 0.05ms의 지연 시간 증가만으로 2.0% AP 향상을 이루며 더 나은 지연 시간-정확도 트레이드오프를 달성하였다. 또한 모델 규모가 더 크고 중복성이 많은 YOLOv10-M(표 2의 #6)의 경우, 효율성 기반 모델 설계를 통해 12.5%라는 상당한 지연 시간 감소를 달성하였다. 여기에 정확도 기반 모델 설계를 결합하면 0.48ms의 지연 시간 단축과 동시에 0.8% AP의 유의미한 성능 향상이 관측된다. 이러한 결과는 본 설계 전략이 다양한 모델 스케일에 걸쳐 효과적임을 잘 보여준다.
+</p>
+
+<h3>A.8 시각화 결과 (Visualization Results)</h3>
+<p>
+  그림 6은 복잡하고 까다로운 시나리오에서 YOLOv10의 탐지 시각화 결과를 보여준다. YOLOv10은 저조도(Low Light), 회전(Rotation) 등 다양한 악조건 속에서도 정밀한 탐지를 수행함을 확인할 수 있다. 또한 병(bottle), 컵(cup), 사람(person) 등 다양하고 빽빽하게 밀집된 객체(Densely Packed Objects)를 탐지하는 데에도 뛰어난 역량을 발휘하며 우수한 성능을 입증한다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv10_2405.14458v2/fig_6.png" alt="그림 6" />
+  <figcaption><strong>그림 6.</strong> 복잡하고 까다로운 시나리오에서의 탐지 시각화 결과.</figcaption>
+</figure>
+
+<h3>A.9 기여, 한계점 및 사회적 영향 (Contribution, Limitation, and Broader Impact)</h3>
+<p>
+  <strong>기여 (Contribution).</strong> 요약하면 본 연구의 기여는 다음 세 가지로 정리된다.
+</p>
+<ol>
+  <li>
+    NMS-free YOLO를 위한 새로운 <strong>일관된 이중 할당(Consistent Dual Assignments)</strong> 전략을 제시하였다. 학습 중에는 일대다 분기를 통해 풍부한 지도를 제공하고 추론 중에는 일대일 분기를 통해 높은 효율성을 달성하는 이중 레이블 할당 방식을 설계하였다. 또한 두 분기 간의 조화로운 지도를 보장하기 위해 일관된 매칭 지표를 독창적으로 제안하여 이론적 지도 격차를 줄이고 성능 향상을 이끌어냈다.
+  </li>
+  <li>
+    YOLO 모델 아키텍처를 위한 <strong>총체적 효율성-정확도 기반 모델 설계(Holistic Efficiency-Accuracy Driven Model Design)</strong> 전략을 제안하였다. 새로운 경량 분류 헤드, 공간-채널 분리 다운샘플링, 랭크 기반 블록 설계를 통해 연산 중복성을 대폭 줄이고 높은 효율성을 확보하였다. 나아가 대형 커널 합성곱과 독창적인 부분 자기주의(PSA) 모듈을 도입하여 낮은 비용으로 성능을 효과적으로 향상시켰다.
+  </li>
+  <li>
+    이상의 접근법을 토대로 새로운 실시간 종단간 객체 탐지기인 <strong>YOLOv10</strong>을 선보였다. 광범위한 실험을 통해 YOLOv10이 다른 진보된 탐지기들 대비 최첨단 성능-효율성 트레이드오프를 달성함을 입증하였다.
+  </li>
+</ol>
+<p>
+  <strong>한계점 (Limitation).</strong> 제한된 연산 자원으로 인해 Objects365와 같은 대규모 데이터셋에서의 YOLOv10 사전 학습(Pretraining)은 탐구하지 못하였다. 또한 NMS-free 학습 하에서 일대일 헤드를 사용하여 경쟁력 있는 종단간 성능을 달성했으나, 특히 소형 모델에서는 NMS를 사용하는 기존 일대다 학습 대비 여전히 성능 격차가 존재한다. 예를 들어 YOLOv10-N과 YOLOv10-S에서는 NMS를 동반한 일대다 학습이 NMS-free 학습보다 각각 1.0% AP 및 0.5% AP 더 높은 성능을 보인다. 향후 연구에서는 이 격차를 더욱 줄여 YOLOv10의 성능을 한층 높이는 방안을 모색할 것이다.
+</p>
+<p>
+  <strong>사회적 영향 (Broader impact).</strong> YOLO 계열 모델은 의료 영상 분석, 자율 주행 등 다양한 실제 응용 분야에 폭넓게 활용될 수 있다. 본 연구의 YOLOv10이 이러한 분야에 기여하고 효율성을 높이는 데 도움이 되기를 바란다. 다만 본 모델이 악의적인 목적으로 오용될 가능성을 인지하고 있으며, 이를 방지하기 위해 최선의 노력을 다할 것이다.
+</p>

@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>[논문 번역] ReAct: 언어 모델에서 추론과 행동의 시너지 창출 (ReAct)</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
     .math-box {
       background: #f1f5f9;
@@ -161,17 +159,17 @@
         <h3 id="sec2-1">2.1 수학적 공식화 (Formulation)</h3>
         <p>
           에이전트가 환경과 상호작용하여 과제를 해결하는 일반적인 강화학습 및 순차적 의사결정 설정을 고려하자. 
-          시간 단계 $t$에서 에이전트는 환경으로부터의 관찰 $o_t \in \mathcal{O}$를 수신하고, 지금까지의 누적된 맥락(Context)을 바탕으로 행동 $a_t \in \mathcal{A}$를 취한다:
+          시간 단계 <span class="math-inline"><i>t</i></span>에서 에이전트는 환경으로부터의 관찰 <span class="math-inline"><i>o</i><sub>t</sub> ∈ <span class="math-cal">O</span></span>를 수신하고, 지금까지의 누적된 맥락(Context)을 바탕으로 행동 <span class="math-inline"><i>a</i><sub>t</sub> ∈ <span class="math-cal">A</span></span>를 취한다:
         </p>
 
         <div class="math-box">
-          $$c_t = (o_1, a_1, o_2, a_2, \dots, o_{t-1}, a_{t-1}, o_t)$$
-          $$a_t \sim \pi(a_t \mid c_t)$$
+          <div class="math-block"><i>c</i><sub>t</sub> = (<i>o</i><sub>1</sub>, <i>a</i><sub>1</sub>, <i>o</i><sub>2</sub>, <i>a</i><sub>2</sub>, …, <i>o</i><sub>t−1</sub>, <i>a</i><sub>t−1</sub>, <i>o</i><sub>t</sub>)</div>
+          <div class="math-block"><i>a</i><sub>t</sub> ~ <i>π</i>(<i>a</i><sub>t</sub> | <i>c</i><sub>t</sub>)</div>
         </div>
 
         <p>
-          ReAct의 핵심 혁신은 에이전트의 <strong>행동 공간(Action Space)을 언어 공간 $\mathcal{L}$로 대폭 확장</strong>하여 $\hat{\mathcal{A}} = \mathcal{A} \cup \mathcal{L}$로 정의한 것이다. 
-          즉, 에이전트가 취할 수 있는 선택지 안에 외부 환경을 조작하는 도구 행동(Action)뿐만 아니라, <strong>내부 인지적 상태를 갱신하는 언어적 '생각(Thought)'</strong> $a_t \in \mathcal{L}$을 포함시킨다.
+          ReAct의 핵심 혁신은 에이전트의 <strong>행동 공간(Action Space)을 언어 공간 <span class="math-inline"><span class="math-cal">L</span></span>로 대폭 확장</strong>하여 <span class="math-inline"><span class="math-cal">Â</span> = <span class="math-cal">A</span> ∪ <span class="math-cal">L</span></span>로 정의한 것이다. 
+          즉, 에이전트가 취할 수 있는 선택지 안에 외부 환경을 조작하는 도구 행동(Action)뿐만 아니라, <strong>내부 인지적 상태를 갱신하는 언어적 '생각(Thought)'</strong> <span class="math-inline"><i>a</i><sub>t</sub> ∈ <span class="math-cal">L</span></span>을 포함시킨다.
         </p>
 
         <h3 id="sec2-2">2.2 생각(Thought)이 수행하는 3대 핵심 역할</h3>

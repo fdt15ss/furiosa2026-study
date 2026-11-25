@@ -508,7 +508,7 @@
               비행기의 블랙박스 기록이나 사건 현장의 CCTV 녹화본처럼, <strong>"에이전트가 무슨 생각을 했고, 어떤 도구를 썼으며, 화면에 무엇이 떴는지"</strong> 처음부터 끝까지 기록된 전체 타임라인입니다.
             </div>
             <div class="technical-detail">
-              에이전트가 문제를 해결하는 동안 발생한 모든 상태, 생각, 행동, 관찰의 순차적 시계열 기록 $\tau = (o_1, a_1, o_2, a_2, \dots, o_T)$입니다. Reflexion 에이전트는 이 궤적 전체를 검토하여 실패 원인을 분석합니다.
+              에이전트가 문제를 해결하는 동안 발생한 모든 상태, 생각, 행동, 관찰의 순차적 시계열 기록 <span class="math-inline"><i>τ</i> = (<i>o</i><sub>1</sub>, <i>a</i><sub>1</sub>, <i>o</i><sub>2</sub>, <i>a</i><sub>2</sub>, …, <i>o</i><sub>T</sub>)</span>입니다. Reflexion 에이전트는 이 궤적 전체를 검토하여 실패 원인을 분석합니다.
             </div>
           </div>
 
@@ -544,7 +544,7 @@
               게임기 패드에 있는 <strong>버튼들의 종류(조이스틱, A버튼, B버튼 = 행동 공간)</strong>와 게임기 <strong>모니터 화면에 출력되는 영상(관찰 공간)</strong>입니다.
             </div>
             <div class="technical-detail">
-              에이전트가 취할 수 있는 모든 유효 조작 명령어들의 집합 $\mathcal{A}$과 환경이 이에 반응하여 반환하는 모든 감각/텍스트 출력의 집합 $\mathcal{O}$입니다. ReAct는 여기에 언어 공간 $\mathcal{L}$(생각)을 행동 공간의 일부로 확장했습니다.
+              에이전트가 취할 수 있는 모든 유효 조작 명령어들의 집합 <span class="math-inline"><span class="math-cal">A</span></span>과 환경이 이에 반응하여 반환하는 모든 감각/텍스트 출력의 집합 <span class="math-inline"><span class="math-cal">O</span></span>입니다. ReAct는 여기에 언어 공간 <span class="math-inline"><span class="math-cal">L</span></span>(생각)을 행동 공간의 일부로 확장했습니다.
             </div>
           </div>
 
@@ -629,7 +629,7 @@
               선수가 실수했을 때 말없이 점수만 깎는(-10점) 대신, <strong>코치가 다가와서 "방금 스윙할 때 팔꿈치가 너무 들렸어. 다음엔 팔꿈치를 붙여봐"라고 구체적인 말(Verbal feedback)로 교정</strong>해주는 방식입니다.
             </div>
             <div class="technical-detail">
-              전통적인 강화학습(RL)이 수치형 스칼라 보상($R \in \mathbb{R}$)과 그래디언트 역전파를 통해 신경망 가중치를 학습시켰던 것과 달리, <strong>풍부한 의미 정보를 담은 자연어 피드백 신호</strong>를 보상으로 사용하여 모델의 행동 정책을 인컨텍스트로 최적화하는 기법입니다.
+              전통적인 강화학습(RL)이 수치형 스칼라 보상(<span class="math-inline"><i>R</i> ∈ ℝ</span>)과 그래디언트 역전파를 통해 신경망 가중치를 학습시켰던 것과 달리, <strong>풍부한 의미 정보를 담은 자연어 피드백 신호</strong>를 보상으로 사용하여 모델의 행동 정책을 인컨텍스트로 최적화하는 기법입니다.
             </div>
             <div class="related-paper">
               관련 논문: <a href="3_reflexion_korean.html#sec2" class="paper-link-pill">Reflexion 논문 섹션 2</a>
@@ -677,8 +677,8 @@
             </div>
             <div class="technical-detail">
               <ul>
-                <li><strong>단기/작업 기억(Working Memory):</strong> 현재 진행 중인 세션 내의 최근 대화 및 궤적($\tau_t$). 컨텍스트 윈도우 크기에 제한을 받음.</li>
-                <li><strong>장기/에피소드 기억(Episodic Memory):</strong> 이전 시도나 과거 상호작용에서 얻은 교훈, 반성 텍스트($sr_t$), 또는 벡터 DB에 임베딩되어 영구 보관되는 경험 데이터베이스.</li>
+                <li><strong>단기/작업 기억(Working Memory):</strong> 현재 진행 중인 세션 내의 최근 대화 및 궤적(<span class="math-inline"><i>τ</i><sub>t</sub></span>). 컨텍스트 윈도우 크기에 제한을 받음.</li>
+                <li><strong>장기/에피소드 기억(Episodic Memory):</strong> 이전 시도나 과거 상호작용에서 얻은 교훈, 반성 텍스트(<span class="math-inline"><i>sr</i><sub>t</sub></span>), 또는 벡터 DB에 임베딩되어 영구 보관되는 경험 데이터베이스.</li>
               </ul>
             </div>
           </div>

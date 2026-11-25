@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOLO v1 ~ YOLO26 논문 한글 번역 &amp; AI 용어집</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    }
+    [data-theme="dark"] {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #60a5fa;
+      --accent-soft: #1e3a5f;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.68;
+    }
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+    .brand { font-weight: 800; font-size: 1.05rem; }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.56rem 1.08rem;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.94rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, border-color 0.14s ease, opacity 0.14s ease;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .nav-btn.primary:hover { color: #fff; opacity: 0.93; }
+    .wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 { margin: 0 0 0.5rem; font-size: 2rem; }
+    .hero p { margin: 0 0 1.1rem; color: var(--text-muted); max-width: 780px; }
+    .glossary-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 1.35rem 1.65rem;
+      margin-bottom: 1.85rem;
+      box-shadow: var(--shadow);
+    }
+    .glossary-banner h2 { margin: 0 0 0.25rem; font-size: 1.22rem; }
+    .glossary-banner p { margin: 0; font-size: 0.94rem; color: var(--text-muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.35rem;
+    }
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .paper-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+    .paper-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+    }
+    .thumb-wrap {
+      height: 175px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.6rem;
+      overflow: hidden;
+    }
+    .thumb-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .card-body {
+      padding: 1.2rem 1.3rem 1.3rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .badge {
+      padding: 0.18rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .badge.muted { background: var(--surface-2); color: var(--text-muted); font-weight: 600; }
+    .badge.mono { font-family: monospace; }
+    .paper-card h2 { margin: 0 0 0.25rem; font-size: 1.12rem; line-height: 1.38; }
+    .en-title { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.65rem; }
+    .one-liner { font-size: 0.91rem; margin: 0 0 0.75rem; flex: 1; }
+    .card-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.95rem; }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+    .read-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.88rem 1.5rem;
+      min-height: 50px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.02rem;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card-cta {
+      width: 100%;
+    }
+    .banner-cta {
+      padding: 0.95rem 2rem;
+      min-height: 54px;
+      font-size: 1.08rem;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .read-btn:hover { opacity: 0.94; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25); }
+    .notes-box {
+      margin-top: 2.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+      box-shadow: var(--shadow);
+    }
+    .notes-box h3 { margin-top: 0; }
+    .notes-box ul { margin: 0.5rem 0 0; padding-left: 1.25rem; color: var(--text-muted); }
+    .notes-box li { margin-bottom: 0.45rem; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">📚 YOLO 논문 전체 한글 번역 아카이브 (v1 ~ YOLO26)</div>
+    <div style="display:flex;gap:0.6rem;align-items:center;">
+      <a class="nav-btn primary" href="glossary.html">📘 AI · Agent · YOLO 용어집</a>
+      <button class="nav-btn" onclick="toggleTheme()" id="themeBtn">🌙 다크 모드</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>YOLO 버전별 공식 논문 한글 번역 모음</h1>
+      <p>YOLOv1(2015)부터 Ultralytics YOLO26(2026)까지 폴더 내 영문 arXiv 논문 12편 전부를 원문 그림(77개 Figure)·표·수식과 함께 한국어로 번역했습니다. 목차, 수식 렌더링(KaTeX), 이미지 확대 보기, 다크 모드를 지원합니다.</p>
+    </section>
+
+    <section class="glossary-banner">
+      <div>
+        <h2>📘 어려운 AI · AI Agent · YOLO 용어가 헷갈린다면?</h2>
+        <p>MCP, RAG, ReAct, 멀티 에이전트 같은 AI Agent 개념부터 NMS, IoU, 백본/넥/헤드, PGI, HyperACE, FlashAttention, STAL까지 쉬운 비유로 정리한 90개 핵심 용어집을 함께 보세요.</p>
+      </div>
+      <a class="read-btn banner-cta" href="glossary.html">용어집 바로 열기 →</a>
+    </section>
+
+    <section class="grid">
+      
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv1_1506.02640v5/fig_1.png" alt="YOLOv1 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv1</span>
+            <span class="badge muted">2015 · UW / Allen AI / Facebook</span>
+            <span class="badge muted">10p · 그림 6개</span>
+            <span class="badge muted mono">arXiv:1506.02640v5</span>
+          </div>
+          <h2>You Only Look Once: 통합형 실시간 객체 탐지</h2>
+          <div class="en-title">You Only Look Once: Unified, Real-Time Object Detection</div>
+          <p class="one-liner">객체 탐지를 단일 신경망의 종단간 회귀 문제로 재정의하여 45 FPS(Fast YOLO 155 FPS)의 실시간 속도와 전역적 문맥 추론을 동시에 달성한 최초의 통합형 YOLO 모델</p>
+          <div class="card-meta">저자: Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv1_1506.02640v5_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv2_YOLO9000_1612.08242v1/fig_1.png" alt="YOLOv2 / YOLO9000 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv2 / YOLO9000</span>
+            <span class="badge muted">2016 · UW / Allen AI</span>
+            <span class="badge muted">9p · 그림 6개</span>
+            <span class="badge muted mono">arXiv:1612.08242v1</span>
+          </div>
+          <h2>YOLO9000: 더 정확하고, 더 빠르며, 더 많은 클래스를 탐지하는 모델</h2>
+          <div class="en-title">YOLO9000: Better, Faster, Stronger</div>
+          <p class="one-liner">앵커 박스·k-평균 차원 클러스터·Darknet-19·다중 스케일 학습으로 속도와 정확도를 크게 높인 YOLOv2와, WordTree 계층적 공동 학습으로 9,000개 이상의 객체 클래스를 실시간 탐지하는 YOLO9000을 제안한 논문</p>
+          <div class="card-meta">저자: Joseph Redmon, Ali Farhadi</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv2_YOLO9000_1612.08242v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv3_1804.02767v1/fig_1.png" alt="YOLOv3 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv3</span>
+            <span class="badge muted">2018 · UW</span>
+            <span class="badge muted">6p · 그림 5개</span>
+            <span class="badge muted mono">arXiv:1804.02767v1</span>
+          </div>
+          <h2>YOLOv3: 점진적 개선 (An Incremental Improvement)</h2>
+          <div class="en-title">YOLOv3: An Incremental Improvement</div>
+          <p class="one-liner">Darknet-53 백본과 FPN 스타일의 3단계 다중 스케일 예측, 다중 레이블 분류를 도입하여 실시간 속도를 유지하면서 작은 객체 탐지와 AP50 성능을 크게 끌어올린 YOLOv3 기술 보고서입니다.</p>
+          <div class="card-meta">저자: Joseph Redmon, Ali Farhadi</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv3_1804.02767v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv4_2004.10934v1/fig_1.png" alt="YOLOv4 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv4</span>
+            <span class="badge muted">2020 · Academia Sinica</span>
+            <span class="badge muted">17p · 그림 8개</span>
+            <span class="badge muted mono">arXiv:2004.10934v1</span>
+          </div>
+          <h2>YOLOv4: 객체 탐지의 최적 속도와 정확도</h2>
+          <div class="en-title">YOLOv4: Optimal Speed and Accuracy of Object Detection</div>
+          <p class="one-liner">단일 일반 GPU에서 학습 가능하면서도 CSPDarknet53·SPP·PANet 구조와 Mosaic·SAT·CmBN·CIoU·Mish 등 BoF/BoS 기법을 결합해 MS COCO에서 약 65 FPS로 43.5% AP를 달성한 실시간 객체 탐지기.</p>
+          <div class="card-meta">저자: Alexey Bochkovskiy, Chien-Yao Wang, Hong-Yuan Mark Liao</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv4_2004.10934v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv6_2209.02976v1/fig_1.png" alt="YOLOv6 v1/v2 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv6 v1/v2</span>
+            <span class="badge muted">2022 · Meituan</span>
+            <span class="badge muted">17p · 그림 8개</span>
+            <span class="badge muted mono">arXiv:2209.02976v1</span>
+          </div>
+          <h2>YOLOv6: 산업 응용을 위한 단일 단계 객체 탐지 프레임워크</h2>
+          <div class="en-title">YOLOv6: A Single-Stage Object Detection Framework for Industrial Applications</div>
+          <p class="one-liner">산업 배포에 최적화하여 모델 규모별 재파라미터화 백본·넥(EfficientRep/CSPStackRep), 효율적 분리 헤드, TAL·VFL·SIoU/DFL 학습 전략, 자기 증류 및 RepOptimizer 기반 QAT 양자화를 통합한 실시간 객체 탐지 프레임워크.</p>
+          <div class="card-meta">저자: Chuyi Li, Lulu Li, Hongliang Jiang, Kaiheng Weng, Yifei Geng, Liang Li, Zaidan Ke, Qingyuan Li, Meng Cheng, Weiqiang Nie, Yiduo Li, Bo Zhang, Yufei Liang, Linyuan Zhou, Xiaoming Xu, Xiangxiang Chu, Xiaoming Wei, Xiaolin Wei</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv6_2209.02976v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv6-v3.0_2301.05586v1/fig_1.png" alt="YOLOv6 v3.0 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv6 v3.0</span>
+            <span class="badge muted">2023 · Meituan</span>
+            <span class="badge muted">7p · 그림 3개</span>
+            <span class="badge muted mono">arXiv:2301.05586v1</span>
+          </div>
+          <h2>YOLOv6 v3.0: 전면적 재장전</h2>
+          <div class="en-title">YOLOv6 v3.0: A Full-Scale Reloading</div>
+          <p class="one-liner">RepBi-PAN(BiC·SimCSPSPPF), 앵커 보조 학습(AAT), 분리된 위치 증류(DLD) 및 C6 고해상도 확장을 통해 실시간 객체 탐지 정확도와 처리량을 전면 끌어올린 YOLOv6 v3.0 기술 보고서</p>
+          <div class="card-meta">저자: Chuyi Li, Lulu Li, Yifei Geng, Hongliang Jiang, Meng Cheng, Bo Zhang, Zaidan Ke, Xiaoming Xu, Xiangxiang Chu</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv6-v3.0_2301.05586v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv7_2207.02696v1/fig_1.png" alt="YOLOv7 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv7</span>
+            <span class="badge muted">2022 · Academia Sinica</span>
+            <span class="badge muted">15p · 그림 11개</span>
+            <span class="badge muted mono">arXiv:2207.02696v1</span>
+          </div>
+          <h2>YOLOv7: 실시간 객체 탐지기의 새로운 최고 성능을 달성하는 학습 가능한 Bag-of-Freebies</h2>
+          <div class="en-title">YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</div>
+          <p class="one-liner">추론 비용 증가 없이 학습 과정을 최적화하는 Trainable Bag-of-Freebies와 E-ELAN·복합 스케일링을 도입하여 5~160 FPS 구간의 모든 객체 탐지기를 능가한 실시간 객체 탐지 모델</p>
+          <div class="card-meta">저자: Chien-Yao Wang, Alexey Bochkovskiy, Hong-Yuan Mark Liao</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv7_2207.02696v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv9_2402.13616v2/fig_1.png" alt="YOLOv9 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv9</span>
+            <span class="badge muted">2024 · Academia Sinica</span>
+            <span class="badge muted">18p · 그림 7개</span>
+            <span class="badge muted mono">arXiv:2402.13616v2</span>
+          </div>
+          <h2>YOLOv9: 프로그래밍 가능한 그래디언트 정보(PGI)를 활용한 원하는 바의 학습</h2>
+          <div class="en-title">YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information</div>
+          <p class="one-liner">정보 병목 현상을 해결하는 보조 가역 기반 PGI 학습 프레임워크와 그래디언트 경로 계획 기반 경량 아키텍처 GELAN을 결합해 추론 비용 증가 없이 객체 탐지 성능을 극대화한 모델.</p>
+          <div class="card-meta">저자: Chien-Yao Wang, I-Hau Yeh, and Hong-Yuan Mark Liao</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv9_2402.13616v2_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv10_2405.14458v2/fig_1.png" alt="YOLOv10 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv10</span>
+            <span class="badge muted">2024 · Tsinghua Univ.</span>
+            <span class="badge muted">21p · 그림 6개</span>
+            <span class="badge muted mono">arXiv:2405.14458v2</span>
+          </div>
+          <h2>YOLOv10: 실시간 종단간 객체 탐지</h2>
+          <div class="en-title">YOLOv10: Real-Time End-to-End Object Detection</div>
+          <p class="one-liner">일관된 이중 할당 기반 NMS-free 학습과 효율성-정확도 중심의 총체적 아키텍처 최적화를 통해 실시간 종단간 객체 탐지의 성능-지연 시간 한계를 돌파한 YOLOv10</p>
+          <div class="card-meta">저자: Ao Wang, Hui Chen, Lihao Liu, Kai Chen, Zijia Lin, Jungong Han, Guiguang Ding</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv10_2405.14458v2_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv12_2502.12524v1/fig_1.png" alt="YOLOv12 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv12</span>
+            <span class="badge muted">2025 · UB / UCAS</span>
+            <span class="badge muted">13p · 그림 5개</span>
+            <span class="badge muted mono">arXiv:2502.12524v1</span>
+          </div>
+          <h2>YOLOv12: 어텐션 중심의 실시간 객체 탐지기</h2>
+          <div class="en-title">YOLOv12: Attention-Centric Real-Time Object Detectors</div>
+          <p class="one-liner">영역 어텐션(Area Attention), R-ELAN 및 FlashAttention 기반 아키텍처 최적화를 통해 기존 CNN 기반 YOLO의 추론 속도를 유지하면서도 최고 수준의 정확도를 달성한 어텐션 중심 실시간 YOLO 프레임워크.</p>
+          <div class="card-meta">저자: Qixiang Ye, Yunjie Tian, David Doermann</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv12_2502.12524v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLOv13_2506.17733v2/fig_1.png" alt="YOLOv13 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLOv13</span>
+            <span class="badge muted">2025 · Tsinghua iMoonLab</span>
+            <span class="badge muted">12p · 그림 6개</span>
+            <span class="badge muted mono">arXiv:2506.17733v2</span>
+          </div>
+          <h2>YOLOv13: 하이퍼그래프 기반 적응형 시각 인식을 활용한 실시간 객체 탐지</h2>
+          <div class="en-title">YOLOv13: Real-Time Object Detection with Hypergraph-Enhanced Adaptive Visual Perception</div>
+          <p class="one-liner">적응형 하이퍼그래프 기반 고차 상관관계 강화(HyperACE), 전체 파이프라인 집계·분배(FullPAD), 깊이 분리 합성곱 경량 블록(DS 시리즈)을 결합해 정확도와 효율을 극대화한 실시간 객체 탐지기 YOLOv13을 제안한다.</p>
+          <div class="card-meta">저자: Mengqi Lei, Siqi Li, Yihong Wu, Han Hu, You Zhou, Xinhu Zheng, Guiguang Ding, Shaoyi Du, Zongze Wu, Yue Gao</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLOv13_2506.17733v2_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+      <article class="paper-card">
+        <div class="thumb-wrap"><img src="images/YOLO26_Ultralytics-official_2606.03748v1/fig_1.png" alt="YOLO26 대표 그림" loading="lazy" /></div>
+        <div class="card-body">
+          <div class="badge-row">
+            <span class="badge">YOLO26</span>
+            <span class="badge muted">2026 · Ultralytics</span>
+            <span class="badge muted">31p · 그림 6개</span>
+            <span class="badge muted mono">arXiv:2606.03748v1</span>
+          </div>
+          <h2>Ultralytics YOLO26: 통합 실시간 종단간 비전 모델</h2>
+          <div class="en-title">Ultralytics YOLO26: Unified Real-Time End-to-End Vision Models</div>
+          <p class="one-liner">DFL 제거와 듀얼 헤드 기반 네이티브 NMS-free 구조, 그리고 MuSGD·Progressive Loss·STAL 학습 파이프라인을 결합해 다중 비전 태스크와 오픈 보캐뷸러리(YOLOE-26)까지 통합한 실시간 종단간 비전 모델 패밀리</p>
+          <div class="card-meta">저자: Glenn Jocher, Jing Qiu, Mengyu Liu, Shuai Lyu, Fatih Cagatay Akyon, Muhammet Esat Kalfaoglu</div>
+          <div class="card-actions">
+            <a class="read-btn card-cta" href="YOLO26_Ultralytics-official_2606.03748v1_ko.html">한글 번역본 읽기 →</a>
+          </div>
+        </div>
+      </article>
+    
+    </section>
+
+    <section class="notes-box">
+      <h3>📌 빠진 버전 번호 안내 (원본 README 참고)</h3>
+      <ul>
+        <li><strong>YOLOv5 · YOLOv8 · YOLO11</strong>: Ultralytics가 공식 arXiv 논문 없이 GitHub 코드 및 온라인 문서로만 공개했습니다.</li>
+        <li><strong>YOLOv14</strong>: arXiv에 올라왔던 별도 연구이나 저자가 직접 철회(Withdrawn)하여 공식 목록에서 제외되었습니다.</li>
+        <li><strong>v15 ~ v25</strong>: 해당 번호의 공식 논문이 존재하지 않으며, Ultralytics는 YOLO11 다음 공식 모델로 <strong>YOLO26</strong>을 공개했습니다.</li>
+        <li><strong>주요 계보</strong>: v1~v3 (Redmon · Farhadi) / v4·v7·v9 (Bochkovskiy · Wang · Liao) / v6 (Meituan) / v10 (칭화대) / v12 (Tian 외) / v13 (iMoonLab) / 26 (Ultralytics)</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const root = document.documentElement;
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      document.getElementById('themeBtn').textContent = isDark ? '🌙 다크 모드' : '☀️ 라이트 모드';
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('themeBtn').textContent = '☀️ 라이트 모드';
+    }
+  </script>
+</body>
+</html>

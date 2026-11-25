@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOLOv6: 산업 응용을 위한 단일 단계 객체 탐지 프레임워크 — 한글 번역</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}], throwOnError:false});"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --code-bg: #f1f5f9;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.07);
+    }
+    [data-theme="dark"] {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #60a5fa;
+      --accent-soft: #1e3a5f;
+      --code-bg: #1e293b;
+      --shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.78;
+      font-size: 16px;
+    }
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.56rem 1.08rem;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.94rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, border-color 0.14s ease;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .nav-btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .nav-btn.primary:hover { opacity: 0.92; color: #fff; }
+    .layout {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 2rem;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      aside.toc { position: static !important; max-height: none !important; }
+    }
+    aside.toc {
+      position: sticky;
+      top: 4.5rem;
+      align-self: start;
+      max-height: calc(100vh - 5.5rem);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      box-shadow: var(--shadow);
+    }
+    aside.toc h3 {
+      margin: 0 0 0.65rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+    aside.toc ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.88rem;
+    }
+    aside.toc li { margin-bottom: 0.35rem; }
+    aside.toc li.sub { padding-left: 0.9rem; font-size: 0.83rem; }
+    aside.toc a {
+      color: var(--text-muted);
+      text-decoration: none;
+      display: block;
+      padding: 0.15rem 0.35rem;
+      border-radius: 6px;
+    }
+    aside.toc a:hover { background: var(--surface-2); color: var(--accent); }
+    .glossary-quick {
+      margin-bottom: 1rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .glossary-quick label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+    .glossary-quick form {
+      display: flex;
+      gap: 0.35rem;
+    }
+    .glossary-quick input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.35rem 0.55rem;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.82rem;
+    }
+    .glossary-quick button {
+      padding: 0.35rem 0.6rem;
+      border-radius: 7px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    main.paper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.25rem 2.5rem;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 640px) {
+      main.paper { padding: 1.35rem 1.1rem; }
+    }
+    .paper-header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .paper-header h1 {
+      margin: 0.2rem 0 0.45rem;
+      font-size: 1.75rem;
+      line-height: 1.32;
+    }
+    .paper-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0 0 0.5rem;
+    }
+    .paper-meta {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+    .summary-box {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.2rem;
+      border-radius: 0 10px 10px 0;
+      margin: 1.25rem 0 1.75rem;
+    }
+    .summary-box strong { display: block; margin-bottom: 0.35rem; color: var(--accent); }
+    h2 {
+      margin-top: 2.2rem;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.35rem;
+      scroll-margin-top: 4.5rem;
+    }
+    h3 {
+      margin-top: 1.5rem;
+      margin-bottom: 0.55rem;
+      font-size: 1.12rem;
+      scroll-margin-top: 4.5rem;
+    }
+    p { margin: 0 0 0.95rem; text-align: justify; word-break: keep-all; }
+    figure.paper-fig {
+      margin: 1.6rem 0;
+      padding: 1rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+    }
+    figure.paper-fig img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      background: #fff;
+      cursor: zoom-in;
+    }
+    figure.paper-fig figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: left;
+      line-height: 1.6;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1.4rem 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    th {
+      background: var(--surface-2);
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: none; }
+    caption {
+      caption-side: top;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.92rem;
+      padding: 0.65rem 0.75rem;
+      color: var(--text);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    code {
+      background: var(--code-bg);
+      padding: 0.12rem 0.38rem;
+      border-radius: 5px;
+      font-size: 0.88em;
+    }
+    .term-hint {
+      border-bottom: 1px dashed var(--accent);
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 96vw;
+      max-height: 92vh;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <a class="nav-btn" href="index.html">← 전체 논문 목록</a>
+      <a class="nav-btn primary" href="glossary.html">AI · Agent · YOLO 용어집</a>
+      <span style="font-size:0.88rem;color:var(--text-muted);font-weight:600;">YOLOv6 v1/v2</span>
+    </div>
+    <button class="nav-btn" onclick="toggleTheme()" id="themeBtn">🌙 다크 모드</button>
+  </header>
+
+  <div class="layout">
+    <aside class="toc">
+      <div class="glossary-quick">
+        <label for="gSearch">📘 모르는 용어 바로 찾기</label>
+        <form onsubmit="const q=document.getElementById('gSearch').value.trim(); window.open('glossary.html'+(q?'?q='+encodeURIComponent(q):''), '_blank'); return false;">
+          <input id="gSearch" type="search" placeholder="예: PGI, DFL, NMS, TAL..." />
+          <button type="submit">검색</button>
+        </form>
+      </div>
+      <h3>목차</h3>
+      <ul id="tocList"></ul>
+    </aside>
+
+    <main class="paper">
+      <div class="paper-header">
+        <div class="badge-row">
+          <span class="badge">YOLOv6 v1/v2</span>
+          <span class="badge">arXiv:2209.02976v1</span>
+          <span class="badge">2022 · Meituan</span>
+        </div>
+        <h1>YOLOv6: 산업 응용을 위한 단일 단계 객체 탐지 프레임워크</h1>
+        <p class="paper-subtitle">YOLOv6: A Single-Stage Object Detection Framework for Industrial Applications</p>
+        <div class="paper-meta">저자: Chuyi Li, Lulu Li, Hongliang Jiang, Kaiheng Weng, Yifei Geng, Liang Li, Zaidan Ke, Qingyuan Li, Meng Cheng, Weiqiang Nie, Yiduo Li, Bo Zhang, Yufei Liang, Linyuan Zhou, Xiaoming Xu, Xiangxiang Chu, Xiaoming Wei, Xiaolin Wei · 원문 PDF: <code>YOLOv6_2209.02976v1.pdf</code></div>
+      </div>
+
+      <div class="summary-box">
+  <strong>핵심 요약 (한눈에 보기)</strong>
+  <p>
+    <strong>YOLOv6</strong>은 Meituan이 산업 현장 배포(industrial application)에 초점을 맞춰 설계한 단일 단계(single-stage) 실시간 객체 탐지 프레임워크이다. 소형 모델과 대형 모델에 동일한 블록을 단순 스케일링하지 않고 모델 규모별로 최적화된 구조적 재파라미터화(structural re-parameterization) 아키텍처(EfficientRep / CSPStackRep)를 적용했으며, 학습 전략(TAL, VFL, SIoU/GIoU, DFL, 자기 증류)과 양자화 파이프라인(RepOptimizer + 채널별 증류 기반 QAT)을 통합해 속도와 정확도 사이의 최고 수준 트레이드오프를 달성했다.
+  </p>
+  <ul>
+    <li><strong>스케일 맞춤형 네트워크 설계:</strong> 소형 모델(N/T/S)에는 하드웨어 병렬성이 높은 단일 경로 <code>RepBlock</code> 기반 <code>EfficientRep</code> 백본과 <code>Rep-PAN</code> 넥을, 중·대형 모델(M/L)에는 연산량 폭발을 억제하는 다중 분기 <code>CSPStackRep</code> 블록을 적용하고, 하이브리드 채널 전략으로 경량화한 <strong>효율적 분리 헤드(Efficient Decoupled Head)</strong>를 채택했다.</li>
+    <li><strong>고도화된 학습 및 산업 실무 기법:</strong> 레이블 할당에는 <code>TAL</code>(Task Alignment Learning), 분류 손실에는 <code>VFL</code>(VariFocal Loss), 회귀 손실에는 <code>SIoU</code>/<code>GIoU</code> 및 <code>DFL</code>을 채택했다. 또한 분류와 박스 회귀 모두에 코사인 감쇠 가중치를 적용한 <strong>자기 증류(Self-distillation)</strong>, 400 에폭 학습, 그리고 회색 테두리(gray border) 패딩 문제 해결책을 도입했다.</li>
+    <li><strong>재파라미터화 모델 특화 양자화:</strong> <code>RepOptimizer</code>를 통한 기울기 재파라미터화로 PTQ 친화적 가중치를 얻고, 민감도 분석 및 FP32 교사-INT8 학생 간 <strong>채널별 증류(Channel-wise Distillation) 기반 QAT</strong>를 결합해 양자화 성능 저하를 극복했다.</li>
+    <li><strong>주요 성능 (COCO 2017 val, Tesla T4 FP16 / INT8 TensorRT):</strong> <code>YOLOv6-N</code>은 <strong>35.9% AP @ 1234 FPS</strong>(BS=32), <code>YOLOv6-S</code>는 <strong>43.5% AP @ 495 FPS</strong>, 양자화된 <code>YOLOv6-S (INT8)</code>는 <strong>43.3% AP @ 869 FPS</strong>를 기록했으며, <code>YOLOv6-M/L</code>은 각각 <strong>49.5% / 52.5% AP</strong>(초록 기준 52.3%)를 달성했다.</li>
+  </ul>
+</div>
+
+<h2>초록 (Abstract)</h2>
+<p>
+  수년간 YOLO 시리즈는 효율적인 객체 탐지(object detection) 분야에서 사실상의 산업 표준(de facto industry-level standard)으로 자리매김해 왔다. YOLO 커뮤니티는 다양한 하드웨어 플랫폼과 수많은 응용 시나리오에서 활용을 넓히며 폭발적으로 성장해 왔다. 본 기술 보고서(technical report)에서 우리는 산업 응용이라는 확고한 목표 의식을 가지고 YOLO의 한계를 한 단계 더 끌어올리고자 한다. 실제 환경에서 요구되는 다양한 속도와 정확도 조건을 고려하여, 산업계와 학계의 최신 객체 탐지 발전 동향을 폭넓게 검토하였다. 구체적으로 최신 네트워크 설계, 학습 전략, 추론 기법, 양자화(quantization) 및 최적화 방법론의 아이디어를 대폭 흡수하였다. 이를 바탕으로 우리의 통찰과 실무 경험을 결합하여 다양한 활용 사례에 대응할 수 있는 규모별 즉시 배포 가능(deployment-ready) 네트워크 제품군을 구축하였다. 기존 YOLO 저자들의 너그러운 허락을 받아 이를 <strong>YOLOv6</strong>이라 명명하였으며, 향후 발전을 위한 사용자와 기여자들의 참여를 환영한다.
+</p>
+<p>
+  성능을 개략적으로 살펴보면, <code>YOLOv6-N</code>은 NVIDIA Tesla T4 GPU에서 배치 크기 32 기준 1234 FPS의 처리량(throughput)으로 COCO 데이터셋 35.9% AP를 달성하였다. <code>YOLOv6-S</code>는 495 FPS에서 43.5% AP를 기록하여 동급 주류 탐지기(YOLOv5-S, YOLOX-S, PP-YOLOE-S)를 능가한다. 또한 양자화된 <code>YOLOv6-S</code> 버전은 869 FPS에서 43.3% AP라는 새로운 최고 성능(state-of-the-art)을 달성하였다. 나아가 <code>YOLOv6-M/L</code> 역시 유사한 추론 속도의 다른 탐지기보다 더 우수한 정확도(각각 49.5% / 52.3%)를 보여준다. 우리는 각 구성 요소의 효과를 검증하기 위해 세심한 실험을 수행하였으며, 코드는 <a href="https://github.com/meituan/YOLOv6" target="_blank" rel="noopener noreferrer">https://github.com/meituan/YOLOv6</a>에 공개하였다.
+</p>
+
+<h2>1. 서론 (Introduction)</h2>
+<p>
+  YOLO 시리즈는 속도와 정확도 사이의 뛰어난 균형 덕분에 산업 응용 분야에서 가장 널리 쓰이는 탐지 프레임워크이다. 선구적 연구인 YOLOv1~3[32–34]은 단일 단계 탐지기(one-stage detector)의 새로운 길을 열었고, 이후 상당한 개선이 이어졌다. YOLOv4[1]는 탐지 프레임워크를 백본(backbone), 넥(neck), 헤드(head) 등 여러 개별 구성 요소로 재구성하고, 단일 GPU에서 학습 가능한 프레임워크를 설계하기 위해 당시의 다양한 bag-of-freebies 및 bag-of-specials 기법을 검증하였다. 현재는 YOLOv5[10], YOLOX[7], PP-YOLOE[44], YOLOv7[42] 등이 배포용 효율적 탐지기의 유력한 경쟁 모델들로 꼽히며, 다양한 크기의 모델은 일반적으로 스케일링(scaling) 기법을 통해 얻어진다.
+</p>
+<p>
+  본 보고서에서 우리는 YOLO 프레임워크를 전면 개편하게 된 몇 가지 중요한 실증적 관찰 사항을 도출하였다.
+</p>
+<ol>
+  <li>
+    <strong>규모에 따른 아키텍처 차별화 필요성:</strong> RepVGG[3]의 재파라미터화(reparameterization)는 탐지 분야에서 아직 충분히 활용되지 못한 우수한 기법이다. 그러나 RepVGG 블록에 단순 모델 스케일링을 적용하는 것은 비실용적이라는 점도 확인하였다. 즉, 소형 네트워크와 대형 네트워크 사이의 아키텍처 일관성을 억지로 유지할 필요가 없다. 단순한 단일 경로(plain single-path) 아키텍처는 소형 네트워크에서는 더 나은 선택이지만, 대형 모델에서는 파라미터 수와 연산량의 기하급수적인 증가로 인해 적용이 불가능하다.
+  </li>
+  <li>
+    <strong>재파라미터화 기반 모델의 양자화 난제:</strong> 재파라미터화 기반 탐지기의 양자화는 세심한 처리가 요구되며, 그렇지 않으면 학습 시와 추론 시의 이질적인 구조 차이로 인한 성능 저하를 해결하기 어렵다.
+  </li>
+  <li>
+    <strong>실제 서빙 하드웨어와의 괴리:</strong> 기존 연구들[7, 10, 42, 44]은 배포 환경에 상대적으로 적은 관심을 기울여 V100과 같은 고가 장비에서 지연 시간(latency)을 비교하는 경향이 있다. 실제 서빙 환경에서는 하드웨어 격차가 존재하며, 일반적으로 Tesla T4와 같은 저전력 GPU가 비용이 낮으면서도 상당히 우수한 추론 성능을 제공한다.
+  </li>
+  <li>
+    <strong>아키텍처 변화에 따른 도메인 특화 전략 재검증:</strong> 레이블 할당(label assignment)이나 손실 함수(loss function) 설계 같은 고도화된 도메인 특화 전략은 아키텍처 변화에 맞추어 추가 검증이 필요하다.
+  </li>
+  <li>
+    <strong>추론 비용 없는 학습 전략 개선:</strong> 배포 관점에서는 지식 증류(knowledge distillation)처럼 추론 비용을 늘리지 않으면서 정확도만 높여주는 학습 전략의 조정을 적극 수용할 수 있다.
+  </li>
+</ol>
+<p>
+  이러한 관찰을 토대로, 우리는 정확도와 속도 면에서 현존 최고의 트레이드오프를 달성한 <strong>YOLOv6</strong>을 탄생시켰다. 유사 규모 경쟁 모델들과 YOLOv6의 비교는 그림 1에 제시되어 있다. 큰 성능 저하 없이 추론 속도를 더욱 끌어올리기 위해 학습 후 양자화(PTQ, Post-Training Quantization)와 양자화 인식 학습(QAT, Quantization-Aware Training) 등 최신 양자화 기법을 검토하고 이를 YOLOv6에 접목하여 즉시 배포 가능한 네트워크를 완성하였다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_1.png" alt="그림 1" />
+  <figcaption><strong>그림 1.</strong> 최신 효율적 객체 탐지기(state-of-the-art efficient object detectors)들의 성능 비교. 편의를 위해 지연 시간(latency)과 배치 크기 32 기준 처리량(throughput)을 함께 제시한다. 양자화 모델(TensorRT 8)을 제외한 모든 모델은 TensorRT 7 환경에서 테스트되었다.</figcaption>
+</figure>
+
+<p>YOLOv6의 핵심 기여는 다음과 같이 요약된다.</p>
+<ul>
+  <li>
+    다양한 시나리오의 산업 응용에 맞춘 크기별 네트워크 라인업을 새롭게 설계하였다. 속도와 정확도의 최적 균형을 위해 규모별로 구조를 달리하여, 소형 모델은 단일 경로(single-path) 백본을 특징으로 하고 대형 모델은 효율적인 다중 분기(multi-branch) 블록을 기반으로 구축하였다.
+  </li>
+  <li>
+    분류(classification) 작업과 회귀(regression) 작업 모두에 대해 <strong>자기 증류(self-distillation)</strong> 전략을 적용하였다. 동시에 교사 모델(teacher)의 지식과 정답 레이블(hard label) 간의 비중을 동적으로 조절하여 모든 학습 단계에서 학생 모델이 지식을 더 효율적으로 학습하도록 돕는다.
+  </li>
+  <li>
+    레이블 할당, 손실 함수, 데이터 증강(data augmentation) 등 최신 탐지 기법들을 폭넓게 검증하고 선별적으로 채택하여 성능을 더욱 향상시켰다.
+  </li>
+  <li>
+    <code>RepOptimizer</code>[2]와 채널별 증류(channel-wise distillation)[36]를 활용해 탐지 모델용 양자화 체계를 개혁함으로써, 배치 크기 32 기준 869 FPS의 처리량과 43.3% COCO AP를 동시에 달성하는 초고속·고정확도 탐지기를 구현하였다.
+  </li>
+</ul>
+
+<h2>2. 방법론 (Method)</h2>
+<p>
+  개선된 YOLOv6의 설계는 네트워크 설계, 레이블 할당, 손실 함수, 데이터 증강, 산업 실무형 개선 기법(industry-handy improvements), 그리고 양자화 및 배포의 여섯 가지 핵심 요소로 구성된다.
+</p>
+<ul>
+  <li>
+    <strong>네트워크 설계 (Network Design):</strong> <em>백본(Backbone):</em> 다른 주류 아키텍처와 비교했을 때, RepVGG[3] 백본은 소형 네트워크에서 유사한 추론 속도 대비 더 높은 특징 표현력을 갖추고 있으나, 파라미터와 연산량의 폭발적 증가로 인해 대형 모델로 스케일링하기 어렵다는 사실을 확인하였다. 이에 소형 네트워크의 기본 블록으로 <code>RepBlock</code>[3]을 채택하고, 대형 모델에는 효율적인 CSP[43] 블록을 개량한 <code>CSPStackRep Block</code>을 사용하였다. <em>넥(Neck):</em> YOLOv4와 YOLOv5를 따라 PAN(Path Aggregation Network) 토폴로지[24]를 채택하고, <code>RepBlock</code> 또는 <code>CSPStackRep Block</code>으로 강화한 <code>Rep-PAN</code>을 구성하였다. <em>헤드(Head):</em> 분리 헤드(decoupled head)를 더욱 효율적으로 단순화한 <strong>효율적 분리 헤드(Efficient Decoupled Head)</strong>를 제안한다.
+  </li>
+  <li>
+    <strong>레이블 할당 (Label Assignment):</strong> 다양한 실험을 통해 최신 레이블 할당 전략[5, 7, 18, 48, 51]을 YOLOv6에서 평가한 결과, <code>TAL</code>(Task Alignment Learning)[5]이 가장 효과적이고 학습 친화적임을 확인하였다.
+  </li>
+  <li>
+    <strong>손실 함수 (Loss Function):</strong> 주류 앵커 프리(anchor-free) 객체 탐지기의 손실 함수는 분류 손실, 박스 회귀 손실, 객체성 손실(object loss)로 구성된다. 각 손실 항목에 대해 가용한 모든 기법을 체계적으로 실험한 뒤, 최종적으로 분류 손실에는 <code>VariFocal Loss</code>(VFL)[50], 회귀 손실에는 <code>SIoU</code>[8]/<code>GIoU</code>[35] 손실을 채택하였다.
+  </li>
+  <li>
+    <strong>산업 실무형 개선 기법 (Industry-handy improvements):</strong> 자기 증류와 학습 에폭 증가 등 실무에서 바로 활용 가능한 기법을 도입하였다. 자기 증류에서는 분류와 박스 회귀 모두가 교사 모델로부터 지도(supervision)를 받으며, 특히 박스 회귀 증류는 <code>DFL</code>[20] 덕분에 가능해졌다. 또한 소프트 레이블(soft label)과 하드 레이블(hard label) 정보의 비율을 코사인 감쇠(cosine decay)로 동적 조절하여 학습 단계별로 학생 모델이 필요한 지식을 선택적으로 습득하게 한다. 아울러 평가 시 추가 회색 테두리(gray border)를 넣지 않을 때 발생하는 성능 저하 문제를 규명하고 해결책을 제시한다.
+  </li>
+  <li>
+    <strong>양자화 및 배포 (Quantization and deployment):</strong> 재파라미터화 기반 모델의 양자화 시 성능 저하를 치유하기 위해 <code>RepOptimizer</code>[2]로 YOLOv6을 학습시켜 PTQ 친화적 가중치를 얻는다. 나아가 극한의 성능을 추구하기 위해 채널별 증류[36] 기반의 QAT와 그래프 최적화(graph optimization)를 적용한다. 그 결과 양자화된 YOLOv6-S는 42.3% AP(v1.0 기준; v2.0 기준 43.3% AP)와 869 FPS(배치 크기 32)라는 새로운 최고 성능을 달성하였다.
+  </li>
+</ul>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_2.png" alt="그림 2" />
+  <figcaption><strong>그림 2.</strong> YOLOv6 프레임워크 구조 (N과 S 모델 기준). M/L 모델에서는 <code>RepBlock</code>이 <code>CSPStackRep</code> 블록으로 대체된다.</figcaption>
+</figure>
+
+<h3>2.1. 네트워크 설계 (Network Design)</h3>
+<p>
+  단일 단계 객체 탐지기는 일반적으로 백본, 넥, 헤드로 구성된다. 백본은 주로 특징 표현 능력을 결정하며, 전체 연산 비용의 큰 비중을 차지하므로 추론 효율성에 결정적인 영향을 미친다. 넥은 저수준의 물리적 특징(low-level physical features)과 고수준의 의미론적 특징(high-level semantic features)을 결합해 모든 스케일 수준의 피라미드 특징 맵을 구축한다. 헤드는 여러 합성곱 계층(convolutional layers)으로 이루어지며, 넥이 취합한 다중 수준 특징을 바탕으로 최종 탐지 결과를 예측한다. 헤드는 구조적 관점에서 앵커 기반(anchor-based)과 앵커 프리(anchor-free), 혹은 파라미터 공유 헤드(parameter-coupled head)와 파라미터 분리 헤드(parameter-decoupled head)로 나뉜다.
+</p>
+<p>
+  YOLOv6에서는 하드웨어 친화적 네트워크 설계 원칙[3]에 기반하여 다양한 모델 크기에 맞추어 스케일링된 두 종류의 재파라미터화 가능 백본·넥과, 하이브리드 채널 전략을 적용한 효율적 분리 헤드를 제안한다. YOLOv6의 전체 아키텍처는 그림 2에 나타나 있다.
+</p>
+
+<h4>2.1.1. 백본 (Backbone)</h4>
+<p>
+  앞서 언급했듯이 백본 네트워크의 설계는 탐지 모델의 효과성과 효율성에 지대한 영향을 미친다. 기존 연구들에서 다중 분기 네트워크[13, 14, 38, 39]가 단일 경로 네트워크[15, 37]보다 더 나은 분류 성능을 내는 경우가 많았으나, 이는 종종 병렬성 저하와 추론 지연 시간 증가를 동반한다. 반대로 VGG[37] 같은 단순 단일 경로 네트워크는 높은 병렬성과 적은 메모리 점유율(memory footprint)이라는 이점을 통해 높은 추론 효율을 얻는다. 최근 RepVGG[3]에서는 학습 시의 다중 분기 토폴로지와 추론 시의 단일 경로 아키텍처를 분리하는 구조적 재파라미터화(structural re-parameterization) 기법을 제안하여 더 나은 속도-정확도 트레이드오프를 달성하였다.
+</p>
+<p>
+  이러한 연구에 영감을 받아, 우리는 <code>EfficientRep</code>이라 명명한 효율적인 재파라미터화 백본을 설계하였다. 소형 모델에서 백본의 핵심 구성 요소는 학습 단계의 <code>RepBlock</code>이다(그림 3(a)). 추론 단계에서는 각 <code>RepBlock</code>이 ReLU 활성화 함수가 뒤따르는 $3 \times 3$ 합성곱 계층(<code>RepConv</code>)의 적층 구조로 변환된다(그림 3(b)). 일반적으로 $3 \times 3$ 합성곱은 주류 GPU와 CPU에서 고도로 최적화되어 있으며 높은 연산 밀도(computational density)를 누린다. 결과적으로 <code>EfficientRep</code> 백본은 하드웨어의 연산 능력을 충분히 활용하여 표현력을 높이는 동시에 추론 지연 시간을 크게 줄여준다.
+</p>
+<p>
+  그러나 모델 용량을 더욱 확장함에 따라 단일 경로 평면 네트워크에서는 연산 비용과 파라미터 수가 기하급수적으로 증가한다는 점을 확인하였다. 연산 부담과 정확도 사이의 더 나은 균형을 위해, 우리는 중·대형 네트워크의 백본을 구축할 <code>CSPStackRep Block</code>을 고안하였다. 그림 3(c)에 나타난 것처럼 <code>CSPStackRep Block</code>은 세 개의 $1 \times 1$ 합성곱 계층과, 잔차 연결(residual connection)이 포함된 두 개의 <code>RepVGG</code> 블록(학습 시) 또는 <code>RepConv</code>(추론 시)로 구성된 하위 블록들의 스택으로 이루어진다. 또한 과도한 연산 비용 없이 성능을 높이기 위해 CSP(Cross Stage Partial) 연결을 도입하였다. CSPRepResStage[45]와 비교했을 때 훨씬 간결한 구조를 갖추고 정확도와 속도 간의 균형을 효과적으로 맞춘다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_3.png" alt="그림 3" />
+  <figcaption><strong>그림 3.</strong> (a) <code>RepBlock</code>은 학습 시 ReLU 활성화 함수를 포함한 <code>RepVGG</code> 블록들의 스택으로 구성된다. (b) 추론 시에는 <code>RepVGG</code> 블록이 <code>RepConv</code>로 변환된다. (c) <code>CSPStackRep Block</code>은 세 개의 $1 \times 1$ 합성곱 계층과, 잔차 연결 및 ReLU 활성화 함수를 동반하는 이중 <code>RepConv</code> 하위 블록들의 스택으로 구성된다.</figcaption>
+</figure>
+
+<h4>2.1.2. 넥 (Neck)</h4>
+<p>
+  실무에서 다중 스케일 특징 통합(feature integration at multiple scales)은 객체 탐지의 핵심적이고 효과적인 요소로 입증되어 왔다[9, 21, 24, 40]. 우리는 YOLOv4[1]와 YOLOv5[10]에서 사용된 수정된 PAN 토폴로지[24]를 탐지 넥의 기반으로 채택하였다. 여기에 YOLOv5에서 사용하던 CSPBlock을 소형 모델에서는 <code>RepBlock</code>으로, 대형 모델에서는 <code>CSPStackRep Block</code>으로 교체하고 너비(width)와 깊이(depth)를 이에 맞게 조정하였다. YOLOv6의 넥은 <code>Rep-PAN</code>이라 명명한다.
+</p>
+
+<h4>2.1.3. 헤드 (Head)</h4>
+<p>
+  <strong>효율적 분리 헤드 (Efficient decoupled head):</strong> YOLOv5의 탐지 헤드는 분류 분기와 위치 추정(localization) 분기 간에 파라미터를 공유하는 결합 헤드(coupled head)인 반면, FCOS[41]와 YOLOX[7]에서는 두 분기를 분리하고 성능을 높이기 위해 각 분기에 두 개의 $3 \times 3$ 합성곱 계층을 추가하였다. YOLOv6에서는 하이브리드 채널(hybrid-channel) 전략을 채택하여 더 효율적인 분리 헤드를 구축한다. 구체적으로 중간 $3 \times 3$ 합성곱 계층의 수를 단 1개로 줄였으며, 헤드의 너비는 백본 및 넥의 너비 배율(width multiplier)에 맞추어 함께 스케일링된다. 이러한 수정은 연산 비용을 더욱 절감하여 더 낮은 추론 지연 시간을 달성한다.
+</p>
+<p>
+  <strong>앵커 프리 (Anchor-free):</strong> 앵커 프리 탐지기는 뛰어난 일반화 능력과 예측 결과 디코딩의 단순함으로 주목받으며, 후처리(post-processing) 시간 비용이 크게 줄어든다. 앵커 프리 탐지기는 앵커 포인트 기반(anchor point-based)[7, 41]과 키포인트 기반(keypoint-based)[16, 46, 53]의 두 가지 유형이 있다. YOLOv6에서는 앵커 포인트 기반 패러다임을 채택하며, 박스 회귀 분기는 해당 앵커 포인트로부터 경계 상자(bounding box)의 네 변까지의 거리를 직접 예측한다.
+</p>
+
+<h3>2.2. 레이블 할당 (Label Assignment)</h3>
+<p>
+  레이블 할당은 학습 단계에서 사전 정의된 앵커(또는 앵커 포인트)에 정답 레이블을 배정하는 역할을 한다. 선행 연구들은 단순한 IoU 기반 전략이나 정답 박스 내부 포함 방식(inside ground-truth)[41]부터 더욱 정교한 기법[5, 7, 18, 48, 51]까지 다양한 할당 전략을 제안해 왔다.
+</p>
+<p>
+  <strong>SimOTA:</strong> OTA[6]는 객체 탐지의 레이블 할당을 최적 수송(optimal transport) 문제로 간주하여 전역적 관점에서 각 정답 객체에 대한 양성(positive)/음성(negative) 학습 샘플을 정의한다. SimOTA[7]는 OTA[6]를 단순화하여 추가 하이퍼파라미터를 줄이면서도 성능을 유지한 기법이다. YOLOv6 초기 버전에서는 SimOTA를 사용했으나, 실제 운용 과정에서 SimOTA가 학습 속도를 느리게 만들고 학습 불안정(unstable training)에 빠지는 경우가 적지 않음을 발견하였다. 따라서 SimOTA를 대체할 방법이 필요했다.
+</p>
+<p>
+  <strong>작업 정렬 학습 (TAL, Task Alignment Learning):</strong> TAL은 TOOD[5]에서 처음 제안되었으며, 분류 점수(classification score)와 예측 박스 품질을 통합한 단일 지표(metric)를 설계해 IoU 대신 이 지표로 객체 레이블을 할당한다. 이를 통해 분류와 박스 회귀 두 작업 간의 불일치(misalignment) 문제를 상당 부분 완화한다. TOOD의 또 다른 주요 기여는 작업 정렬 헤드(T-head)로, 합성곱 계층을 쌓아 상호작용 특징을 만든 뒤 작업 정렬 예측기(TAP)를 적용한다. PP-YOLOE[45]는 T-head의 레이어 어텐션(layer attention)을 경량 ESE 어텐션으로 대체해 ET-head를 제안했으나, 우리 모델에서는 ET-head가 정확도 이득 없이 추론 속도만 저하시키는 것으로 나타났다. 따라서 우리는 효율적 분리 헤드 설계를 유지하였다. 나아가 TAL이 SimOTA보다 더 큰 성능 향상과 안정적인 학습을 제공함을 확인하여, YOLOv6의 기본 레이블 할당 전략으로 TAL을 채택하였다.
+</p>
+
+<h3>2.3. 손실 함수 (Loss Functions)</h3>
+<p>
+  객체 탐지는 분류와 위치 추정이라는 두 가지 하위 작업을 포함하며, 이에 대응하는 분류 손실과 박스 회귀 손실이 존재한다. 최근 몇 년간 각 하위 작업을 위한 다양한 손실 함수가 제안되었다. 본 절에서는 이러한 손실 함수들을 소개하고 YOLOv6에 최적인 손실 함수를 선정한 과정을 설명한다.
+</p>
+
+<h4>2.3.1. 분류 손실 (Classification Loss)</h4>
+<p>
+  분류기의 성능을 높이는 것은 탐지기 최적화의 핵심 부분이다. <code>Focal Loss</code>[22]는 기존 교차 엔트로피 손실(cross-entropy loss)을 수정하여 양성·음성 샘플 간 또는 어려운·쉬운 샘플 간의 클래스 불균형 문제를 해결하였다. 학습과 추론 사이에 품질 추정과 분류가 일관되지 않게 쓰이는 문제를 해결하기 위해, <code>Quality Focal Loss</code>(QFL)[20]는 분류 점수와 위치 추정 품질을 결합한 표현으로 분류 지도를 확장하였다. 반면 <code>VariFocal Loss</code>(VFL)[50]는 Focal Loss[22]에 기반하되 양성 샘플과 음성 샘플을 비대칭적으로 다루어, 서로 다른 중요도를 부여함으로써 양쪽 샘플의 학습 신호 균형을 맞춘다. <code>Poly Loss</code>[17]는 일반적인 분류 손실을 가중 다항식 기저(weighted polynomial bases)의 급수로 분해해 태스크와 데이터셋에 맞게 다항식 계수를 튜닝한다. 우리는 이러한 최신 분류 손실들을 모두 YOLOv6에서 평가한 뒤 최종적으로 <strong>VFL</strong>[50]을 채택하였다.
+</p>
+
+<h4>2.3.2. 박스 회귀 손실 (Box Regression Loss)</h4>
+<p>
+  박스 회귀 손실은 경계 상자를 정밀하게 위치시키기 위한 핵심 학습 신호를 제공한다. 초기 연구의 $L_1$ 손실 이후, IoU 계열 손실[8, 11, 35, 47, 52]과 확률 손실(probability loss)[20] 등 잘 설계된 다양한 회귀 손실이 등장하였다.
+</p>
+<ul>
+  <li>
+    <strong>IoU 계열 손실 (IoU-series Loss):</strong> IoU 손실[47]은 예측 박스의 네 경계를 하나의 통합된 단위로 회귀하며, 평가 지표(IoU)와의 일관성 덕분에 효과적임이 입증되었다. 이후 GIoU[35], DIoU[52], CIoU[52], $\alpha$-IoU[11], SIoU[8] 등 다양한 변형이 제안되었다. 본 연구에서는 GIoU, CIoU, SIoU를 실험하였으며, <code>YOLOv6-N</code>과 <code>YOLOv6-T</code>에는 <strong>SIoU</strong>를, 나머지 모델에는 <strong>GIoU</strong>를 적용하였다.
+  </li>
+  <li>
+    <strong>확률 손실 (Probability Loss):</strong> <code>Distribution Focal Loss</code>(DFL)[20]는 박스 위치의 연속 분포를 이산화된 확률 분포(discretized probability distribution)로 단순화하여 모델링한다. 이는 강한 사전 가정(prior) 없이도 데이터 내 모호성과 불확실성을 반영하므로, 특히 정답 박스의 경계가 흐릿할 때 위치 추정 정확도를 높이는 데 유리하다. DFL에 기반한 DFLv2[19]는 분포 통계와 실제 위치 추정 품질 간의 밀접한 상관관계를 활용하는 경량 서브네트워크를 추가해 탐지 성능을 더욱 끌어올린다. 그러나 DFL은 일반 박스 회귀보다 보통 17배 많은 회귀 값을 출력해야 하므로 상당한 오버헤드를 유발하며, 추가 연산 비용이 소형 모델의 학습을 크게 저해한다. DFLv2 역시 추가 서브네트워크로 인해 연산 부담이 더 커지며, 실험 결과 우리 모델에서 DFL과 유사한 수준의 성능 향상만 보였다. 결과적으로 우리는 <strong>DFL을 YOLOv6-M과 YOLOv6-L에만 채택</strong>하였다(상세 실험은 3.3.3절 참조).
+  </li>
+</ul>
+
+<h4>2.3.3. 객체성 손실 (Object Loss)</h4>
+<p>
+  객체성 손실(object loss)은 후처리 단계에서 품질이 낮은 경계 상자의 점수를 낮춰 걸러내기 위해 FCOS[41]에서 처음 제안되었으며, YOLOX[7]에서도 수렴 가속과 정확도 향상을 위해 사용되었다. FCOS 및 YOLOX와 같은 앵커 프리 프레임워크로서 YOLOv6에도 객체성 손실을 시험해 보았으나, 아쉽게도 긍정적인 효과를 거두지 못하였다(세부 사항은 3절 참조).
+</p>
+
+<h3>2.4. 산업 실무형 개선 기법 (Industry-handy improvements)</h3>
+<p>
+  다음 기법들은 실제 산업 현장에서 바로 활용할 수 있는 실용적 요소들이다. 타 모델과의 엄밀한 공정 비교만을 목적으로 한 것은 아니지만, 큰 수고 없이도 꾸준히 성능 향상을 이끌어낸다.
+</p>
+
+<h4>2.4.1. 더 많은 학습 에폭 (More training epochs)</h4>
+<p>
+  경험적 결과에 따르면 탐지기는 학습 시간이 길어질수록 점진적으로 성능이 향상된다. 우리는 더 나은 수렴에 도달하기 위해 학습 기간을 기존 300 에폭에서 <strong>400 에폭</strong>으로 연장하였다.
+</p>
+
+<h4>2.4.2. 자기 증류 (Self-distillation)</h4>
+<p>
+  추가 추론 연산 비용을 거의 늘리지 않으면서 모델 정확도를 더욱 높이기 위해, 교사 모델과 학생 모델의 예측 간 쿨백-라이블러 발산(KL-divergence)을 최소화하는 고전적 지식 증류 기법을 적용하였다. 이때 교사 모델을 사전 학습된 학생 모델 자신으로 제한하므로 이를 <strong>자기 증류(self-distillation)</strong>라 부른다. 일반적으로 객체 탐지의 두 하위 작업 중 분류 작업만 KL-발산 기반 지식 증류를 직접 적용할 수 있으나, <code>DFL</code> 손실[20] 덕분에 박스 회귀 작업에도 KL-발산 증류를 수행할 수 있다. 지식 증류 손실 $L_{\text{KD}}$는 다음과 같이 정식화된다.
+</p>
+$$L_{\text{KD}} = \text{KL}\left(p_t^{\text{cls}} \,\|\, p_s^{\text{cls}}\right) + \text{KL}\left(p_t^{\text{reg}} \,\|\, p_s^{\text{reg}}\right) \tag{1}$$
+<p>
+  여기서 $p_t^{\text{cls}}$와 $p_s^{\text{cls}}$는 각각 교사 모델과 학생 모델의 클래스 예측이며, $p_t^{\text{reg}}$와 $p_s^{\text{reg}}$는 박스 회귀 예측이다. 이에 따라 전체 손실 함수는 다음과 같이 정의된다.
+</p>
+$$L_{\text{total}} = L_{\text{det}} + \alpha L_{\text{KD}} \tag{2}$$
+<p>
+  여기서 $L_{\text{det}}$는 예측과 정답 레이블로 계산한 탐지 손실이고, $\alpha$는 두 손실의 균형을 맞추는 하이퍼파라미터이다. 학습 초기 단계에서는 교사 모델이 제공하는 소프트 레이블이 학습하기 쉽지만, 학습이 진행되어 학생 모델의 성능이 교사 수준에 근접하면 하드 레이블이 학생 모델에 더 큰 도움을 준다. 이에 착안하여 $\alpha$에 코사인 가중치 감쇠(cosine weight decay)를 적용해 교사의 소프트 레이블 정보와 하드 레이블 정보의 비중을 동적으로 조절하였다. YOLOv6에서 자기 증류의 효과를 검증한 상세 실험은 3절에서 다룬다.
+</p>
+
+<h4>2.4.3. 이미지의 회색 테두리 (Gray border of images)</h4>
+<p>
+  YOLOv5[10]와 YOLOv7[42]의 구현에서는 모델 성능을 평가할 때 각 이미지 주변에 스트라이드 절반(half-stride) 크기의 회색 테두리(gray border)를 덧대는 것을 확인하였다. 이 테두리는 유의미한 정보를 추가하지 않지만 이미지 가장자리 근처의 객체를 탐지하는 데 도움을 주며, 이는 YOLOv6에도 동일하게 적용된다.
+</p>
+<p>
+  그러나 추가된 회색 픽셀들은 추론 속도를 명백히 저하시킨다. 반대로 회색 테두리를 제거하면 [10, 42]와 마찬가지로 YOLOv6의 성능도 하락한다. 우리는 이 문제가 Mosaic 데이터 증강[1, 10] 시 들어가는 회색 테두리 패딩과 관련이 있다고 가설을 세우고, 학습 마지막 에폭 동안 Mosaic 증강을 끄는 실험(일명 fade 전략[7])을 수행하여 이를 검증하였다. 또한 회색 테두리의 면적을 조정하고 회색 테두리가 포함된 이미지를 목표 입력 크기로 직접 리사이즈하였다. 이 두 전략을 결합함으로써 추론 속도 저하 없이도 성능을 유지하거나 오히려 향상시킬 수 있었다.
+</p>
+
+<h3>2.5. 양자화 및 배포 (Quantization and Deployment)</h3>
+<p>
+  산업 배포에서는 큰 성능 저하 없이 실행 속도를 더욱 가속하기 위해 양자화(quantization)를 적용하는 것이 일반적이다. 학습 후 양자화(PTQ)는 소규모 보정 데이터셋(calibration set)만으로 모델을 직접 양자화하는 반면, 양자화 인식 학습(QAT)은 전체 학습 데이터셋을 활용하여(주로 증류와 결합해) 성능을 한층 끌어올린다. 그러나 YOLOv6은 재파라미터화 블록을 대거 사용하기 때문에 기존 PTQ 기법으로는 높은 성능을 얻기 어렵고, 학습 시와 추론 시의 가짜 양자화기(fake quantizer)를 일치시켜야 하는 문제로 인해 QAT를 통합하기도 까다롭다. 본 절에서는 배포 과정에서 마주친 함정과 이에 대한 우리의 해법을 제시한다.
+</p>
+
+<h4>2.5.1. 재파라미터화 옵티마이저 (Reparameterizing Optimizer)</h4>
+<p>
+  <code>RepOptimizer</code>[2]는 매 최적화 단계마다 기울기 재파라미터화(gradient re-parameterization)를 수행하는 기법으로, 재파라미터화 기반 모델의 양자화 문제를 훌륭히 해결한다. 이에 우리는 YOLOv6의 재파라미터화 블록들을 이러한 방식으로 재구성하고 <code>RepOptimizer</code>로 학습시켜 PTQ 친화적인 가중치를 확보하였다. 그 결과 그림 4(추가 예시는 부록 B.1 참조)에서 보듯 특징 맵의 활성화 분포가 크게 좁아져 양자화 과정에 지대한 이점을 제공한다(결과는 3.5.1절 참조).
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_4.png" alt="그림 4" />
+  <figcaption><strong>그림 4.</strong> <code>RepOptimizer</code>로 학습된 <code>YOLOv6-S</code>의 개선된 활성화 값(activation) 분포.</figcaption>
+</figure>
+
+<h4>2.5.2. 민감도 분석 (Sensitivity Analysis)</h4>
+<p>
+  우리는 양자화에 민감한 연산 일부를 부동소수점(float) 연산으로 전환함으로써 PTQ 성능을 더욱 개선하였다. 민감도 분포를 얻기 위해 일반적으로 평균 제곱 오차(MSE), 신호 대 잡음비(SNR), 코사인 유사도(cosine similarity) 같은 지표를 사용한다. 대개 특정 계층의 활성화 이후 출력 특징 맵을 선택해 양자화 전후로 이 지표들을 계산한다. 대안으로 특정 계층의 양자화를 켜고 끄면서 검증 AP를 직접 계산하는 방법[29]도 활용 가능하다. 우리는 <code>RepOptimizer</code>로 학습한 <code>YOLOv6-S</code> 모델에 대해 이 모든 지표를 계산하여 민감도가 가장 높은 상위 6개 계층을 부동소수점 연산으로 실행하도록 지정하였다. 전체 민감도 분석 차트는 부록 B.2에 수록되어 있다.
+</p>
+
+<h4>2.5.3. 채널별 증류를 적용한 양자화 인식 학습 (QAT with Channel-wise Distillation)</h4>
+<p>
+  PTQ만으로 충분하지 않은 경우, 양자화 성능을 극대화하기 위해 QAT를 도입할 것을 제안한다. 학습과 추론 사이의 가짜 양자화기 불일치 문제를 해소하려면 <code>RepOptimizer</code> 위에 QAT를 구축하는 것이 필수적이다. 아울러 그림 5와 같이 YOLOv6 프레임워크 내에 채널별 증류(Channel-wise Distillation, 이하 CW Distill)[36]를 적용하였다. 이 역시 교사 네트워크가 FP32 정밀도의 학생 모델 자신인 자기 증류 방식이다(실험 결과는 3.5.1절 및 3.5.2절 참조).
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_5.png" alt="그림 5" />
+  <figcaption><strong>그림 5.</strong> QAT에서 YOLOv6 채널별 증류(channel-wise distillation)의 모식도.</figcaption>
+</figure>
+
+<h2>3. 실험 (Experiments)</h2>
+
+<h3>3.1. 구현 세부 사항 (Implementation Details)</h3>
+<p>
+  옵티마이저와 학습률 스케줄은 YOLOv5[10]와 동일하게 모멘텀(momentum)과 코사인 학습률 감쇠(cosine decay)를 적용한 확률적 경사 하강법(SGD)을 사용한다. 웜업(warm-up), 그룹별 가중치 감쇠(grouped weight decay) 전략, 지수 이동 평균(EMA, Exponential Moving Average) 역시 활용하였다. 데이터 증강으로는 [1, 7, 10]을 따라 강력한 두 가지 증강 기법인 Mosaic[1, 10]과 Mixup[49]을 채택하였다. 전체 하이퍼파라미터 설정 목록은 공개된 코드에서 확인할 수 있다. 모든 모델은 COCO 2017[23] 학습 세트에서 학습하고, 정확도는 COCO 2017 검증(val) 세트에서 평가하였다. 학습은 8대의 NVIDIA A100 GPU에서 수행하였으며, 속도 성능은 별도 명시가 없는 한 NVIDIA Tesla T4 GPU와 TensorRT 7.2 버전 환경에서 측정하였다. 다른 TensorRT 버전 또는 다른 장치에서의 속도 성능은 부록 A에 제시되어 있다.
+</p>
+
+<h3>3.2. 성능 비교 (Comparisons)</h3>
+<p>
+  본 연구의 목표가 산업 응용을 위한 네트워크 구축인 만큼, FLOPs나 파라미터 수보다는 실제 배포 후 모델의 속도 성능, 즉 처리량(배치 크기 1 또는 32에서의 FPS)과 GPU 지연 시간(latency)에 주안점을 두었다. 우리는 YOLOv5[10], YOLOX[7], PP-YOLOE[45], YOLOv7[42] 등 최신 YOLO 계열 탐지기들과 YOLOv6을 비교하였다. 모든 공식 모델의 속도 성능은 동일한 Tesla T4 GPU에서 TensorRT[28] 기반 FP16 정밀도로 재측정하였다. YOLOv7-Tiny의 성능은 공식 공개 코드 및 가중치를 바탕으로 입력 크기 416과 640에서 재평가하였다. 결과는 표 1과 그림 1에 나타나 있다.
+</p>
+<ul>
+  <li><code>YOLOv6-N</code>은 <code>YOLOv5-N</code> 및 <code>YOLOv7-Tiny</code>(입력 크기 416) 대비 각각 <strong>7.9% / 2.6%</strong> 더 높은 AP를 달성하였으며, 처리량과 지연 시간 모두에서 최고의 속도를 기록하였다.</li>
+  <li><code>YOLOv6-S</code>는 <code>YOLOX-S</code> 및 <code>PP-YOLOE-S</code> 대비 더 빠른 속도로 AP를 각각 <strong>3.0% / 0.4%</strong> 향상시켰다.</li>
+  <li><code>YOLOv5-S</code> 및 <code>YOLOv7-Tiny</code>(입력 크기 640)와 <code>YOLOv6-T</code>를 비교하면, 우리 모델은 정확도가 <strong>2.9%</strong> 더 높으면서 배치 크기 1 기준 <strong>73 / 25 FPS</strong> 더 빠르다.</li>
+  <li><code>YOLOv6-M</code>은 유사한 속도에서 <code>YOLOv5-M</code>보다 <strong>4.2%</strong> 높은 AP를 기록하며, <code>YOLOX-M</code> / <code>PP-YOLOE-M</code>보다도 더 빠른 속도로 <strong>2.7% / 0.6%</strong> 높은 AP를 달성하였다. 또한 <code>YOLOv5-L</code>보다도 더 정확하고 빠르다.</li>
+  <li><code>YOLOv6-L</code>은 동일한 지연 시간 제약 하에서 <code>YOLOX-L</code> / <code>PP-YOLOE-L</code>보다 <strong>2.8% / 1.1%</strong> 더 정확하다. 추가로 SiLU를 ReLU로 대체한 고속 버전(<code>YOLOv6-L-ReLU</code>)을 제공하며, 이 모델은 8.8 ms 지연 시간에서 <strong>51.7% AP</strong>를 달성해 정확도와 속도 모두에서 <code>YOLOX-L</code>, <code>PP-YOLOE-L</code>, <code>YOLOv7</code>을 능가한다.</li>
+</ul>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 1. COCO 2017 val에서의 타 YOLO 계열 탐지기와의 성능 비교. FPS와 지연 시간은 동일한 Tesla T4 환경에서 TensorRT FP16 정밀도로 측정하였다. 모든 YOLOv6 모델은 사전 학습이나 외부 데이터 없이 300 에폭 학습되었으며, 정확도와 속도 모두 $640 \times 640$ 입력 해상도에서 평가되었다. ‘$\ddagger$’는 제안된 자기 증류 기법이 적용되었음을, ‘$*$’는 공식 코드를 통해 공개 모델을 재평가한 결과임을 뜻한다.</caption>
+    <thead>
+      <tr>
+        <th>모델 (Method)</th>
+        <th>입력 크기</th>
+        <th>$\text{AP}^{\text{val}}$</th>
+        <th>$\text{AP}^{\text{val}}_{50}$</th>
+        <th>FPS (bs=1)</th>
+        <th>FPS (bs=32)</th>
+        <th>지연 시간 (bs=1)</th>
+        <th>파라미터</th>
+        <th>FLOPs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-N [10]</td><td>640</td><td>28.0%</td><td>45.7%</td><td>602</td><td>735</td><td>1.7 ms</td><td>1.9 M</td><td>4.5 G</td></tr>
+      <tr><td>YOLOv5-S [10]</td><td>640</td><td>37.4%</td><td>56.8%</td><td>376</td><td>444</td><td>2.7 ms</td><td>7.2 M</td><td>16.5 G</td></tr>
+      <tr><td>YOLOv5-M [10]</td><td>640</td><td>45.4%</td><td>64.1%</td><td>182</td><td>209</td><td>5.5 ms</td><td>21.2 M</td><td>49.0 G</td></tr>
+      <tr><td>YOLOv5-L [10]</td><td>640</td><td>49.0%</td><td>67.3%</td><td>113</td><td>126</td><td>8.8 ms</td><td>46.5 M</td><td>109.1 G</td></tr>
+      <tr><td>YOLOX-Tiny [7]</td><td>416</td><td>32.8%</td><td>50.3%$*$</td><td>717</td><td>1143</td><td>1.4 ms</td><td>5.1 M</td><td>6.5 G</td></tr>
+      <tr><td>YOLOX-S [7]</td><td>640</td><td>40.5%</td><td>59.3%$*$</td><td>333</td><td>396</td><td>3.0 ms</td><td>9.0 M</td><td>26.8 G</td></tr>
+      <tr><td>YOLOX-M [7]</td><td>640</td><td>46.9%</td><td>65.6%$*$</td><td>155</td><td>179</td><td>6.4 ms</td><td>25.3 M</td><td>73.8 G</td></tr>
+      <tr><td>YOLOX-L [7]</td><td>640</td><td>49.7%</td><td>68.0%$*$</td><td>94</td><td>103</td><td>10.6 ms</td><td>54.2 M</td><td>155.6 G</td></tr>
+      <tr><td>PPYOLOE-S [45]</td><td>640</td><td>43.1%</td><td>59.6%</td><td>327</td><td>419</td><td>3.1 ms</td><td>7.9 M</td><td>17.4 G</td></tr>
+      <tr><td>PPYOLOE-M [45]</td><td>640</td><td>49.0%</td><td>65.9%</td><td>152</td><td>189</td><td>6.6 ms</td><td>23.4 M</td><td>49.9 G</td></tr>
+      <tr><td>PPYOLOE-L [45]</td><td>640</td><td>51.4%</td><td>68.6%</td><td>101</td><td>127</td><td>10.1 ms</td><td>52.2 M</td><td>110.1 G</td></tr>
+      <tr><td>YOLOv7-Tiny [42]</td><td>416</td><td>33.3%$*$</td><td>49.9%$*$</td><td>787</td><td>1196</td><td>1.3 ms</td><td>6.2 M</td><td>5.8 G</td></tr>
+      <tr><td>YOLOv7-Tiny [42]</td><td>640</td><td>37.4%$*$</td><td>55.2%$*$</td><td>424</td><td>519</td><td>2.4 ms</td><td>6.2 M</td><td>13.7 G$*$</td></tr>
+      <tr><td>YOLOv7 [42]</td><td>640</td><td>51.2%</td><td>69.7%</td><td>110</td><td>122</td><td>9.0 ms</td><td>36.9 M</td><td>104.7 G</td></tr>
+      <tr><td><strong>YOLOv6-N</strong></td><td>640</td><td><strong>35.9%</strong></td><td><strong>51.2%</strong></td><td><strong>802</strong></td><td><strong>1234</strong></td><td><strong>1.2 ms</strong></td><td>4.3 M</td><td>11.1 G</td></tr>
+      <tr><td><strong>YOLOv6-T</strong></td><td>640</td><td><strong>40.3%</strong></td><td><strong>56.6%</strong></td><td><strong>449</strong></td><td><strong>659</strong></td><td><strong>2.2 ms</strong></td><td>15.0 M</td><td>36.7 G</td></tr>
+      <tr><td><strong>YOLOv6-S</strong></td><td>640</td><td><strong>43.5%</strong></td><td><strong>60.4%</strong></td><td><strong>358</strong></td><td><strong>495</strong></td><td><strong>2.8 ms</strong></td><td>17.2 M</td><td>44.2 G</td></tr>
+      <tr><td><strong>YOLOv6-M$\ddagger$</strong></td><td>640</td><td><strong>49.5%</strong></td><td><strong>66.8%</strong></td><td><strong>179</strong></td><td><strong>233</strong></td><td><strong>5.6 ms</strong></td><td>34.3 M</td><td>82.2 G</td></tr>
+      <tr><td><strong>YOLOv6-L-ReLU$\ddagger$</strong></td><td>640</td><td><strong>51.7%</strong></td><td><strong>69.2%</strong></td><td><strong>113</strong></td><td><strong>149</strong></td><td><strong>8.8 ms</strong></td><td>58.5 M</td><td>144.0 G</td></tr>
+      <tr><td><strong>YOLOv6-L$\ddagger$</strong></td><td>640</td><td><strong>52.5%</strong></td><td><strong>70.0%</strong></td><td><strong>98</strong></td><td><strong>121</strong></td><td><strong>10.2 ms</strong></td><td>58.5 M</td><td>144.0 G</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>3.3. 절제 연구 (Ablation Study)</h3>
+
+<h4>3.3.1. 네트워크 (Network)</h4>
+<p>
+  <strong>백본 및 넥 (Backbone and neck):</strong> 백본과 넥에서 단일 경로 구조와 다중 분기 구조가 미치는 영향, 그리고 <code>CSPStackRep Block</code>의 채널 계수(channel coefficient, CC)를 탐구하였다. 이 절의 모든 모델은 레이블 할당으로 TAL, 분류 손실로 VFL, 회귀 손실로 GIoU 및 DFL을 사용하였다. 표 2의 결과에서 볼 수 있듯 모델 크기에 따라 최적의 네트워크 구조가 달라진다.
+</p>
+<p>
+  <code>YOLOv6-N</code>에서는 단일 경로 구조가 정확도와 속도 모두에서 다중 분기 구조를 앞선다. 단일 경로 구조는 다중 분기 구조보다 FLOPs와 파라미터 수가 더 많음에도 불구하고, 상대적으로 낮은 메모리 점유율과 높은 병렬성 덕분에 더 빠르게 실행된다. <code>YOLOv6-S</code>에서는 두 블록 방식이 유사한 성능을 보였다. 반면 더 큰 모델로 갈수록 다중 분기 구조가 정확도와 속도 모두에서 우수한 성능을 보인다. 최종적으로 <code>YOLOv6-M</code>에는 채널 계수 $2/3$, <code>YOLOv6-L</code>에는 채널 계수 $1/2$의 다중 분기 구조를 채택하였다.
+</p>
+<p>
+  또한 <code>YOLOv6-L</code>에서 넥의 너비와 깊이가 미치는 영향을 조사하였다. 표 3의 결과는 가늘고 깊은 넥(slender neck)이 유사한 속도에서 넓고 얕은 넥(wide-shallow neck)보다 0.2% 더 우수한 성능을 보임을 나타낸다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 2. 백본 및 넥에 대한 절제 연구. 여기서 <code>YOLOv6-L</code>은 ReLU 활성화 함수를 사용한다.</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>블록 (Block)</th>
+        <th>CC</th>
+        <th>$\text{AP}^{\text{val}}$</th>
+        <th>FPS (bs=32)</th>
+        <th>파라미터</th>
+        <th>FLOPs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="2">YOLOv6-N</td><td>RepBlock</td><td>-</td><td>35.2%</td><td>1237</td><td>4.3 M</td><td>11.1 G</td></tr>
+      <tr><td>CSPStackRep Block</td><td>1/2</td><td>32.7%</td><td>1257</td><td>2.3 M</td><td>5.6 G</td></tr>
+      <tr><td rowspan="2">YOLOv6-S</td><td>RepBlock</td><td>-</td><td>43.2%</td><td>499</td><td>17.2 M</td><td>44.2 G</td></tr>
+      <tr><td>CSPStackRep Block</td><td>1/2</td><td>43.4%</td><td>511</td><td>11.5 M</td><td>27.7 G</td></tr>
+      <tr><td rowspan="3">YOLOv6-M</td><td>RepBlock</td><td>-</td><td>47.9%</td><td>137</td><td>67.1 M</td><td>175.6 G</td></tr>
+      <tr><td>CSPStackRep Block</td><td>2/3</td><td>48.1%</td><td>237</td><td>34.3 M</td><td>82.2 G</td></tr>
+      <tr><td>CSPStackRep Block</td><td>1/2</td><td>47.3%</td><td>237</td><td>27.7 M</td><td>68.4 G</td></tr>
+      <tr><td rowspan="2">YOLOv6-L</td><td>CSPStackRep Block</td><td>2/3</td><td>50.1%</td><td>149</td><td>54.7 M</td><td>142.7 G</td></tr>
+      <tr><td>CSPStackRep Block</td><td>1/2</td><td>50.1%</td><td>151</td><td>58.5 M</td><td>144.0 G</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 3. <code>YOLOv6-L</code> 넥 설정에 대한 절제 연구. 활성화 함수로 SiLU가 선택되었다.</caption>
+    <thead>
+      <tr>
+        <th>너비 (Width)</th>
+        <th>깊이 (Depth)</th>
+        <th>$\text{AP}^{\text{val}}$</th>
+        <th>FPS (bs=32)</th>
+        <th>파라미터</th>
+        <th>FLOPs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>[192, 384, 768]</td><td>5</td><td>50.8%</td><td>123</td><td>58.6 M</td><td>144.7 G</td></tr>
+      <tr><td>[128, 256, 512]</td><td>12</td><td>51.0%</td><td>122</td><td>58.5 M</td><td>144.0 G</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>합성곱 계층과 활성화 함수의 조합:</strong> YOLO 시리즈는 ReLU[27], LReLU[25], Swish[31], SiLU[4], Mish[26] 등 다양한 활성화 함수를 채택해 왔으며, 그중 SiLU가 가장 널리 사용된다. 일반적으로 SiLU는 더 높은 정확도를 제공하며 추가 연산량도 크지 않다. 그러나 산업 응용, 특히 TensorRT[28] 가속으로 모델을 배포할 때는 ReLU가 합성곱 계층과 융합(fusion)될 수 있어 훨씬 큰 속도 이점을 가진다.
+</p>
+<p>
+  더 나아가 우리는 더 나은 트레이드오프를 찾기 위해 다양한 크기의 네트워크에서 <code>RepConv</code>/일반 합성곱(Conv)과 ReLU/SiLU/LReLU의 조합 효과를 검증하였다. 표 4에서 보듯 <code>Conv + SiLU</code>는 정확도가 가장 높고, <code>RepConv + ReLU</code> 조합은 더 나은 속도-정확도 균형을 달성한다. 지연 시간에 민감한 응용 분야에서는 <code>RepConv + ReLU</code> 조합을 권장한다. 우리는 더 높은 추론 속도를 위해 <code>YOLOv6-N/T/S/M</code>에 <code>RepConv/ReLU</code> 조합을 사용하였고, 대형 모델 <code>YOLOv6-L</code>에는 학습 가속과 성능 향상을 위해 <code>Conv/SiLU</code> 조합을 사용하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 4. 서로 다른 유형의 합성곱 계층(Conv.)과 활성화 계층(Act.) 조합에 대한 절제 연구.</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>Conv.</th>
+        <th>Act.</th>
+        <th>$\text{AP}^{\text{val}}$</th>
+        <th>FPS (bs=32)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="6">YOLOv6-N</td><td>Conv</td><td>SiLU</td><td>36.6%</td><td>963</td></tr>
+      <tr><td>RepConv</td><td>SiLU</td><td>36.5%</td><td>971</td></tr>
+      <tr><td>Conv</td><td>ReLU</td><td>34.8%</td><td>1246</td></tr>
+      <tr><td>RepConv</td><td>ReLU</td><td>35.2%</td><td>1233</td></tr>
+      <tr><td>Conv</td><td>LReLU</td><td>35.4%</td><td>983</td></tr>
+      <tr><td>RepConv</td><td>LReLU</td><td>35.6%</td><td>975</td></tr>
+      <tr><td rowspan="6">YOLOv6-M</td><td>Conv</td><td>SiLU</td><td>48.9%</td><td>180</td></tr>
+      <tr><td>RepConv</td><td>SiLU</td><td>48.9%</td><td>180</td></tr>
+      <tr><td>Conv</td><td>ReLU</td><td>47.7%</td><td>235</td></tr>
+      <tr><td>RepConv</td><td>ReLU</td><td>48.1%</td><td>236</td></tr>
+      <tr><td>Conv</td><td>LReLU</td><td>48.0%</td><td>185</td></tr>
+      <tr><td>RepConv</td><td>LReLU</td><td>48.1%</td><td>187</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>기타 설계 요소 (Miscellaneous design):</strong> <code>YOLOv6-N</code>을 기반으로 2.1절에서 언급한 다른 네트워크 요소들에 대한 점진적(incremental) 절제 연구를 수행하였다. <code>YOLOv5-N</code>을 기준선(baseline)으로 삼아 구성 요소를 하나씩 추가한 결과가 표 5에 정리되어 있다. 첫째, 분리 헤드(DH)를 적용하면 시간 비용이 5% 증가하는 대신 정확도가 <strong>1.4%</strong> 향상된다. 둘째, 앵커 프리(AF) 패러다임은 사전 정의된 앵커가 3배 적어 출력 차원이 줄어듦에 따라 앵커 기반 방식보다 <strong>51% 더 빠르다</strong>. 셋째, 백본(EfficientRep Backbone)과 넥(Rep-PAN)의 통합 수정(EB+RN)은 AP를 <strong>3.6%</strong> 향상시키는 동시에 속도를 <strong>21%</strong> 더 빠르게 만든다. 마지막으로 최적화된 분리 헤드(하이브리드 채널, HC)는 정확도와 속도를 각각 <strong>0.2% AP</strong> 및 <strong>6.8% FPS</strong> 개선한다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 5. 모든 네트워크 설계 요소에 대한 점진적 절제 연구. FPS는 Tesla T4 GPU에서 FP16 정밀도 및 배치 크기 32로 측정되었다. (DH: 분리 헤드, AF: 앵커 프리, EB+RN: EfficientRep 백본 + Rep-PAN 넥, HC: 하이브리드 채널)</caption>
+    <thead>
+      <tr>
+        <th>DH</th>
+        <th>AF</th>
+        <th>EB+RN</th>
+        <th>HC</th>
+        <th>$\text{AP}^{\text{val}}$</th>
+        <th>FPS (bs=32)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>28.0%</td><td>672</td></tr>
+      <tr><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>29.4%</td><td>637</td></tr>
+      <tr><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>30.7%</td><td>962</td></tr>
+      <tr><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>34.3%</td><td>1163</td></tr>
+      <tr><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>34.5%</td><td>1242</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>3.3.2. 레이블 할당 (Label Assignment)</h4>
+<p>
+  표 6에서는 <code>YOLOv6-N</code>을 대상으로 주류 레이블 할당 전략들의 효과를 분석하였다. 예상대로 SimOTA와 TAL이 가장 우수한 두 전략으로 나타났다. ATSS 대비 SimOTA는 AP를 2.0% 높였고, TAL은 SimOTA보다 0.5% 더 높은 AP를 기록하였다. TAL의 안정적인 학습과 더 우수한 정확도를 고려하여 YOLOv6의 레이블 할당 전략으로 TAL을 채택하였다.
+</p>
+<p>
+  또한 TOOD[5]의 구현에서는 초기 학습 에폭 동안 웜업 레이블 할당 전략으로 ATSS[51]를 사용한다. 우리 역시 웜업 전략을 유지하면서 추가 탐색을 진행하였다. 표 7에서 보듯 웜업이 없거나 SimOTA 등 다른 전략으로 웜업을 수행하더라도 유사한 성능을 달성함을 확인하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 6. 레이블 할당 기법들의 성능 비교.</caption>
+    <thead>
+      <tr><th>기법 (Method)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ATSS [51]</td><td>32.5%</td></tr>
+      <tr><td>SimOTA [7]</td><td>34.5%</td></tr>
+      <tr><td><strong>TAL [5]</strong></td><td><strong>35.0%</strong></td></tr>
+      <tr><td>DW [18]</td><td>33.4%</td></tr>
+      <tr><td>ObjectBox [48]</td><td>30.1%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 7. 웜업(warm-up) 단계에서의 레이블 할당 기법 비교.</caption>
+    <thead>
+      <tr><th>웜업 전략 (Warmup strategy)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>미사용 (w/o)</td><td>34.9%</td></tr>
+      <tr><td>ATSS [51]</td><td>35.0%</td></tr>
+      <tr><td>SimOTA [7]</td><td>34.9%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>3.3.3. 손실 함수 (Loss functions)</h4>
+<p>
+  객체 탐지 프레임워크의 손실 함수는 분류 손실, 박스 회귀 손실, 그리고 선택적인 객체성 손실로 구성되며 다음과 같이 정식화된다.
+</p>
+$$L_{\text{det}} = L_{\text{cls}} + \lambda L_{\text{reg}} + \mu L_{\text{obj}} \tag{3}$$
+<p>
+  여기서 $L_{\text{cls}}$, $L_{\text{reg}}$, $L_{\text{obj}}$는 각각 분류 손실, 회귀 손실, 객체성 손실이며 $\lambda$와 $\mu$는 하이퍼파라미터이다. 본 소절에서는 YOLOv6에서 각 손실 함수를 평가한다. 별도 명시가 없는 한 <code>YOLOv6-N</code>, <code>YOLOv6-S</code>, <code>YOLOv6-M</code>의 기준선은 TAL, Focal Loss, GIoU Loss로 학습된 각각 35.0%, 42.9%, 48.0% AP 모델이다.
+</p>
+<p>
+  <strong>분류 손실:</strong> Focal Loss[22], Poly Loss[17], QFL[20], VFL[50]을 <code>YOLOv6-N/S/M</code>에서 실험하였다. 표 8에서 확인되듯 VFL은 Focal Loss 대비 <code>YOLOv6-N/S/M</code>에서 각각 0.2% / 0.3% / 0.1% AP 향상을 가져왔다. 이에 분류 손실 함수로 VFL을 선정하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 8. 분류 손실 함수에 대한 절제 연구.</caption>
+    <thead>
+      <tr><th>모델</th><th>분류 손실 (Classification Loss)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="4">YOLOv6-N</td><td>Focal Loss [22]</td><td>35.0%</td></tr>
+      <tr><td>Poly Loss [17]</td><td>34.0%</td></tr>
+      <tr><td>QFL [20]</td><td>35.4%</td></tr>
+      <tr><td>VFL [50]</td><td>35.2%</td></tr>
+      <tr><td rowspan="4">YOLOv6-S</td><td>Focal Loss [22]</td><td>42.9%</td></tr>
+      <tr><td>Poly Loss [17]</td><td>41.5%</td></tr>
+      <tr><td>QFL [20]</td><td>43.1%</td></tr>
+      <tr><td>VFL [50]</td><td>43.2%</td></tr>
+      <tr><td rowspan="4">YOLOv6-M</td><td>Focal Loss [22]</td><td>48.0%</td></tr>
+      <tr><td>Poly Loss [17]</td><td>46.9%</td></tr>
+      <tr><td>QFL [20]</td><td>48.0%</td></tr>
+      <tr><td>VFL [50]</td><td>48.1%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>회귀 손실:</strong> IoU 계열 손실과 확률 손실 함수를 모두 <code>YOLOv6-N/S/M</code>에서 실험하였다. 표 9의 IoU 계열 손실 실험 결과에 따르면 <code>YOLOv6-N</code>과 <code>YOLOv6-T</code>에서는 <code>SIoU Loss</code>가 가장 우수했고, <code>YOLOv6-M</code>에서는 <code>CIoU Loss</code>가 더 나은 성능을 보였다. 확률 손실의 경우 표 10과 같이 <code>DFL</code>을 도입하면 <code>YOLOv6-N/S/M</code>에서 각각 0.2% / 0.1% / 0.2%의 성능 이득을 얻을 수 있다. 그러나 소형 모델에서는 추론 속도가 크게 저하되므로 <code>DFL</code>은 <code>YOLOv6-M/L</code>에만 도입하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 9. IoU 계열 박스 회귀 손실 함수에 대한 절제 연구. 분류 손실은 VFL[50]을 사용하였다.</caption>
+    <thead>
+      <tr><th>모델</th><th>손실 함수 (Loss)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="3">YOLOv6-N</td><td>GIoU [35]</td><td>35.1%</td></tr>
+      <tr><td>CIoU [52]</td><td>35.1%</td></tr>
+      <tr><td>SIoU [8]</td><td>35.5%</td></tr>
+      <tr><td rowspan="3">YOLOv6-S</td><td>GIoU [35]</td><td>43.1%</td></tr>
+      <tr><td>CIoU [52]</td><td>43.1%</td></tr>
+      <tr><td>SIoU [8]</td><td>43.3%</td></tr>
+      <tr><td rowspan="3">YOLOv6-M</td><td>GIoU [35]</td><td>48.2%</td></tr>
+      <tr><td>CIoU [52]</td><td>48.3%</td></tr>
+      <tr><td>SIoU [8]</td><td>48.1%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 10. 확률 손실 함수에 대한 절제 연구.</caption>
+    <thead>
+      <tr><th>모델</th><th>손실 함수 (Loss)</th><th>$\text{AP}^{\text{val}}$</th><th>FPS (bs=32)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="3">YOLOv6-N</td><td>미사용 (w/o)</td><td>35.0%</td><td>1226</td></tr>
+      <tr><td>DFL [20]</td><td>35.2%</td><td>1022</td></tr>
+      <tr><td>DFLv2 [19]</td><td>35.2%</td><td>819</td></tr>
+      <tr><td rowspan="3">YOLOv6-S</td><td>미사용 (w/o)</td><td>42.9%</td><td>486</td></tr>
+      <tr><td>DFL [20]</td><td>43.0%</td><td>461</td></tr>
+      <tr><td>DFLv2 [19]</td><td>43.0%</td><td>422</td></tr>
+      <tr><td rowspan="3">YOLOv6-M</td><td>미사용 (w/o)</td><td>48.0%</td><td>233</td></tr>
+      <tr><td>DFL [20]</td><td>48.2%</td><td>236</td></tr>
+      <tr><td>DFLv2 [19]</td><td>48.3%</td><td>226</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>객체성 손실:</strong> 표 11과 같이 YOLOv6에서 객체성 손실도 실험하였다. 표 11에서 볼 수 있듯 객체성 손실은 <code>YOLOv6-N/S/M</code> 네트워크 모두에 부정적인 영향을 미쳤으며, <code>YOLOv6-N</code>에서는 최대 1.1% AP 하락을 초래하였다. 이러한 부정적 효과는 TAL 내의 기존 두 분기(분류·회귀)와 객체성 분기 간의 충돌에서 비롯된 것으로 보인다. 구체적으로 학습 단계에서 예측 박스와 정답 박스 간의 IoU 및 분류 점수를 결합한 지표를 레이블 할당 기준으로 사용하는데, 객체성 분기가 추가되면 정렬해야 할 작업 수가 2개에서 3개로 늘어나 정렬 난이도가 급격히 증가한다. 실험 결과와 이 분석을 바탕으로 YOLOv6에서는 객체성 손실을 폐기하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 11. 객체성 손실(Object Loss) 적용 효과 비교.</caption>
+    <thead>
+      <tr><th>모델</th><th>Object Loss</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="2">YOLOv6-N</td><td>✗</td><td>35.0%</td></tr>
+      <tr><td>✓</td><td>33.9%</td></tr>
+      <tr><td rowspan="2">YOLOv6-S</td><td>✗</td><td>42.9%</td></tr>
+      <tr><td>✓</td><td>41.4%</td></tr>
+      <tr><td rowspan="2">YOLOv6-M</td><td>✗</td><td>48.0%</td></tr>
+      <tr><td>✓</td><td>46.5%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>3.4. 산업 실무형 개선 기법 (Industry-handy improvements)</h3>
+<p>
+  <strong>더 많은 학습 에폭:</strong> 실무에서 학습 에폭을 늘리는 것은 정확도를 추가로 높이는 간단하고 효과적인 방법이다. 소형 모델을 300 에폭과 400 에폭으로 학습한 결과는 표 12에 제시되어 있다. 더 긴 에폭 동안 학습하면 <code>YOLOv6-N</code>, <code>T</code>, <code>S</code>에서 AP가 각각 0.4%, 0.6%, 0.5%씩 유의미하게 상승한다. 감수할 만한 학습 비용과 얻어지는 이득을 고려할 때, 400 에폭 학습이 YOLOv6의 더 나은 수렴 스킴임을 알 수 있다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 12. 소형 모델에서의 학습 에폭 증가 실험.</caption>
+    <thead>
+      <tr><th>모델</th><th>300 epochs</th><th>400 epochs</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-N</td><td>35.9%</td><td>36.3%</td></tr>
+      <tr><td>YOLOv6-T</td><td>40.3%</td><td>40.9%</td></tr>
+      <tr><td>YOLOv6-S</td><td>43.4%</td><td>43.9%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>자기 증류 (Self-distillation):</strong> <code>YOLOv6-L</code>을 대상으로 제안한 자기 증류 기법을 검증하는 상세 실험을 수행하였다. 표 13에서 볼 수 있듯이 분류 분기에만 자기 증류를 적용하면 0.4% AP가 향상된다. 여기에 박스 회귀 작업에도 자기 증류를 적용하면 0.3% AP가 추가로 상승하며, 코사인 가중치 감쇠(Weight Decay)를 도입하면 모델 성능이 0.6% AP 더 향상된다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 13. 자기 증류(Self-distillation)에 대한 절제 연구 (<code>YOLOv6-L</code> 기준).</caption>
+    <thead>
+      <tr><th>분류 증류 (Cls.)</th><th>회귀 증류 (Reg.)</th><th>가중치 감쇠 (Weight Decay)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>✗</td><td>✗</td><td>✗</td><td>51.0%</td></tr>
+      <tr><td>✓</td><td>✗</td><td>✗</td><td>51.4%</td></tr>
+      <tr><td>✓</td><td>✓</td><td>✗</td><td>51.7%</td></tr>
+      <tr><td>✓</td><td>✓</td><td>✓</td><td>52.3%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  <strong>이미지의 회색 테두리 (Gray border of images):</strong> 2.4.3절에서 추가 회색 테두리가 없을 때 발생하는 성능 저하 문제를 해결하기 위한 전략을 소개하였다. 표 14에 나타난 실험에서는 <code>YOLOv6-N</code>과 <code>YOLOv6-S</code>를 400 에폭, <code>YOLOv6-M</code>을 300 에폭 학습하였다. Mosaic 페이딩(Close Mosaic) 없이 회색 테두리를 제거하면 <code>YOLOv6-N/S/M</code>의 정확도가 각각 0.4% / 0.5% / 0.7% 하락한다. 그러나 Mosaic 페이딩을 적용하면 하락 폭이 0.2% / 0.5% / 0.5%로 줄어 성능 저하 문제가 완화될 뿐 아니라, 소형 모델(<code>YOLOv6-N/S</code>)에서는 회색 테두리 패딩 여부와 무관하게 정확도가 전반적으로 상승한다. 나아가 입력 이미지를 $634 \times 634$로 제한하고 가장자리에 폭 3픽셀의 회색 테두리를 추가하면(추가 결과는 부록 C 참조) 최종 이미지 크기가 목표 크기인 $640 \times 640$이 된다. 표 14의 결과는 최종 이미지 크기를 672에서 640으로 줄이면서도 <code>YOLOv6-N/S/M</code>의 최종 성능이 오히려 0.2% / 0.3% / 0.1% 더 정확해짐을 보여준다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 14. 추가 회색 테두리 제거 시 성능 저하 문제 해결 전략에 대한 실험 결과.</caption>
+    <thead>
+      <tr><th>모델</th><th>이미지 크기</th><th>테두리 크기</th><th>Close Mosaic</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="5">YOLOv6-N</td><td>640</td><td>16</td><td>✗</td><td>36.0%</td></tr>
+      <tr><td>640</td><td>16</td><td>✓</td><td>36.2%</td></tr>
+      <tr><td>640</td><td>0</td><td>✗</td><td>35.6%</td></tr>
+      <tr><td>640</td><td>0</td><td>✓</td><td>36.0%</td></tr>
+      <tr><td>634</td><td>3</td><td>✓</td><td>36.2%</td></tr>
+      <tr><td rowspan="5">YOLOv6-S</td><td>640</td><td>16</td><td>✗</td><td>43.4%</td></tr>
+      <tr><td>640</td><td>16</td><td>✓</td><td>43.9%</td></tr>
+      <tr><td>640</td><td>0</td><td>✗</td><td>42.9%</td></tr>
+      <tr><td>640</td><td>0</td><td>✓</td><td>43.4%</td></tr>
+      <tr><td>634</td><td>3</td><td>✓</td><td>43.7%</td></tr>
+      <tr><td rowspan="5">YOLOv6-M</td><td>640</td><td>16</td><td>✗</td><td>48.4%</td></tr>
+      <tr><td>640</td><td>16</td><td>✓</td><td>48.4%</td></tr>
+      <tr><td>640</td><td>0</td><td>✗</td><td>47.7%</td></tr>
+      <tr><td>640</td><td>0</td><td>✓</td><td>47.9%</td></tr>
+      <tr><td>634</td><td>3</td><td>✓</td><td>48.5%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>3.5. 양자화 결과 (Quantization Results)</h3>
+<p>
+  양자화 기법을 검증하기 위한 대표 사례로 <code>YOLOv6-S</code>를 선택하였다. 아래 실험은 v1.0과 v2.0 두 릴리스 모두에서 진행되었으며, 기준 모델은 300 에폭 동안 학습되었다.
+</p>
+
+<h4>3.5.1. PTQ</h4>
+<p>
+  <code>RepOptimizer</code>로 모델을 학습하면 평균 양자화 성능이 크게 향상된다(표 15 참조). <code>RepOptimizer</code>는 전반적으로 더 빠르고(학습 효율 측면) 부동소수점 정확도 역시 기존과 거의 동일하다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 15. <code>RepOptimizer</code>로 학습된 <code>YOLOv6-S</code>의 PTQ 성능 비교.</caption>
+    <thead>
+      <tr><th>모델</th><th>FP32 $\text{AP}^{\text{val}}$</th><th>PTQ INT8 $\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-S (v1.0)</td><td>42.4</td><td>35.0</td></tr>
+      <tr><td>YOLOv6-S w/ RepOptimizer (v1.0)</td><td>42.4</td><td>40.9</td></tr>
+      <tr><td>YOLOv6-S (v2.0)</td><td>43.4</td><td>41.3</td></tr>
+      <tr><td>YOLOv6-S w/ RepOptimizer (v2.0)</td><td>43.1</td><td>42.6</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>3.5.2. QAT</h4>
+<p>
+  v1.0에서는 2.5.2절에서 도출한 비민감 계층(non-sensitive layers)에만 가짜 양자화기를 적용해 양자화 인식 학습을 수행하였으며, 이를 부분 QAT(partial QAT)라 부른다. 표 16에서 이를 전체 QAT(full QAT)와 비교한 결과, 부분 QAT가 처리량은 소폭 감소하지만 더 높은 정확도를 달성하였다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 16. 다양한 설정에서의 <code>YOLOv6-S</code> (v1.0) QAT 성능.</caption>
+    <thead>
+      <tr><th>모델</th><th>INT8 $\text{AP}^{\text{val}}$</th><th>FPS</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-S</td><td>35.0</td><td>556</td></tr>
+      <tr><td>YOLOv6-S + RepOpt + Partial QAT + CW Distill</td><td>42.3</td><td>503</td></tr>
+      <tr><td>YOLOv6-S + RepOpt + QAT + CW Distill</td><td>42.1</td><td>528</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  v2.0 릴리스에서는 양자화에 민감한 계층들이 제거됨에 따라 <code>RepOptimizer</code>로 학습한 <code>YOLOv6-S</code>에 전체 QAT를 바로 적용하였다. 또한 그래프 최적화(graph optimization)를 통해 삽입된 불필요한 양자화 연산을 제거하여 더 높은 정확도와 더 빠른 속도를 확보하였다. 표 17에서는 PaddleSlim[30]의 증류 기반 양자화 결과와 비교하였으며, 우리의 양자화된 <code>YOLOv6-S</code>가 가장 빠르고 가장 정확함을 확인할 수 있다(그림 1도 참조).
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 17. 타 양자화 탐지기와 <code>YOLOv6-S</code> (v2.0) QAT 성능 비교. ‘$*$’는 v1.0 릴리스 기반 결과이며, ‘$\dagger$’는 Tesla T4에서 TensorRT 8로 배치 크기 1 및 32에서 측정한 결과이다.</caption>
+    <thead>
+      <tr><th>모델</th><th>$\text{AP}^{\text{val}}$</th><th>$\text{FPS}_{\text{bs=1}}$</th><th>$\text{FPS}_{\text{bs=32}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-S [30]</td><td>36.9</td><td>502$\dagger$</td><td>N/A</td></tr>
+      <tr><td>YOLOv6-S$*$ [30]</td><td>41.3</td><td>579$\dagger$</td><td>N/A</td></tr>
+      <tr><td>YOLOv7-Tiny [30]</td><td>37.0</td><td>512$\dagger$</td><td>N/A</td></tr>
+      <tr><td>YOLOv6-S (FP16)</td><td>43.4</td><td>377$\dagger$</td><td>541$\dagger$</td></tr>
+      <tr><td><strong>YOLOv6-S (Our QAT strategy)</strong></td><td><strong>43.3</strong></td><td><strong>596$\dagger$</strong></td><td><strong>869$\dagger$</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>4. 결론 (Conclusion)</h2>
+<p>
+  요약하자면, 우리는 지속적인 산업계 요구사항을 염두에 두고 최신 객체 탐지기 구성 요소들의 발전상을 면밀히 검토하고 우리의 통찰과 실무 경험을 접목하여 현재 형태의 <strong>YOLOv6</strong>을 제시하였다. 그 결과 YOLOv6은 정확도와 속도 모두에서 기존의 다른 실시간 탐지기들을 능가한다. 또한 산업 현장 배포의 편의를 위해 YOLOv6에 특화된 양자화 기법을 함께 제공함으로써 즉시 활용 가능한(out-of-box) 초고속 탐지기를 구현하였다. 훌륭한 아이디어와 노력을 아끼지 않은 학계와 산업계 커뮤니티에 진심으로 감사드리며, 향후 더 높은 기준과 까다로운 시나리오를 충족할 수 있도록 본 프로젝트를 지속적으로 확장해 나갈 것이다.
+</p>
+
+<h2>부록 (Appendix)</h2>
+
+<h3>A. 상세 지연 시간 및 처리량 벤치마크 (Detailed Latency and Throughput Benchmark)</h3>
+
+<h4>A.1. 실험 환경 설정 (Setup)</h4>
+<p>
+  별도 명시가 없는 한, 본문에 보고된 모든 지연 시간은 NVIDIA Tesla T4 GPU와 TensorRT 7.2.1.6 버전에서 측정되었다. 하드웨어 및 소프트웨어 설정에 따른 편차가 크기 때문에, 모든 비교 모델의 지연 시간과 처리량을 동일한 환경(하드웨어 및 소프트웨어 모두 동일)에서 재측정하였다. 편의를 위해 일관성 검증 차원에서 TensorRT 버전을 변경한 결과(표 18)와 V100 GPU에서의 지연 시간(표 19)도 함께 포함하였다. 이를 통해 최신 탐지기들에 대한 전방위적인 성능 비교를 제공한다.
+</p>
+
+<h4>A.2. TensorRT 8 환경 T4 GPU 지연 시간 표</h4>
+<p>
+  표 18에서 확인할 수 있듯이 TensorRT 8.2 환경에서도 YOLOv6 모델의 처리량은 경쟁 모델들과 대등하거나 앞서는 수준을 유지한다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 18. 상위 버전의 TensorRT(8.2)를 적용한 T4 GPU에서의 YOLO 계열 지연 시간 및 처리량 비교.</caption>
+    <thead>
+      <tr><th>모델 (Method)</th><th>FPS (bs=1)</th><th>FPS (bs=32)</th><th>지연 시간 (bs=1)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-N [10]</td><td>702</td><td>843</td><td>1.4 ms</td></tr>
+      <tr><td>YOLOv5-S [10]</td><td>433</td><td>515</td><td>2.3 ms</td></tr>
+      <tr><td>YOLOv5-M [10]</td><td>202</td><td>235</td><td>4.9 ms</td></tr>
+      <tr><td>YOLOv5-L [10]</td><td>126</td><td>137</td><td>7.9 ms</td></tr>
+      <tr><td>YOLOX-Tiny [7]</td><td>766</td><td>1393</td><td>1.3 ms</td></tr>
+      <tr><td>YOLOX-S [7]</td><td>313</td><td>489</td><td>2.6 ms</td></tr>
+      <tr><td>YOLOX-M [7]</td><td>159</td><td>204</td><td>5.3 ms</td></tr>
+      <tr><td>YOLOX-L [7]</td><td>104</td><td>117</td><td>9.0 ms</td></tr>
+      <tr><td>PPYOLOE-S [45]</td><td>357</td><td>493</td><td>2.8 ms</td></tr>
+      <tr><td>PPYOLOE-M [45]</td><td>163</td><td>210</td><td>6.1 ms</td></tr>
+      <tr><td>PPYOLOE-L [45]</td><td>110</td><td>145</td><td>9.1 ms</td></tr>
+      <tr><td>YOLOv7-Tiny [42]</td><td>464</td><td>568</td><td>2.1 ms</td></tr>
+      <tr><td>YOLOv7 [42]</td><td>128</td><td>135</td><td>7.6 ms</td></tr>
+      <tr><td><strong>YOLOv6-N</strong></td><td><strong>810</strong></td><td><strong>1323</strong></td><td><strong>1.2 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-T</strong></td><td><strong>469</strong></td><td><strong>677</strong></td><td><strong>2.1 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-S</strong></td><td><strong>362</strong></td><td><strong>522</strong></td><td><strong>2.7 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-M</strong></td><td><strong>180</strong></td><td><strong>241</strong></td><td><strong>5.6 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-L-ReLU</strong></td><td><strong>111</strong></td><td><strong>145</strong></td><td><strong>9.0 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-L</strong></td><td><strong>105</strong></td><td><strong>131</strong></td><td><strong>9.6 ms</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>A.3. V100 GPU 지연 시간 표</h4>
+<p>
+  표 19에서 확인할 수 있듯이 V100 GPU 환경에서도 YOLOv6의 속도 우위는 대체로 그대로 유지된다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 19. V100 GPU에서의 YOLO 계열 지연 시간 및 처리량 비교. 모든 모델은 완전히 동일한 환경에서 $640 \times 640$ 입력 크기와 FP16 정밀도로 측정하였다.</caption>
+    <thead>
+      <tr><th>모델 (Method)</th><th>FPS (bs=1)</th><th>FPS (bs=32)</th><th>지연 시간 (bs=1)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-N [10]</td><td>709</td><td>1891</td><td>1.3 ms</td></tr>
+      <tr><td>YOLOv5-S [10]</td><td>571</td><td>1354</td><td>1.6 ms</td></tr>
+      <tr><td>YOLOv5-M [10]</td><td>332</td><td>685</td><td>2.9 ms</td></tr>
+      <tr><td>YOLOv5-L [10]</td><td>215</td><td>426</td><td>4.5 ms</td></tr>
+      <tr><td>YOLOX-Tiny [7]</td><td>739</td><td>3271</td><td>1.3 ms</td></tr>
+      <tr><td>YOLOX-S [7]</td><td>515</td><td>1254</td><td>1.9 ms</td></tr>
+      <tr><td>YOLOX-M [7]</td><td>308</td><td>605</td><td>3.2 ms</td></tr>
+      <tr><td>YOLOX-L [7]</td><td>189</td><td>370</td><td>5.2 ms</td></tr>
+      <tr><td>PPYOLOE-S [45]</td><td>435</td><td>1117</td><td>2.2 ms</td></tr>
+      <tr><td>PPYOLOE-M [45]</td><td>263</td><td>583</td><td>3.8 ms</td></tr>
+      <tr><td>PPYOLOE-L [45]</td><td>194</td><td>415</td><td>5.1 ms</td></tr>
+      <tr><td>YOLOv7-Tiny [42]</td><td>647</td><td>1269</td><td>1.5 ms</td></tr>
+      <tr><td>YOLOv7 [42]</td><td>229</td><td>425</td><td>4.3 ms</td></tr>
+      <tr><td><strong>YOLOv6-N</strong></td><td><strong>752</strong></td><td><strong>2031</strong></td><td><strong>1.0 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-T</strong></td><td><strong>604</strong></td><td><strong>1724</strong></td><td><strong>1.4 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-S</strong></td><td><strong>507</strong></td><td><strong>1546</strong></td><td><strong>1.7 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-M</strong></td><td><strong>287</strong></td><td><strong>750</strong></td><td><strong>3.4 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-L-ReLU</strong></td><td><strong>198</strong></td><td><strong>476</strong></td><td><strong>5.0 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-L</strong></td><td><strong>175</strong></td><td><strong>416</strong></td><td><strong>5.6 ms</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>A.4. CPU 지연 시간 (CPU Latency)</h4>
+<p>
+  OpenCV DNN(Deep Neural Network) 모듈을 사용하여 2.6 GHz Intel Core i7 CPU에서 YOLOv6과 타 경쟁 모델들의 성능을 평가하였으며, 결과는 표 20과 같다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 20. 일반적인 CPU 환경에서의 YOLO 계열 지연 시간 비교. 모든 모델은 완전히 동일한 환경에서 입력 크기 $640 \times 640$(YOLOX-Tiny는 416) 및 FP32 정밀도로 측정하였다.</caption>
+    <thead>
+      <tr><th>모델 (Method)</th><th>입력 크기</th><th>지연 시간 (bs=1)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-N [10]</td><td>640</td><td>118.9 ms</td></tr>
+      <tr><td>YOLOv5-S [10]</td><td>640</td><td>202.2 ms</td></tr>
+      <tr><td>YOLOX-Tiny [7]</td><td>416</td><td>144.2 ms</td></tr>
+      <tr><td>YOLOX-S [7]</td><td>640</td><td>164.6 ms</td></tr>
+      <tr><td>YOLOX-M [7]</td><td>640</td><td>357.9 ms</td></tr>
+      <tr><td>YOLOv7-Tiny [42]</td><td>640</td><td>137.5 ms</td></tr>
+      <tr><td><strong>YOLOv6-N</strong></td><td>640</td><td><strong>70.0 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-T</strong></td><td>640</td><td><strong>128.1 ms</strong></td></tr>
+      <tr><td><strong>YOLOv6-S</strong></td><td>640</td><td><strong>163.4 ms</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>B. 양자화 세부 사항 (Quantization Details)</h3>
+
+<h4>B.1. 특징 분포 비교 (Feature Distribution Comparison)</h4>
+<p>
+  <code>RepOptimizer</code>로 학습한 후 활성화 값 분포가 크게 완화된 추가 계층들의 사례를 그림 6에 제시한다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_6.png" alt="그림 6" />
+  <figcaption><strong>그림 6.</strong> 기존에는 양자화가 어려웠으나 <code>RepOptimizer</code> 적용 후 더 잘 최적화된 <code>YOLOv6-S</code> 내 계층들의 추가 예시.</figcaption>
+</figure>
+
+<h4>B.2. 민감도 분석 결과 (Sensitivity Analysis Results)</h4>
+<p>
+  그림 7에서 보듯 SNR과 코사인 유사도(Cosine Similarity)는 서로 매우 높은 상관관계를 보이는 결과를 낸다. 반면 AP를 직접 평가하는 방식은 이와는 다른 양상을 보인다. 그럼에도 최종 양자화 성능 측면에서는 MSE가 직접 AP 평가 결과에 가장 근접한 성능을 제공한다(표 21 참조).
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_7.png" alt="그림 7" />
+  <figcaption><strong>그림 7.</strong> <code>RepOptimizer</code>로 학습된 <code>YOLOv6-S</code>의 모든 계층에 대한 양자화 민감도 분석 결과.</figcaption>
+</figure>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 21. 서로 다른 민감도 지표에 따른 부분 학습 후 양자화(partial PTQ) 성능 비교.</caption>
+    <thead>
+      <tr><th>민감도 지표 (Metric)</th><th>$\text{AP}^{\text{val}}$</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>MSE</td><td>41.5</td></tr>
+      <tr><td>Cosine Similarity</td><td>41.1</td></tr>
+      <tr><td>SNR</td><td>41.1</td></tr>
+      <tr><td>Direct AP Evaluation</td><td>42.0</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>C. 회색 테두리 분석 (Analysis of Gray Border)</h3>
+<p>
+  회색 테두리(gray border)의 영향을 분석하기 위해, 불러온 이미지를 다양한 크기로 리사이즈한 뒤 $640 \times 640$으로 패딩하는 여러 테두리 설정을 추가로 탐색하였다(예: 이미지 크기가 608일 때 테두리 크기를 16으로 설정 등). 또한 전처리(pre-processing)와 후처리(post-processing) 간의 정보 불일치 문제를 간단한 조정을 통해 완화하였다. 결과는 그림 8에 나타나 있다. 각 모델마다 최적의 AP를 달성하는 테두리 크기가 조금씩 다르며, 입력 크기 640과 비교했을 때 입력 이미지 크기가 632에서 638 범위에 위치할 경우 평균적으로 약 0.3% 더 높은 AP를 얻음을 확인할 수 있다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv6_2209.02976v1/fig_8.png" alt="그림 8" />
+  <figcaption><strong>그림 8.</strong> 회색 테두리(gray border) 문제에 대한 분석 결과.</figcaption>
+</figure>
+
+<h2>참고 문헌 (References)</h2>
+<p>본 논문에는 총 53편의 참고 문헌이 인용되어 있으며, 주요 핵심 문헌은 다음과 같다.</p>
+<ul>
+  <li><strong>[1] YOLOv4:</strong> Alexey Bochkovskiy et al., <em>YOLOv4: Optimal speed and accuracy of object detection</em>, arXiv:2004.10934, 2020.</li>
+  <li><strong>[2] RepOptimizer:</strong> Xiaohan Ding et al., <em>Re-parameterizing your optimizers rather than architectures</em>, arXiv:2205.15242, 2022.</li>
+  <li><strong>[3] RepVGG:</strong> Xiaohan Ding et al., <em>RepVGG: Making VGG-style ConvNets great again</em>, CVPR, 2021.</li>
+  <li><strong>[5] TOOD (TAL):</strong> Chengjian Feng et al., <em>TOOD: Task-aligned one-stage object detection</em>, ICCV, 2021.</li>
+  <li><strong>[7] YOLOX:</strong> Zheng Ge et al., <em>YOLOX: Exceeding YOLO series in 2021</em>, arXiv:2107.08430, 2021.</li>
+  <li><strong>[8] SIoU Loss:</strong> Zhora Gevorgyan, <em>SIoU loss: More powerful learning for bounding box regression</em>, arXiv:2205.12740, 2022.</li>
+  <li><strong>[10] YOLOv5:</strong> Glenn Jocher, <em>YOLOv5 release v6.1</em>, GitHub, 2022.</li>
+  <li><strong>[20] Generalized Focal Loss (DFL/QFL):</strong> Xiang Li et al., <em>Generalized focal loss: Learning qualified and distributed bounding boxes for dense object detection</em>, NeurIPS, 2020.</li>
+  <li><strong>[24] PANet:</strong> Shu Liu et al., <em>Path aggregation network for instance segmentation</em>, CVPR, 2018.</li>
+  <li><strong>[32–34] YOLOv1–3:</strong> Joseph Redmon et al., <em>YOLO</em> (CVPR 2016), <em>YOLO9000</em> (CVPR 2017), <em>YOLOv3</em> (arXiv 2018).</li>
+  <li><strong>[36] Channel-wise Distillation:</strong> Changyong Shu et al., <em>Channel-wise knowledge distillation for dense prediction</em>, ICCV, 2021.</li>
+  <li><strong>[42] YOLOv7:</strong> Chien-Yao Wang et al., <em>YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</em>, arXiv:2207.02696, 2022.</li>
+  <li><strong>[44, 45] PP-YOLOE:</strong> Shangliang Xu et al., <em>PP-YOLOE: An evolved version of YOLO</em>, arXiv:2203.16250, 2022.</li>
+  <li><strong>[50] VariFocalNet (VFL):</strong> Haoyang Zhang et al., <em>VariFocalNet: An IoU-aware dense object detector</em>, CVPR, 2021.</li>
+</ul>
+    <nav style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:2.5rem;padding-top:1.5rem;border-top:2px solid var(--border);">
+      <a class="nav-btn" href="YOLOv4_2004.10934v1_ko.html">← 이전 논문: YOLOv4</a>
+      <a class="nav-btn primary" href="YOLOv6-v3.0_2301.05586v1_ko.html">다음 논문: YOLOv6 v3.0 →</a>
+    </nav>
+    
+    </main>
+  </div>
+
+  <div class="lightbox" id="lightbox" onclick="this.classList.remove('open')">
+    <img id="lightboxImg" src="" alt="" />
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const root = document.documentElement;
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      document.getElementById('themeBtn').textContent = isDark ? '🌙 다크 모드' : '☀️ 라이트 모드';
+    }
+    (function init() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').textContent = '☀️ 라이트 모드';
+      }
+      const tocList = document.getElementById('tocList');
+      document.querySelectorAll('main.paper h2, main.paper h3').forEach((h, i) => {
+        if (!h.id) h.id = 'sec-' + i;
+        const li = document.createElement('li');
+        if (h.tagName === 'H3') li.className = 'sub';
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+      document.querySelectorAll('figure.paper-fig img').forEach(img => {
+        img.addEventListener('click', () => {
+          document.getElementById('lightboxImg').src = img.src;
+          document.getElementById('lightbox').classList.add('open');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

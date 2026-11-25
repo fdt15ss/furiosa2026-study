@@ -1,0 +1,796 @@
+<div class="summary-box">
+  <strong>핵심 요약 (한눈에 보기)</strong>
+  <p>
+    <strong>YOLOv9</strong>은 심층 신경망의 순전파(feedforward) 과정에서 입력 데이터의 정보가 소실되는 <strong>정보 병목(Information Bottleneck)</strong> 현상을 규명하고, 이를 해결하기 위한 <strong>프로그래밍 가능한 그래디언트 정보(PGI, Programmable Gradient Information)</strong> 프레임워크와 그래디언트 경로 계획 기반의 경량 아키텍처 <strong>GELAN(Generalized Efficient Layer Aggregation Network)</strong>을 제안한 실시간 객체 탐지 모델입니다.
+  </p>
+  <ul>
+    <li><strong>문제 의식 (정보 병목):</strong> 심층 신경망을 거치며 특징 추출 및 공간 변환이 반복될수록 목표 과업에 필요한 입력 정보가 손실되어 편향되고 신뢰할 수 없는 그래디언트가 생성되며, 기존 심층 지도(deep supervision) 방식은 경량 모델에서 오히려 성능 저하를 유발합니다.</li>
+    <li><strong>PGI (Programmable Gradient Information):</strong> 추론 시에는 주 분기(main branch)만 사용하여 추가 연산 비용이 전혀 없으며, 학습 시에만 보조 가역 분기(auxiliary reversible branch)와 다중 수준 보조 정보(multi-level auxiliary information)를 활용해 주 분기에 완전하고 신뢰할 수 있는 그래디언트를 공급합니다.</li>
+    <li><strong>GELAN 아키텍처:</strong> CSPNet과 ELAN을 결합·일반화하여 일반 합성곱(conventional convolution)만으로도 깊이별 합성곱(depth-wise convolution) 기반 최신 기법보다 뛰어난 파라미터 효율과 정확도·속도의 균형을 달성하며, 임의의 연산 블록을 자유롭게 조합할 수 있습니다.</li>
+    <li><strong>주요 성능 (MS COCO 2017 val, 처음부터 학습):</strong> YOLOv9-C는 YOLOv7 AF 대비 파라미터 42%, 연산량(FLOPs) 22%를 절감하면서도 동일한 53.0% AP를 달성했고, YOLOv9-E는 YOLOv8-X 대비 파라미터 16%, 연산량 27%를 줄이면서도 AP를 1.7%p 향상시켜 55.6% AP(AP<sub>50</sub> 72.8%)를 기록했습니다. 또한 대규모 데이터셋으로 사전 학습된 RT-DETR-X와 비교해도 약 66% 수준의 파라미터만으로 동등 이상의 정확도를 보였습니다.</li>
+  </ul>
+</div>
+
+<h2>초록 (Abstract)</h2>
+<p>
+  오늘날의 딥러닝 방법론은 모델의 예측 결과가 정답(ground truth)에 최대한 가까워지도록 가장 적절한 목적 함수(objective function)를 설계하는 데 초점을 맞추고 있다. 이와 동시에 예측에 필요한 충분한 정보를 획득할 수 있도록 돕는 적절한 네트워크 아키텍처 역시 설계되어야 한다. 그러나 기존 방법들은 입력 데이터가 계층별 특징 추출(feature extraction)과 공간 변환(spatial transformation)을 거칠 때 막대한 양의 정보가 손실된다는 사실을 간과하고 있다.
+</p>
+<p>
+  본 논문은 데이터가 심층 신경망을 통과할 때 발생하는 데이터 손실이라는 중요한 문제, 구체적으로 정보 병목(information bottleneck)과 가역 함수(reversible function)를 심층적으로 탐구한다. 심층 신경망이 다중 목적(multiple objectives)을 달성하기 위해 요구되는 다양한 변화에 대응할 수 있도록 <strong>프로그래밍 가능한 그래디언트 정보(PGI, Programmable Gradient Information)</strong>라는 개념을 제안한다. PGI는 목표 과업이 목적 함수를 계산하는 데 필요한 완전한 입력 정보를 제공함으로써, 네트워크 가중치를 업데이트하기 위한 신뢰할 수 있는 그래디언트 정보를 얻을 수 있게 한다.
+</p>
+<p>
+  또한, 그래디언트 경로 계획(gradient path planning)을 기반으로 한 새로운 경량 네트워크 아키텍처인 <strong>일반화된 효율적 계층 집계 네트워크(GELAN, Generalized Efficient Layer Aggregation Network)</strong>를 설계했다. GELAN의 아키텍처는 PGI가 경량 모델에서도 탁월한 성과를 거둠을 입증한다. 제안된 GELAN과 PGI는 MS COCO 데이터셋 기반 객체 탐지 과업을 통해 검증했다. 실험 결과, GELAN은 일반 합성곱 연산자(conventional convolution operators)만을 사용하고도 깊이별 합성곱(depth-wise convolution)을 기반으로 개발된 최신(state-of-the-art) 방법론들보다 더 우수한 파라미터 활용도를 달성했다. PGI는 경량 모델부터 대형 모델까지 다양한 규모의 모델에 폭넓게 적용될 수 있으며, 완전한 정보를 확보함으로써 처음부터 학습(train-from-scratch)한 모델이 대규모 데이터셋으로 사전 학습(pre-trained)된 최신 모델들보다 더 나은 성능을 달성할 수 있게 한다. 비교 결과는 그림 1에 제시되어 있으며, 소스 코드는 <a href="https://github.com/WongKinYiu/yolov9" target="_blank" rel="noopener">https://github.com/WongKinYiu/yolov9</a>에 공개되어 있다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_1.png" alt="그림 1" />
+  <figcaption><strong>그림 1.</strong> MS COCO 데이터셋에서의 실시간 객체 탐지기 비교. GELAN과 PGI 기반 객체 탐지 방법은 객체 탐지 성능 측면에서 기존의 모든 처음부터 학습(train-from-scratch) 방식 모델들을 능가했다. 정확도 면에서는 대규모 데이터셋으로 사전 학습된 RT-DETR [43]을 뛰어넘으며, 파라미터 활용도 면에서는 깊이별 합성곱 기반 설계인 YOLO-MS [7]보다 우수한 성능을 보인다.</figcaption>
+</figure>
+
+<h2>1. 서론 (Introduction)</h2>
+<p>
+  딥러닝 기반 모델은 컴퓨터 비전, 언어 처리, 음성 인식 등 다양한 분야에서 과거의 인공지능 시스템보다 월등히 뛰어난 성능을 입증해 왔다. 최근 몇 년간 딥러닝 분야의 연구자들은 주로 CNN [21–23, 42, 55, 71, 72], 트랜스포머(Transformers) [8, 9, 40, 41, 60, 69, 70], 퍼시버(Perceivers) [26, 32, 52, 56, 81], 맘바(Mambas) [17, 38, 80]와 같이 더욱 강력한 시스템 아키텍처와 학습 방법을 개발하는 데 주력해 왔다. 또한 일부 연구자들은 손실 함수(loss function) [5, 45, 46, 50, 77, 78], 레이블 할당(label assignment) [10, 12, 33, 67, 79], 보조 지도(auxiliary supervision) [18, 20, 24, 28, 29, 51, 54, 68, 76] 등 보다 범용적인 목적 함수를 개발하고자 노력해 왔다. 이러한 연구들은 모두 입력과 목표 과업 간의 매핑(mapping)을 정밀하게 찾아내는 것을 목표로 한다.
+</p>
+<p>
+  하지만 대부분의 기존 접근법은 입력 데이터가 순전파(feedforward) 과정에서 무시할 수 없을 만큼 많은 정보 손실을 겪는다는 점을 간과했다. 이러한 정보 손실은 편향된 그래디언트 흐름(biased gradient flows)을 초래하며, 이 편향된 그래디언트가 결국 모델을 업데이트하는 데 사용된다. 이러한 문제들로 인해 심층 신경망은 목표와 입력 사이에 잘못된 연관성(incorrect associations)을 학습하게 되고, 결과적으로 학습된 모델이 부정확한 예측을 내놓게 된다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_2.png" alt="그림 2" />
+  <figcaption><strong>그림 2.</strong> 서로 다른 네트워크 아키텍처의 무작위 초기 가중치(random initial weight) 출력 특징 맵 시각화 결과: (a) 입력 이미지, (b) PlainNet, (c) ResNet, (d) CSPNet, 그리고 (e) 제안하는 GELAN. 그림에서 볼 수 있듯 아키텍처에 따라 목적 함수가 손실을 계산하기 위해 전달받는 정보가 서로 다른 정도로 손실되며, 제안하는 아키텍처는 가장 완전한 정보를 보존하여 목적 함수 계산에 가장 신뢰할 수 있는 그래디언트 정보를 제공할 수 있다.</figcaption>
+</figure>
+
+<p>
+  심층 신경망에서 입력 데이터가 순전파 과정 중 정보를 잃어버리는 현상은 일반적으로 <strong>정보 병목(information bottleneck)</strong> [59]으로 알려져 있으며, 그 개략적인 양상은 그림 2와 같다. 현재 이 현상을 완화할 수 있는 주요 방법들은 다음과 같다.
+</p>
+<ul>
+  <li><strong>(1) 가역 아키텍처(reversible architectures) 사용 [3, 16, 19]:</strong> 이 방법은 주로 입력 데이터를 반복적으로 전달하여 명시적인 방식으로 입력 데이터의 정보를 유지한다.</li>
+  <li><strong>(2) 마스크드 모델링(masked modeling) 사용 [1, 6, 9, 27, 71, 73]:</strong> 주로 재구성 손실(reconstruction loss)을 활용하고 암묵적인 방식을 통해 추출된 특징을 최대화하여 입력 정보를 보존한다.</li>
+  <li><strong>(3) 심층 지도(deep supervision) 개념 도입 [28, 51, 54, 68]:</strong> 중요한 정보를 아직 많이 잃지 않은 얕은 계층의 특징(shallow features)을 이용해 특징에서 목표로의 매핑을 사전에 구축함으로써, 중요한 정보가 더 깊은 계층으로 전달될 수 있도록 보장한다.</li>
+</ul>
+<p>
+  그러나 위 방법들은 학습 과정과 추론 과정에서 각기 다른 단점을 지닌다. 예를 들어, 가역 아키텍처는 반복적으로 입력되는 데이터를 결합하기 위한 추가 계층이 필요하므로 추론 비용(inference cost)이 크게 증가한다. 또한 입력 데이터 계층에서 출력 계층까지의 경로가 너무 깊어질 수 없다는 제약 때문에, 학습 과정에서 고차원 의미 정보(high-order semantic information)를 모델링하기가 어렵다. 마스크드 모델링의 경우, 재구성 손실이 때때로 목표 과업의 손실(target loss)과 충돌하며 대부분의 마스크 메커니즘이 데이터와의 잘못된 연관성을 형성하기도 한다. 심층 지도 메커니즘은 오차 누적(error accumulation)을 유발하며, 만약 학습 과정에서 얕은 계층의 지도가 정보를 잃어버리면 이후의 깊은 계층들이 필요한 정보를 되찾을 수 없게 된다. 이러한 현상은 난이도가 높은 과업과 소형 모델에서 더욱 두드러지게 나타난다.
+</p>
+<p>
+  앞서 언급한 문제들을 해결하기 위해 새로운 개념인 <strong>프로그래밍 가능한 그래디언트 정보(PGI, Programmable Gradient Information)</strong>를 제안한다. 이 개념의 핵심은 <strong>보조 가역 분기(auxiliary reversible branch)</strong>를 통해 신뢰할 수 있는 그래디언트를 생성함으로써, 깊은 계층의 특징들도 목표 과업을 수행하기 위한 핵심 특성을 여전히 유지할 수 있도록 하는 것이다. 보조 가역 분기의 설계는 다중 경로 특징을 통합하는 전통적인 심층 지도 과정에서 발생할 수 있는 의미 정보 손실(semantic loss)을 방지할 수 있다. 다시 말해, 서로 다른 의미 수준(semantic levels)에서의 그래디언트 정보 전파를 프로그래밍함으로써 최적의 학습 결과를 달성하는 것이다. PGI의 가역 아키텍처는 보조 분기에 구축되므로 추론 시 추가 비용이 발생하지 않는다. 또한 PGI는 목표 과업에 적합한 손실 함수를 자유롭게 선택할 수 있으므로 마스크드 모델링이 겪는 문제도 극복한다. 제안된 PGI 메커니즘은 다양한 크기의 심층 신경망에 적용 가능하며, 매우 깊은 신경망에만 적합했던 기존 심층 지도 메커니즘보다 훨씬 범용적이다.
+</p>
+<p>
+  본 논문에서는 또한 ELAN [65]을 기반으로 <strong>일반화된 ELAN(GELAN, Generalized ELAN)</strong>을 설계했다. GELAN의 설계는 파라미터 수, 계산 복잡도, 정확도, 그리고 추론 속도를 동시에 고려한다. 이 설계를 통해 사용자는 다양한 추론 장치(inference devices)에 맞춰 적절한 연산 블록을 자유롭게 선택할 수 있다. 제안된 PGI와 GELAN을 결합하여 차세대 YOLO 계열 객체 탐지 시스템인 <strong>YOLOv9</strong>을 설계했다. MS COCO 데이터셋을 이용해 실험을 수행한 결과, 제안한 YOLOv9이 모든 비교 대상에서 최고 성능을 달성함을 입증했다.
+</p>
+<p>본 논문의 주요 기여는 다음과 같이 요약된다.</p>
+<ol>
+  <li>기존 심층 신경망 아키텍처를 가역 함수(reversible function)의 관점에서 이론적으로 분석하였으며, 이 과정을 통해 과거에는 설명하기 어려웠던 많은 현상들을 성공적으로 규명했다. 또한 이 분석을 바탕으로 PGI와 보조 가역 분기를 설계하여 탁월한 성능을 달성했다.</li>
+  <li>설계한 PGI는 심층 지도가 극단적으로 깊은 신경망 아키텍처에만 사용될 수 있다는 한계를 해결하여, 새로운 경량 아키텍처들이 실생활에 실질적으로 적용될 수 있도록 했다.</li>
+  <li>설계한 GELAN은 일반 합성곱만 사용하고도 최첨단 기술 기반의 깊이별 합성곱 설계보다 높은 파라미터 활용도를 달성했으며, 가볍고 빠르며 정확하다는 큰 장점을 보여준다.</li>
+  <li>제안한 PGI와 GELAN을 결합함으로써, MS COCO 데이터셋에서 YOLOv9의 객체 탐지 성능은 모든 측면에서 기존의 실시간 객체 탐지기들을 크게 능가한다.</li>
+</ol>
+
+<h2>2. 관련 연구 (Related Work)</h2>
+
+<h3>2.1. 실시간 객체 탐지기 (Real-time Object Detectors)</h3>
+<p>
+  현재 주류를 이루는 실시간 객체 탐지기는 YOLO 시리즈 [2, 7, 13–15, 25, 30, 31, 47–49, 61–63, 74, 75]이며, 이들 모델의 대부분은 CSPNet [64]이나 ELAN [65] 및 그 변형들을 주요 연산 단위로 사용한다. 특징 통합(feature integration) 측면에서는 개선된 PAN [37]이나 FPN [35]이 자주 활용되며, 예측 헤드(prediction head)로는 개선된 YOLOv3 헤드 [49] 또는 FCOS 헤드 [57, 58]가 사용된다. 최근에는 DETR [4]을 기반으로 한 RT-DETR [43]과 같은 실시간 객체 탐지기들도 제안되었다. 그러나 DETR 계열 객체 탐지기는 해당 도메인에 맞는 사전 학습 모델이 없으면 새로운 도메인에 적용하기가 극도로 어렵기 때문에, 현재 가장 널리 사용되는 실시간 객체 탐지기는 여전히 YOLO 시리즈이다. 본 논문은 다양한 컴퓨터 비전 과업과 시나리오에서 효과가 입증된 YOLOv7 [63]을 기반으로 제안 방법을 개발한다. GELAN을 사용하여 아키텍처를 개선하고 제안된 PGI로 학습 과정을 강화했다. 이러한 참신한 접근법을 통해 제안된 YOLOv9을 차세대 최고의 실시간 객체 탐지기로 구현했다.
+</p>
+
+<h3>2.2. 가역 아키텍처 (Reversible Architectures)</h3>
+<p>
+  가역 아키텍처 [3, 16, 19]의 연산 단위는 가역 변환(reversible conversion) 특성을 유지해야 하며, 이를 통해 연산 단위의 각 계층이 출력하는 특징 맵이 완전한 원본 정보를 보존할 수 있도록 보장한다. 앞서 RevCol [3]은 전통적인 가역 단위를 다중 수준(multiple levels)으로 일반화하여 서로 다른 계층 단위가 표현하는 의미 수준을 확장했다. 다양한 신경망 아키텍처에 대한 문헌 조사를 통해, 다양한 수준의 가역적 특성을 지닌 고성능 아키텍처가 다수 존재함을 확인했다. 예를 들어, Res2Net 모듈 [11]은 서로 다른 입력 분할(partition)을 계층적 방식으로 다음 분할과 결합한 뒤, 변환된 모든 분할을 연결(concatenate)하여 다음 단계로 전달한다. CBNet [34, 39]은 복합 백본(composite backbone)을 통해 원본 입력 데이터를 재도입하여 완전한 원본 정보를 얻고, 다양한 결합 방식을 통해 여러 수준의 다중 수준 가역 정보를 획득한다. 이러한 네트워크 아키텍처는 일반적으로 파라미터 활용도가 매우 뛰어나지만, 추가되는 복합 계층으로 인해 추론 속도가 느려진다. DynamicDet [36]은 CBNet [34]과 고효율 실시간 객체 탐지기인 YOLOv7 [63]을 결합하여 속도, 파라미터 수, 정확도 간의 매우 우수한 균형(trade-off)을 달성했다. 본 논문은 DynamicDet 아키텍처를 가역 분기 설계의 기반으로 도입하며, 나아가 가역 정보를 제안하는 PGI 내부로 통합한다. 제안된 새로운 아키텍처는 추론 과정에서 추가 연결이 필요하지 않으므로 속도, 파라미터 양, 정확도의 이점을 온전히 유지할 수 있다.
+</p>
+
+<h3>2.3. 보조 지도 (Auxiliary Supervision)</h3>
+<p>
+  심층 지도(deep supervision) [28, 54, 68]는 가장 흔한 보조 지도 방법으로서, 중간 계층에 추가 예측 계층을 삽입하여 학습을 수행한다. 특히 트랜스포머 기반 방법에서 도입된 다층 디코더(multi-layer decoders) 적용이 가장 대표적인 예이다. 또 다른 일반적인 보조 지도 방법은 관련 메타 정보(meta information)를 활용해 중간 계층에서 생성된 특징 맵을 유도하여 목표 과업이 요구하는 속성을 갖도록 하는 것이다 [18, 20, 24, 29, 76]. 이러한 유형의 예로는 객체 탐지기의 정확도를 높이기 위해 분할 손실(segmentation loss)이나 깊이 손실(depth loss)을 사용하는 경우가 있다. 최근에는 서로 다른 레이블 할당 방법을 사용해 다양한 보조 지도 메커니즘을 생성함으로써 모델의 수렴 속도를 높이고 동시에 강건성(robustness)을 향상시키는 연구들이 다수 보고되고 있다 [53, 67, 82]. 그러나 보조 지도 메커니즘은 일반적으로 대형 모델에만 적용 가능하며, 경량 모델에 적용할 경우 과소 매개변수화(under-parameterization) 현상을 유발하여 오히려 성능을 악화시키기 쉽다. 제안한 PGI는 다중 수준 의미 정보를 재프로그래밍하는 방식을 설계했으며, 이를 통해 경량 모델 역시 보조 지도 메커니즘의 혜택을 누릴 수 있다.
+</p>
+
+<h2>3. 문제 정의 (Problem Statement)</h2>
+<p>
+  일반적으로 심층 신경망의 수렴이 어려운 원인은 그래디언트 소실(gradient vanish)이나 그래디언트 포화(gradient saturation) 같은 요인 때문으로 여겨지며, 이러한 현상은 전통적인 심층 신경망에 실제로 존재한다. 그러나 현대의 심층 신경망은 다양한 정규화(normalization) 기법과 활성화 함수(activation functions)를 설계함으로써 위 문제를 이미 근본적으로 해결했다. 그럼에도 불구하고 심층 신경망은 여전히 수렴 속도가 느리거나 수렴 결과가 좋지 않은 문제를 겪고 있다.
+</p>
+<p>
+  본 논문에서는 이 문제의 본질을 더욱 깊이 탐구한다. 정보 병목(information bottleneck)에 대한 심층 분석을 통해, 이 문제의 근본 원인이 매우 깊은 네트워크에서 유래한 초기 그래디언트가 전달되자마자 목표 달성에 필요한 많은 정보를 잃어버린다는 데 있음을 도출했다. 이 추론을 검증하기 위해 서로 다른 아키텍처의 심층 네트워크에 초기 가중치를 적용해 순전파를 수행하고, 그 결과를 그림 2에 시각화하여 나타냈다. 분명히 PlainNet은 깊은 계층에서 객체 탐지에 필요한 중요한 정보를 대량으로 소실했다. 반면 ResNet, CSPNet, 그리고 GELAN이 보존할 수 있는 중요 정보의 비율은 실제로 학습 후 얻을 수 있는 정확도와 양의 상관관계를 보인다. 이러한 문제의 원인을 해결하기 위해 가역 네트워크 기반의 방법론을 추가로 설계한다. 본 절에서는 정보 병목 원리와 가역 함수에 대한 분석을 상세히 설명한다.
+</p>
+
+<h3>3.1. 정보 병목 원리 (Information Bottleneck Principle)</h3>
+<p>
+  정보 병목 원리에 따르면, 데이터 $X$는 변환 과정을 거칠 때 아래 식 (1)과 같이 정보 손실을 겪을 수 있다.
+</p>
+$$I(X, X) \ge I(X, f_\theta(X)) \ge I(X, g_\phi(f_\theta(X))) \tag{1}$$
+<p>
+  여기서 $I$는 상호 정보량(mutual information)을 나타내며, $f$와 $g$는 변환 함수이고 $\theta$와 $\phi$는 각각 $f$와 $g$의 파라미터이다.
+</p>
+<p>
+  심층 신경망에서 $f_\theta(\cdot)$와 $g_\phi(\cdot)$는 각각 심층 신경망 내 연속된 두 계층의 연산을 의미한다. 식 (1)로부터 네트워크 계층이 깊어질수록 원본 데이터가 소실될 가능성이 커진다는 것을 예측할 수 있다. 그러나 심층 신경망의 파라미터는 네트워크의 출력과 주어진 목표(target)를 바탕으로 손실 함수를 계산해 새로운 그래디언트를 생성한 뒤 업데이트된다. 예상할 수 있듯, 더 깊은 신경망의 출력일수록 예측 목표에 대한 완전한 정보를 보존하는 능력이 떨어진다. 이로 인해 네트워크 학습 과정에서 불완전한 정보가 사용될 가능성이 높아지며, 결과적으로 신뢰할 수 없는 그래디언트와 저조한 수렴을 초래한다.
+</p>
+<p>
+  이 문제를 해결하는 한 가지 방법은 모델의 크기를 직접 키우는 것이다. 많은 수의 파라미터로 모델을 구축하면 데이터에 대해 보다 완전한 변환을 수행할 수 있는 능력이 커진다. 이러한 접근 방식은 데이터 순전파 과정에서 일부 정보가 손실되더라도 목표로의 매핑을 수행할 만큼 충분한 정보를 유지할 가능성을 열어준다. 이 현상은 대부분의 현대 모델에서 깊이(depth)보다 너비(width)가 더 중요한 이유를 설명해 준다. 하지만 이 결론 역시 매우 깊은 신경망에서 발생하는 신뢰할 수 없는 그래디언트 문제를 근본적으로 해결할 수는 없다. 아래에서는 가역 함수를 사용하여 문제를 해결하는 방법과 관련 분석을 소개한다.
+</p>
+
+<h3>3.2. 가역 함수 (Reversible Functions)</h3>
+<p>
+  어떤 함수 $r$이 역변환 함수(inverse transformation function) $v$를 가질 때, 식 (2)와 같이 이 함수를 가역 함수(reversible function)라고 부른다.
+</p>
+$$X = v_\zeta(r_\psi(X)) \tag{2}$$
+<p>
+  여기서 $\psi$와 $\zeta$는 각각 $r$과 $v$의 파라미터이다. 데이터 $X$는 식 (3)과 같이 정보 손실 없이 가역 함수를 통해 변환된다.
+</p>
+$$I(X, X) = I(X, r_\psi(X)) = I(X, v_\zeta(r_\psi(X))) \tag{3}$$
+<p>
+  네트워크의 변환 함수가 가역 함수들로 구성되면 모델을 업데이트하기 위한 더욱 신뢰할 수 있는 그래디언트를 얻을 수 있다. 오늘날 인기 있는 거의 모든 딥러닝 기법들은 식 (4)와 같이 가역적 속성(reversible property)에 부합하는 아키텍처를 따른다.
+</p>
+$$X^{l+1} = X^l + f_\theta^{l+1}(X^l) \tag{4}$$
+<p>
+  여기서 $l$은 PreAct ResNet의 $l$번째 계층을 가리키며, $f$는 해당 계층의 변환 함수이다. PreAct ResNet [22]은 명시적인 방식으로 원본 데이터 $X$를 후속 계층에 반복적으로 전달한다. 비록 이러한 설계가 1,000개 이상의 계층을 가진 심층 신경망도 매우 잘 수렴하게 할 수 있지만, 심층 신경망이 필요한 중요한 이유를 훼손한다. 즉, 어려운 문제의 경우 데이터를 목표에 매핑하는 단순한 매핑 함수를 직접 찾기가 어렵다는 점이다. 이는 또한 계층 수가 적을 때 PreAct ResNet이 일반 ResNet [21]보다 성능이 떨어지는 이유를 설명해 준다.
+</p>
+<p>
+  또한 트랜스포머 모델이 중대한 돌파구를 마련할 수 있게 했던 마스크드 모델링(masked modeling)을 활용하는 방안도 검토했다. 식 (5)와 같은 근사 방법을 사용하여 $r$의 역변환 $v$를 찾고, 이를 통해 변환된 특징들이 희소 특징(sparse features)을 사용하면서도 충분한 정보를 보존하도록 시도한다. 식 (5)의 형태는 다음과 같다.
+</p>
+$$X = v_\zeta(r_\psi(X) \cdot M) \tag{5}$$
+<p>
+  여기서 $M$은 동적 이진 마스크(dynamic binary mask)이다. 이러한 과업을 수행하는 데 흔히 쓰이는 다른 방법으로는 확산 모델(diffusion model)과 변이형 오토인코더(variational autoencoder)가 있으며, 두 방법 모두 역함수를 찾는 기능을 갖추고 있다. 그러나 이러한 접근법을 경량 모델에 적용하면 결함이 발생한다. 경량 모델은 방대한 양의 원시 데이터(raw data)에 비해 과소 매개변수화(under-parameterized)되어 있기 때문이다. 이러한 이유로 데이터 $X$를 목표 $Y$에 매핑하는 핵심 정보 $I(Y, X)$ 역시 동일한 문제에 직면하게 된다. 이 문제를 규명하기 위해 정보 병목 개념 [59]을 사용하며, 정보 병목의 수식은 다음과 같다.
+</p>
+$$I(X, X) \ge I(Y, X) \ge I(Y, f_\theta(X)) \ge \dots \ge I(Y, \hat{Y}) \tag{6}$$
+<p>
+  일반적으로 $I(Y, X)$는 전체 $I(X, X)$에서 극히 작은 부분만을 차지한다. 그럼에도 불구하고 목표 임무(target mission)에는 결정적인 역할을 한다. 따라서 순전파 단계에서 손실되는 정보의 양이 크지 않더라도 $I(Y, X)$가 침해받기만 하면 학습 효과에 막대한 타격이 발생한다. 경량 모델은 본래 과소 매개변수화 상태에 놓여 있으므로 순전파 단계에서 많은 중요 정보를 잃기 쉽다. 그러므로 경량 모델에서의 목표는 $I(X, X)$로부터 $I(Y, X)$를 얼마나 정확하게 걸러내느냐에 있다. 반면 $X$의 모든 정보를 온전히 보존하는 것은 달성하기 어렵다. 이상의 분석을 토대로, 모델을 업데이트할 신뢰할 수 있는 그래디언트를 생성할 뿐만 아니라 얕고 가벼운 신경망에도 적합한 새로운 심층 신경망 학습 방법을 제안하고자 한다.
+</p>
+
+<h2>4. 방법론 (Methodology)</h2>
+
+<h3>4.1. 프로그래밍 가능한 그래디언트 정보 (Programmable Gradient Information)</h3>
+<p>
+  앞서 언급한 문제들을 해결하기 위해 그림 3(d)와 같이 <strong>프로그래밍 가능한 그래디언트 정보(PGI, Programmable Gradient Information)</strong>라는 새로운 보조 지도 프레임워크를 제안한다. PGI는 크게 (1) <strong>주 분기(main branch)</strong>, (2) <strong>보조 가역 분기(auxiliary reversible branch)</strong>, (3) <strong>다중 수준 보조 정보(multi-level auxiliary information)</strong>의 세 가지 구성 요소로 이루어져 있다. 그림 3(d)에서 볼 수 있듯이 PGI의 추론 과정은 오직 주 분기만을 사용하므로 어떠한 추가 추론 비용도 요구하지 않는다. 나머지 두 구성 요소는 딥러닝 방법론의 여러 중요 이슈를 해결하거나 완화하는 데 사용된다. 그중 보조 가역 분기는 신경망의 심화로 인해 발생하는 문제를 다루기 위해 설계되었다. 네트워크의 심화는 정보 병목을 야기하여 손실 함수가 신뢰할 수 있는 그래디언트를 생성하지 못하게 한다. 한편 다중 수준 보조 정보는 심층 지도로 인해 발생하는 오차 누적 문제를 처리하기 위해 설계되었으며, 특히 다중 예측 분기(multiple prediction branch)를 갖는 아키텍처와 경량 모델에 효과적이다. 다음으로 이 두 구성 요소를 단계별로 자세히 소개한다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_3.png" alt="그림 3" />
+  <figcaption><strong>그림 3.</strong> PGI 및 관련 네트워크 아키텍처와 방법론. (a) 경로 집계 네트워크(PAN, Path Aggregation Network) [37], (b) 가역 칼럼(RevCol, Reversible Columns) [3], (c) 기존 심층 지도(conventional deep supervision), 그리고 (d) 제안하는 프로그래밍 가능한 그래디언트 정보(PGI). PGI는 크게 세 가지 요소로 구성된다: (1) 주 분기(main branch): 추론에 사용되는 아키텍처, (2) 보조 가역 분기(auxiliary reversible branch): 역전파 시 주 분기에 공급할 신뢰할 수 있는 그래디언트를 생성, (3) 다중 수준 보조 정보(multi-level auxiliary information): 주 분기가 계획 가능한 다중 수준 의미 정보를 학습하도록 제어.</figcaption>
+</figure>
+
+<h4>4.1.1. 보조 가역 분기 (Auxiliary Reversible Branch)</h4>
+<p>
+  PGI에서는 신뢰할 수 있는 그래디언트를 생성하고 네트워크 파라미터를 업데이트하기 위해 보조 가역 분기를 제안한다. 데이터에서 목표로 매핑되는 정보를 제공함으로써, 손실 함수는 목표와 관련성이 낮은 불완전한 순전파 특징으로부터 잘못된 상관관계(false correlations)를 찾아낼 가능성을 피하고 올바른 안내를 제공할 수 있다. 가역 아키텍처를 도입해 완전한 정보를 유지하고자 하지만, 주 분기에 가역 아키텍처를 직접 추가하면 막대한 추론 비용이 소모된다. 그림 3(b)의 아키텍처를 분석한 결과, 깊은 계층에서 얕은 계층으로 이어지는 추가 연결을 도입하면 추론 시간이 20% 증가하는 것으로 나타났다. 나아가 입력 데이터를 네트워크의 고해상도 연산 계층(노란색 상자)에 반복적으로 추가할 경우 추론 시간은 2배 이상으로 늘어난다.
+</p>
+<p>
+  가역 아키텍처를 사용해 신뢰할 수 있는 그래디언트를 얻는 것이 목적이므로, 추론 단계에서 '가역성(reversible)'이 반드시 필요한 유일한 조건은 아니다. 이러한 관점에서 가역 분기를 심층 지도 분기의 확장으로 간주하고 그림 3(d)와 같은 보조 가역 분기를 설계했다. 정보 병목으로 인해 중요한 정보를 잃어버릴 수 있는 주 분기의 깊은 특징들은 보조 가역 분기로부터 신뢰할 수 있는 그래디언트 정보를 전달받을 수 있게 된다. 이 그래디언트 정보는 파라미터 학습을 구동하여 정확하고 중요한 정보를 추출하도록 보조하며, 결과적으로 주 분기가 목표 과업에 더욱 효과적인 특징을 획득할 수 있게 한다. 게다가 가역 아키텍처는 복잡한 과업이 더 깊은 네트워크에서의 변환을 요구하기 때문에 얕은 네트워크에서 일반 네트워크보다 성능이 떨어지는 경향이 있다. 반면 제안된 방법은 주 분기가 완전한 원본 정보를 강제로 유지하도록 하지 않고, 보조 지도 메커니즘을 통해 유용한 그래디언트를 생성하여 주 분기를 업데이트한다. 이러한 설계의 장점은 제안 방법이 더 얕은 네트워크에도 적용될 수 있다는 점이다.
+</p>
+<p>
+  마지막으로, 보조 가역 분기는 추론 단계에서 제거할 수 있으므로 기존 네트워크의 추론 능력을 그대로 보존할 수 있다. 또한 PGI에서는 어떠한 가역 아키텍처든 선택하여 보조 가역 분기의 역할을 수행하도록 할 수 있다.
+</p>
+
+<h4>4.1.2. 다중 수준 보조 정보 (Multi-level Auxiliary Information)</h4>
+<p>
+  본 절에서는 다중 수준 보조 정보가 어떻게 작동하는지 논의한다. 다중 예측 분기를 포함하는 심층 지도 아키텍처는 그림 3(c)에 나타나 있다. 객체 탐지에서 서로 다른 특징 피라미드(feature pyramids)는 서로 다른 과업을 수행하는 데 사용될 수 있으며, 예를 들어 함께 협력하여 서로 다른 크기의 객체를 탐지한다. 따라서 심층 지도 분기에 연결된 후, 얕은 특징은 소형 객체 탐지에 필요한 특징을 학습하도록 유도되며 이때 시스템은 다른 크기의 객체 위치들을 배경(background)으로 간주하게 된다. 하지만 이러한 작동 방식은 깊은 특징 피라미드가 목표 객체를 예측하는 데 필요한 많은 정보를 잃어버리게 한다. 이 문제에 대해 각 특징 피라미드가 모든 목표 객체에 관한 정보를 전달받아야만 후속 주 분기가 다양한 목표에 대한 예측을 학습할 수 있는 완전한 정보를 보존할 수 있다고 판단했다.
+</p>
+<p>
+  다중 수준 보조 정보의 개념은 그림 3(d)와 같이 보조 지도의 특징 피라미드 계층 구조와 주 분기 사이에 <strong>통합 네트워크(integration network)</strong>를 삽입하고, 이를 사용하여 서로 다른 예측 헤드로부터 반환된 그래디언트를 결합하는 것이다. 그런 다음 다중 수준 보조 정보는 모든 목표 객체를 포함하는 그래디언트 정보를 집계하여 주 분기로 전달하고 파라미터를 업데이트한다. 이때 주 분기의 특징 피라미드 계층 구조의 특성은 특정 객체의 정보에만 지배되지 않게 된다. 결과적으로 제안하는 방법은 심층 지도에서 발생하는 정보 단절(broken information) 문제를 완화할 수 있다. 또한 다중 수준 보조 정보에는 어떠한 통합 네트워크든 사용할 수 있다. 따라서 서로 다른 크기의 네트워크 아키텍처 학습을 유도하기 위해 필요한 의미 수준을 유연하게 계획(plan)할 수 있다.
+</p>
+
+<h3>4.2. 일반화된 ELAN (Generalized ELAN)</h3>
+<p>
+  본 절에서는 제안하는 새로운 네트워크 아키텍처인 <strong>GELAN</strong>을 설명한다. 그래디언트 경로 계획(gradient path planning)으로 설계된 두 신경망 아키텍처인 CSPNet [64]과 ELAN [65]을 결합하여, 경량성(lightweight), 추론 속도, 그리고 정확도를 모두 고려한 일반화된 효율적 계층 집계 네트워크(GELAN)를 설계했다. 전체 아키텍처는 그림 4에 나와 있다. 본래 합성곱 계층의 적층(stacking)만을 사용하던 ELAN [65]의 기능을 확장하여 임의의 연산 블록(computational blocks)을 사용할 수 있는 새로운 아키텍처로 일반화했다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_4.png" alt="그림 4" />
+  <figcaption><strong>그림 4.</strong> GELAN의 아키텍처: (a) CSPNet [64], (b) ELAN [65], 그리고 (c) 제안하는 GELAN. CSPNet을 모방하고 ELAN을 확장하여 임의의 연산 블록을 지원할 수 있는 GELAN을 설계했다.</figcaption>
+</figure>
+
+<h2>5. 실험 (Experiments)</h2>
+
+<h3>5.1. 실험 설정 (Experimental Setup)</h3>
+<p>
+  제안된 방법론은 MS COCO 데이터셋을 사용하여 검증했다. 모든 실험 설정은 YOLOv7 AF [63]를 따르며, 데이터셋은 MS COCO 2017 분할(split)을 사용한다. 언급된 모든 모델은 사전 학습 없이 처음부터 학습(train-from-scratch)하는 전략으로 학습되었으며, 총 학습 에폭(epoch) 수는 500이다. 학습률(learning rate) 설정에서는 처음 3 에폭 동안 선형 웜업(linear warm-up)을 적용하고, 이후 에폭에서는 모델 규모에 맞는 감쇠(decay) 방식을 적용한다. 마지막 15 에폭에서는 모자이크(mosaic) 데이터 증강을 끈다. 보다 자세한 설정은 부록(Appendix)에서 확인할 수 있다.
+</p>
+
+<h3>5.2. 구현 세부 사항 (Implementation Details)</h3>
+<p>
+  각각 YOLOv7 [63]과 Dynamic YOLOv7 [36]을 기반으로 YOLOv9의 일반 버전(general version)과 확장 버전(extended version)을 구축했다. 네트워크 아키텍처 설계에서는 계획된 RepConv(planned RepConv) [63]가 적용된 CSPNet 블록 [64]을 연산 블록으로 삼아 기존 ELAN [65]을 GELAN으로 교체했다. 또한 다운샘플링(downsampling) 모듈을 단순화하고 앵커 프리(anchor-free) 예측 헤드를 최적화했다. PGI의 보조 손실(auxiliary loss) 부분은 YOLOv7의 보조 헤드 설정을 그대로 따랐다. 보다 자세한 내용은 부록에서 확인할 수 있다.
+</p>
+
+<h3>5.3. 최신 기법과의 비교 (Comparison with State-of-the-Arts)</h3>
+<p>
+  표 1은 제안하는 YOLOv9과 다른 처음부터 학습(train-from-scratch) 기반 실시간 객체 탐지기들의 비교 결과를 보여준다. 전반적으로 기존 방법 중 가장 우수한 성능을 보인 모델은 경량 모델에서는 YOLO MS-S [7], 중간 모델에서는 YOLO MS [7], 일반 모델에서는 YOLOv7 AF [63], 대형 모델에서는 YOLOv8-X [15]이다. 경량 및 중간 모델인 YOLO MS [7]와 비교했을 때, YOLOv9은 파라미터 수가 약 10% 적고 연산량도 5~15% 적으면서도 AP는 0.4~0.6% 향상되었다. YOLOv7 AF와 비교하면, YOLOv9-C는 파라미터가 42%, 연산량이 22% 적으면서도 동일한 AP(53.0%)를 달성한다. YOLOv8-X와 비교할 때, YOLOv9-E는 파라미터가 16%, 연산량이 27% 적으면서도 AP가 1.7% 크게 향상되었다. 이상의 비교 결과는 제안하는 YOLOv9이 모든 측면에서 기존 방법들보다 획기적으로 개선되었음을 입증한다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 1. 최신 실시간 객체 탐지기 성능 비교 (MS COCO 2017 val, 처음부터 학습)</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>파라미터 수 (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{50}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{75}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{S}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{M}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{L}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv5-N r7.0 [14]</td><td>1.9</td><td>4.5</td><td>28.0</td><td>45.7</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv5-S r7.0 [14]</td><td>7.2</td><td>16.5</td><td>37.4</td><td>56.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv5-M r7.0 [14]</td><td>21.2</td><td>49.0</td><td>45.4</td><td>64.1</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv5-L r7.0 [14]</td><td>46.5</td><td>109.1</td><td>49.0</td><td>67.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv5-X r7.0 [14]</td><td>86.7</td><td>205.7</td><td>50.7</td><td>68.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-N v3.0 [30]</td><td>4.7</td><td>11.4</td><td>37.0</td><td>52.7</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-S v3.0 [30]</td><td>18.5</td><td>45.3</td><td>44.3</td><td>61.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-M v3.0 [30]</td><td>34.9</td><td>85.8</td><td>49.1</td><td>66.1</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-L v3.0 [30]</td><td>59.6</td><td>150.7</td><td>51.8</td><td>69.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv7 [63]</td><td>36.9</td><td>104.7</td><td>51.2</td><td>69.7</td><td>55.9</td><td>31.8</td><td>55.5</td><td>65.0</td></tr>
+      <tr><td>YOLOv7-X [63]</td><td>71.3</td><td>189.9</td><td>52.9</td><td>71.1</td><td>51.4</td><td>36.9</td><td>57.7</td><td>68.6</td></tr>
+      <tr><td>YOLOv7-N AF [63]</td><td>3.1</td><td>8.7</td><td>37.6</td><td>53.3</td><td>40.6</td><td>18.7</td><td>41.7</td><td>52.8</td></tr>
+      <tr><td>YOLOv7-S AF [63]</td><td>11.0</td><td>28.1</td><td>45.1</td><td>61.8</td><td>48.9</td><td>25.7</td><td>50.2</td><td>61.2</td></tr>
+      <tr><td>YOLOv7 AF [63]</td><td>43.6</td><td>130.5</td><td>53.0</td><td>70.2</td><td>57.5</td><td>35.8</td><td>58.7</td><td>68.9</td></tr>
+      <tr><td>YOLOv8-N [15]</td><td>3.2</td><td>8.7</td><td>37.3</td><td>52.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv8-S [15]</td><td>11.2</td><td>28.6</td><td>44.9</td><td>61.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv8-M [15]</td><td>25.9</td><td>78.9</td><td>50.2</td><td>67.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv8-L [15]</td><td>43.7</td><td>165.2</td><td>52.9</td><td>69.8</td><td>57.5</td><td>35.3</td><td>58.3</td><td>69.8</td></tr>
+      <tr><td>YOLOv8-X [15]</td><td>68.2</td><td>257.8</td><td>53.9</td><td>71.0</td><td>58.7</td><td>35.7</td><td>59.3</td><td>70.7</td></tr>
+      <tr><td>DAMO YOLO-T [75]</td><td>8.5</td><td>18.1</td><td>42.0</td><td>58.0</td><td>45.2</td><td>23.0</td><td>46.1</td><td>58.5</td></tr>
+      <tr><td>DAMO YOLO-S [75]</td><td>12.3</td><td>37.8</td><td>46.0</td><td>61.9</td><td>49.5</td><td>25.9</td><td>50.6</td><td>62.5</td></tr>
+      <tr><td>DAMO YOLO-M [75]</td><td>28.2</td><td>61.8</td><td>49.2</td><td>65.5</td><td>53.0</td><td>29.7</td><td>53.1</td><td>66.1</td></tr>
+      <tr><td>DAMO YOLO-L [75]</td><td>42.1</td><td>97.3</td><td>50.8</td><td>67.5</td><td>55.5</td><td>33.2</td><td>55.7</td><td>66.6</td></tr>
+      <tr><td>Gold YOLO-N [61]</td><td>5.6</td><td>12.1</td><td>39.6</td><td>55.7</td><td>–</td><td>19.7</td><td>44.1</td><td>57.0</td></tr>
+      <tr><td>Gold YOLO-S [61]</td><td>21.5</td><td>46.0</td><td>45.4</td><td>62.5</td><td>–</td><td>25.3</td><td>50.2</td><td>62.6</td></tr>
+      <tr><td>Gold YOLO-M [61]</td><td>41.3</td><td>87.5</td><td>49.8</td><td>67.0</td><td>–</td><td>32.3</td><td>55.3</td><td>66.3</td></tr>
+      <tr><td>Gold YOLO-L [61]</td><td>75.1</td><td>151.7</td><td>51.8</td><td>68.9</td><td>–</td><td>34.1</td><td>57.4</td><td>68.2</td></tr>
+      <tr><td>YOLO MS-N [7]</td><td>4.5</td><td>17.4</td><td>43.4</td><td>60.4</td><td>47.6</td><td>23.7</td><td>48.3</td><td>60.3</td></tr>
+      <tr><td>YOLO MS-S [7]</td><td>8.1</td><td>31.2</td><td>46.2</td><td>63.7</td><td>50.5</td><td>26.9</td><td>50.5</td><td>63.0</td></tr>
+      <tr><td>YOLO MS [7]</td><td>22.2</td><td>80.2</td><td>51.0</td><td>68.6</td><td>55.7</td><td>33.1</td><td>56.1</td><td>66.5</td></tr>
+      <tr><td>GELAN-S (Ours)</td><td>7.1</td><td>26.4</td><td>46.7</td><td>63.0</td><td>50.7</td><td>25.9</td><td>51.5</td><td>64.0</td></tr>
+      <tr><td>GELAN-M (Ours)</td><td>20.0</td><td>76.3</td><td>51.1</td><td>67.9</td><td>55.7</td><td>33.6</td><td>56.4</td><td>67.3</td></tr>
+      <tr><td>GELAN-C (Ours)</td><td>25.3</td><td>102.1</td><td>52.5</td><td>69.5</td><td>57.3</td><td>35.8</td><td>57.6</td><td>69.4</td></tr>
+      <tr><td>GELAN-E (Ours)</td><td>57.3</td><td>189.0</td><td>55.0</td><td>71.9</td><td>60.0</td><td>38.0</td><td>60.6</td><td>70.9</td></tr>
+      <tr><td><strong>YOLOv9-S (Ours)</strong></td><td>7.1</td><td>26.4</td><td><strong>46.8</strong></td><td><strong>63.4</strong></td><td>50.7</td><td>26.6</td><td>56.0</td><td>64.5</td></tr>
+      <tr><td><strong>YOLOv9-M (Ours)</strong></td><td>20.0</td><td>76.3</td><td><strong>51.4</strong></td><td><strong>68.1</strong></td><td>56.1</td><td>33.6</td><td>57.0</td><td>68.0</td></tr>
+      <tr><td><strong>YOLOv9-C (Ours)</strong></td><td>25.3</td><td>102.1</td><td><strong>53.0</strong></td><td><strong>70.2</strong></td><td>57.8</td><td>36.2</td><td>58.5</td><td>69.3</td></tr>
+      <tr><td><strong>YOLOv9-E (Ours)</strong></td><td>57.3</td><td>189.0</td><td><strong>55.6</strong></td><td><strong>72.8</strong></td><td>60.6</td><td>40.2</td><td>61.0</td><td>71.4</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  한편, 우리는 ImageNet 사전 학습(pretrained) 모델들 역시 비교 대상에 포함시켰으며 그 결과를 그림 5에 나타냈습니다. 각각 파라미터 수와 연산량을 기준으로 비교를 수행했습니다. 파라미터 수 측면에서 기존 대형 모델 중 최고 성능은 RT-DETR [43]입니다. 그림 5에서 확인할 수 있듯, 일반 합성곱을 사용하는 YOLOv9은 파라미터 활용도 면에서 깊이별 합성곱을 사용하는 YOLO-MS보다도 우수합니다. 대형 모델의 파라미터 활용도 면에서는 ImageNet 사전 학습 모델을 사용하는 RT-DETR을 크게 능가합니다. 더 나아가 깊은 모델에서 YOLOv9은 PGI 사용의 거대한 이점을 보여줍니다. 데이터를 목표에 매핑하는 데 필요한 정보를 정밀하게 보존하고 추출함으로써, 우리의 방법은 RT-DETR-X와 동일한 수준의 정확도를 유지하면서도 파라미터는 단 66%만을 필요로 합니다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_5.png" alt="그림 5" />
+  <figcaption><strong>그림 5.</strong> 최신 실시간 객체 탐지기 비교. 비교에 참여한 타 방법들은 모두 RT-DETR [43], RTMDet [44], PP-YOLOE [74] 등 ImageNet 사전 학습 가중치를 사용한다. 처음부터 학습(train-from-scratch) 방식을 사용한 YOLOv9이 다른 방법들의 성능을 뚜렷하게 능가한다.</figcaption>
+</figure>
+
+<p>
+  연산량 측면에서 기존의 가장 우수한 모델들은 소형부터 대형까지 순서대로 YOLO-MS [7], PP-YOLOE [74], 그리고 RT-DETR [43]입니다. 그림 5에서 볼 수 있듯이 YOLOv9은 계산 복잡도 면에서 기존 처음부터 학습(train-from-scratch) 방식들을 압도합니다. 또한 깊이별 합성곱 기반 모델 및 ImageNet 기반 사전 학습 모델들과 비교하더라도 YOLOv9은 매우 뛰어난 경쟁력을 보입니다.
+</p>
+
+<h3>5.4. 제거 실험 (Ablation Studies)</h3>
+
+<h4>5.4.1. 일반화된 ELAN (Generalized ELAN)</h4>
+<p>
+  GELAN에 대해서는 먼저 연산 블록(computational blocks)에 대한 제거 실험을 진행했습니다. 각각 Res 블록 [21], Dark 블록 [49], 그리고 CSP 블록 [64]을 사용하여 실험을 수행했습니다. 표 2는 ELAN의 합성곱 계층을 서로 다른 연산 블록으로 교체한 후에도 시스템이 우수한 성능을 유지함을 보여줍니다. 실제로 사용자는 연산 블록을 자유롭게 교체하여 각자의 추론 장치에 맞게 활용할 수 있습니다. 여러 연산 블록 교체안 중에서도 CSP 블록이 특히 뛰어난 성능을 발휘했습니다. CSP 블록은 파라미터 수와 연산량을 줄여줄 뿐만 아니라 AP를 0.7% 향상시켰습니다. 따라서 우리는 YOLOv9에서 GELAN의 구성 단위로 CSP-ELAN을 채택했습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 2. 다양한 연산 블록에 대한 제거 실험</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>CB 유형<sup>1</sup></th>
+        <th>파라미터 수</th>
+        <th>FLOPs</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>GELAN-S<sup>2</sup></td><td>Conv</td><td>6.2M</td><td>23.5G</td><td>44.8%</td></tr>
+      <tr><td>GELAN-S</td><td>Res [21]</td><td>5.4M</td><td>21.0G</td><td>44.3%</td></tr>
+      <tr><td>GELAN-S</td><td>Dark [49]</td><td>5.7M</td><td>21.8G</td><td>44.5%</td></tr>
+      <tr><td>GELAN-S</td><td><strong>CSP [64]</strong></td><td>5.9M</td><td>22.4G</td><td><strong>45.5%</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> CB 유형은 연산 블록 유형(computational block type)을 의미한다. <sup>2</sup> -S는 소형 크기 모델(small size model)을 의미한다.
+  </p>
+</div>
+
+<p>
+  다음으로 다양한 크기의 GELAN에 대해 ELAN 블록 깊이(depth)와 CSP 블록 깊이 실험을 수행하고, 그 결과를 표 3에 제시했습니다. ELAN의 깊이를 1에서 2로 증가시킬 때 정확도가 크게 향상되는 것을 확인할 수 있습니다. 그러나 깊이가 2 이상일 때는 ELAN 깊이를 높이든 CSP 깊이를 높이든 관계없이 파라미터 수, 연산량, 그리고 정확도가 항상 선형적인 관계를 보입니다. 이는 GELAN이 깊이에 민감하지 않다는 것을 의미합니다. 즉, 사용자는 특별한 설계 없이도 GELAN 내의 구성 요소들을 임의로 조합하여 네트워크 아키텍처를 설계할 수 있으며 안정적인 성능을 갖춘 모델을 얻을 수 있습니다. 표 3을 바탕으로 YOLOv9-{S, M, C}의 ELAN 깊이와 CSP 깊이 쌍을 각각 {{2, 3}, {2, 1}, {2, 1}}로 설정했습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 3. ELAN 깊이 및 CSP 깊이에 대한 제거 실험</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$D_{\text{ELAN}}$<sup>1</sup></th>
+        <th>$D_{\text{CSP}}$<sup>1</sup></th>
+        <th>파라미터 수</th>
+        <th>FLOPs</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>GELAN-S<sup>2</sup></td><td>2</td><td>1</td><td>5.9M</td><td>22.4G</td><td>45.5%</td></tr>
+      <tr><td>GELAN-S</td><td>2</td><td>2</td><td>6.5M</td><td>24.4G</td><td>46.0%</td></tr>
+      <tr><td>GELAN-S</td><td>3</td><td>1</td><td>7.1M</td><td>26.3G</td><td>46.5%</td></tr>
+      <tr><td>GELAN-S</td><td>2</td><td>3</td><td>7.1M</td><td>26.4G</td><td>46.7%</td></tr>
+      <tr><td>GELAN-M<sup>2</sup></td><td>2</td><td>1</td><td>20.0M</td><td>76.3G</td><td>51.1%</td></tr>
+      <tr><td>GELAN-M</td><td>2</td><td>2</td><td>22.2M</td><td>85.1G</td><td>51.7%</td></tr>
+      <tr><td>GELAN-M</td><td>3</td><td>1</td><td>24.3M</td><td>93.5G</td><td>51.8%</td></tr>
+      <tr><td>GELAN-M</td><td>2</td><td>3</td><td>24.4M</td><td>94.0G</td><td>52.3%</td></tr>
+      <tr><td>GELAN-C<sup>2</sup></td><td>1</td><td>1</td><td>18.9M</td><td>77.5G</td><td>50.7%</td></tr>
+      <tr><td>GELAN-C</td><td>2</td><td>1</td><td>25.3M</td><td>102.1G</td><td>52.5%</td></tr>
+      <tr><td>GELAN-C</td><td>2</td><td>2</td><td>28.6M</td><td>114.4G</td><td>53.0%</td></tr>
+      <tr><td>GELAN-C</td><td>3</td><td>1</td><td>31.7M</td><td>126.8G</td><td>53.2%</td></tr>
+      <tr><td>GELAN-C</td><td>2</td><td>3</td><td>31.9M</td><td>126.7G</td><td>53.3%</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> $D_{\text{ELAN}}$과 $D_{\text{CSP}}$는 각각 ELAN과 CSP의 깊이를 의미한다. <sup>2</sup> -{S, M, C}는 각각 small, medium, compact 모델을 나타낸다.
+  </p>
+</div>
+
+<h4>5.4.2. 프로그래밍 가능한 그래디언트 정보 (Programmable Gradient Information)</h4>
+<p>
+  PGI 측면에서는 백본(backbone)과 넥(neck)에 대해 각각 보조 가역 분기와 다중 수준 보조 정보에 관한 제거 실험을 수행했습니다. 다중 수준 가역 정보를 얻기 위해 DHLC [34] 연결을 사용하는 보조 가역 분기 ICN을 설계했습니다. 다중 수준 보조 정보에 대해서는 FPN과 PAN을 사용해 제거 실험을 진행했으며, PFH의 역할은 전통적인 심층 지도와 동일합니다. 모든 실험 결과는 표 4에 나열되어 있습니다. 표 4에서 보듯 PFH는 깊은 모델에서만 효과를 발휘하는 반면, 제안하는 PGI는 다양한 조합에서도 정확도를 일관되게 향상시킵니다. 특히 ICN을 사용할 때 안정적이고 더욱 우수한 결과를 얻었습니다. 또한 YOLOv7 [63]에서 제안된 주 헤드 유도 할당(lead-head guided assignment)을 PGI의 보조 지도에 적용해 본 결과 훨씬 더 나은 성능을 달성했습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 4. 백본 및 넥의 PGI에 대한 제거 실험</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$G_{\text{backbone}}$</th>
+        <th>$G_{\text{neck}}$</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$</th>
+        <th>$\text{AP}^{\text{val}}_{S}$</th>
+        <th>$\text{AP}^{\text{val}}_{M}$</th>
+        <th>$\text{AP}^{\text{val}}_{L}$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>GELAN-C</td><td>–</td><td>–</td><td>52.5%</td><td>35.8%</td><td>57.6%</td><td>69.4%</td></tr>
+      <tr><td>GELAN-C</td><td>PFH</td><td>–</td><td>52.5%</td><td>35.3%</td><td>58.1%</td><td>68.9%</td></tr>
+      <tr><td>GELAN-C</td><td>FPN</td><td>–</td><td>52.6%</td><td>35.3%</td><td>58.1%</td><td>68.9%</td></tr>
+      <tr><td>GELAN-C</td><td>–</td><td>ICN</td><td>52.7%</td><td>35.3%</td><td>58.4%</td><td>68.9%</td></tr>
+      <tr><td>GELAN-C</td><td>FPN</td><td>ICN</td><td>52.8%</td><td>35.8%</td><td>58.2%</td><td>69.1%</td></tr>
+      <tr><td>GELAN-C</td><td>ICN</td><td>–</td><td>52.9%</td><td>35.2%</td><td>58.7%</td><td>68.6%</td></tr>
+      <tr><td>GELAN-C</td><td>LHG-ICN<sup>1</sup></td><td>–</td><td><strong>53.0%</strong></td><td><strong>36.3%</strong></td><td>58.5%</td><td>69.1%</td></tr>
+      <tr><td>GELAN-E</td><td>–</td><td>–</td><td>55.0%</td><td>38.0%</td><td>60.6%</td><td>70.9%</td></tr>
+      <tr><td>GELAN-E</td><td>PFH</td><td>–</td><td>55.3%</td><td>38.3%</td><td>60.3%</td><td>71.6%</td></tr>
+      <tr><td>GELAN-E</td><td>FPN</td><td>–</td><td><strong>55.6%</strong></td><td><strong>40.2%</strong></td><td>61.0%</td><td>71.4%</td></tr>
+      <tr><td>GELAN-E</td><td>PAN</td><td>–</td><td>55.5%</td><td>39.0%</td><td><strong>61.1%</strong></td><td>71.5%</td></tr>
+      <tr><td>GELAN-E</td><td>FPN</td><td>ICN</td><td><strong>55.6%</strong></td><td>39.8%</td><td>60.9%</td><td><strong>71.9%</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> LHG는 YOLOv7 [63]에서 제안된 주 헤드 유도 학습(lead head guided training)을 의미한다. (원문 각주에는 표 3의 $D_{\text{ELAN}}, D_{\text{CSP}}$ 설명이 병기되어 있음)
+  </p>
+</div>
+
+<p>
+  우리는 나아가 다양한 크기의 모델에 PGI와 심층 지도(deep supervision) 개념을 적용하고 그 결과를 비교하여 표 5에 나타냈습니다. 서두에서 분석한 바와 같이, 심층 지도의 도입은 얕은 모델에서 정확도 손실을 유발합니다. 일반 모델에서는 심층 지도를 도입할 경우 성능이 불안정해지며, 심층 지도 설계 개념은 극단적으로 깊은 모델에서만 이득을 가져다줄 수 있습니다. 반면 제안된 PGI는 정보 병목과 정보 단절(information broken)과 같은 문제를 효과적으로 처리하며, 서로 다른 크기의 모델 모두에서 포괄적으로 정확도를 향상시킵니다. PGI 개념은 두 가지 값진 기여를 가져옵니다. 첫째는 보조 지도 기법이 얕은 모델에도 적용 가능하도록 만든 것이고, 둘째는 깊은 모델의 학습 과정에서 더욱 신뢰할 수 있는 그래디언트를 얻도록 한 것입니다. 이러한 그래디언트는 깊은 모델이 더 정확한 정보를 활용하여 데이터와 목표 간의 올바른 상관관계를 구축할 수 있게 해 줍니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 5. PGI와 기존 심층 지도(DS)에 대한 제거 실험</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$</th>
+        <th>$\text{AP}^{\text{val}}_{50}$</th>
+        <th>$\text{AP}^{\text{val}}_{75}$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>GELAN-S<sup>2</sup></td><td>46.7%</td><td>63.0%</td><td>50.7%</td></tr>
+      <tr><td>+ DS<sup>1</sup></td><td>46.5% (-0.2)</td><td>62.9% (-0.1)</td><td>50.5% (-0.2)</td></tr>
+      <tr><td><strong>+ PGI</strong></td><td><strong>46.8% (+0.1)</strong></td><td><strong>63.4% (+0.4)</strong></td><td><strong>50.7% (=)</strong></td></tr>
+      <tr><td>GELAN-M<sup>2</sup></td><td>51.1%</td><td>67.9%</td><td>55.7%</td></tr>
+      <tr><td>+ DS<sup>1</sup></td><td>51.2% (+0.1)</td><td>68.2% (+0.3)</td><td>55.7% (=)</td></tr>
+      <tr><td><strong>+ PGI</strong></td><td><strong>51.4% (+0.3)</strong></td><td><strong>68.1% (+0.2)</strong></td><td><strong>56.1% (+0.4)</strong></td></tr>
+      <tr><td>GELAN-C<sup>2</sup></td><td>52.5%</td><td>69.5%</td><td>57.3%</td></tr>
+      <tr><td>+ DS<sup>1</sup></td><td>52.5% (=)</td><td>69.9% (+0.4)</td><td>57.1% (-0.2)</td></tr>
+      <tr><td><strong>+ PGI</strong></td><td><strong>53.0% (+0.5)</strong></td><td><strong>70.3% (+0.8)</strong></td><td><strong>57.8% (+0.5)</strong></td></tr>
+      <tr><td>GELAN-E<sup>2</sup></td><td>55.0%</td><td>71.9%</td><td>60.0%</td></tr>
+      <tr><td>+ DS<sup>1</sup></td><td>55.3% (+0.3)</td><td>72.3% (+0.4)</td><td>60.2% (+0.2)</td></tr>
+      <tr><td><strong>+ PGI</strong></td><td><strong>55.6% (+0.6)</strong></td><td><strong>72.8% (+0.9)</strong></td><td><strong>60.6% (+0.6)</strong></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> DS는 심층 지도(deep supervision)를 의미한다. <sup>2</sup> -{S, M, C, E}는 각각 small, medium, compact, extended 모델을 나타낸다.
+  </p>
+</div>
+
+<p>
+  마지막으로, 표 6에서는 베이스라인인 YOLOv7로부터 YOLOv9-E에 이르기까지 구성 요소를 점진적으로 추가한 결과를 보여줍니다. 제안된 GELAN과 PGI는 모델에 전방위적인 성능 향상을 가져왔습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>표 6. YOLOv7에서 YOLOv9-E로의 GELAN 및 PGI 점진적 적용 제거 실험</caption>
+    <thead>
+      <tr>
+        <th>모델</th>
+        <th>파라미터 수 (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$</th>
+        <th>$\text{AP}^{\text{val}}_{S}$</th>
+        <th>$\text{AP}^{\text{val}}_{M}$</th>
+        <th>$\text{AP}^{\text{val}}_{L}$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv7 [63]</td><td>36.9</td><td>104.7</td><td>51.2%</td><td>31.8%</td><td>55.5%</td><td>65.0%</td></tr>
+      <tr><td>+ AF [63]</td><td>43.6</td><td>130.5</td><td>53.0%</td><td>35.8%</td><td>58.7%</td><td>68.9%</td></tr>
+      <tr><td>+ GELAN</td><td>41.2</td><td>126.4</td><td>53.2%</td><td>36.2%</td><td>58.5%</td><td>69.9%</td></tr>
+      <tr><td>+ DHLC [34]</td><td>57.3</td><td>189.0</td><td>55.0%</td><td>38.0%</td><td>60.6%</td><td>70.9%</td></tr>
+      <tr><td><strong>+ PGI</strong></td><td>57.3</td><td>189.0</td><td><strong>55.6%</strong></td><td><strong>40.2%</strong></td><td><strong>61.0%</strong></td><td><strong>71.4%</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>5.5. 시각화 (Visualization)</h3>
+<p>
+  본 절에서는 정보 병목 문제를 탐구하고 이를 시각화합니다. 또한 제안된 PGI가 어떻게 신뢰할 수 있는 그래디언트를 사용하여 데이터와 목표 간의 올바른 상관관계를 찾아내는지도 시각화합니다. 그림 6에는 서로 다른 아키텍처에서 무작위 초기 가중치를 순전파로 통과시켜 얻은 특징 맵 시각화 결과를 나타냈습니다. 계층 수가 증가함에 따라 모든 아키텍처에서 원본 정보가 점진적으로 감소함을 확인할 수 있습니다. 예를 들어, PlainNet의 50번째 계층에서는 객체의 위치를 파악하기 어려워지며, 100번째 계층에서는 식별 가능한 모든 특징이 소실됩니다. ResNet의 경우 50번째 계층에서도 객체의 위치는 여전히 확인할 수 있지만 경계(boundary) 정보는 이미 손실되었습니다. 깊이가 100번째 계층에 도달하면 전체 이미지가 흐릿해집니다. 반면 CSPNet과 제안된 GELAN은 모두 매우 뛰어난 성능을 보이며, 200번째 계층까지도 객체를 명확히 식별할 수 있는 특징을 유지합니다. 비교 대상 중에서도 GELAN은 더욱 안정적인 결과와 더 선명한 경계 정보를 보여줍니다.
+</p>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_6.png" alt="그림 6" />
+  <figcaption><strong>그림 6.</strong> 서로 다른 깊이에서 PlainNet, ResNet, CSPNet, GELAN의 무작위 초기 가중치가 출력한 특징 맵(시각화 결과). 100번째 계층 이후 ResNet은 객체 정보를 흐리게 만들 정도의 순전파 출력을 생성하기 시작한다. 반면 제안하는 GELAN은 150번째 계층까지도 상당히 완전한 정보를 보존할 수 있으며, 200번째 계층에서도 여전히 충분한 분별력을 유지한다.</figcaption>
+</figure>
+
+<figure class="paper-fig">
+  <img src="images/YOLOv9_2402.13616v2/fig_7.png" alt="그림 7" />
+  <figcaption><strong>그림 7.</strong> 1 에폭의 편향 웜업(bias warm-up) 후 GELAN과 YOLOv9(GELAN + PGI)의 PAN 특징 맵(시각화 결과). 원래 GELAN은 일부 발산(divergence) 현상을 보였으나, PGI의 가역 분기를 추가한 후에는 목표 객체에 훨씬 더 잘 집중할 수 있게 되었다.</figcaption>
+</figure>
+
+<p>
+  그림 7은 학습 과정에서 PGI가 더 신뢰할 수 있는 그래디언트를 제공하여 업데이트에 사용되는 파라미터가 입력 데이터와 목표 간의 관계를 효과적으로 포착할 수 있는지 확인하기 위한 결과입니다. 그림 7은 PAN 편향 웜업 단계에서의 GELAN과 YOLOv9(GELAN + PGI) 특징 맵 시각화 결과를 보여줍니다. 그림 7(b)와 (c)를 비교해 보면, PGI가 객체를 포함하는 영역을 정확하고 간결하게 포착함을 명확히 알 수 있습니다. 반면 PGI를 사용하지 않은 GELAN은 객체 경계를 탐지할 때 발산(divergence)이 발생했으며, 일부 배경 영역에서도 예기치 않은 반응(unexpected responses)을 보였습니다. 이 실험은 PGI가 실제로 파라미터를 업데이트하기 위한 더 나은 그래디언트를 제공하며, 주 분기의 순전파 단계가 더 많은 중요 특징을 보존할 수 있게 해 줌을 입증합니다.
+</p>
+
+<h2>6. 결론 (Conclusions)</h2>
+<p>
+  본 논문에서는 정보 병목 문제와 심층 지도 메커니즘이 경량 신경망에 적합하지 않은 문제를 해결하기 위해 PGI를 사용할 것을 제안했습니다. 우리는 매우 효율적이고 가벼운 신경망인 GELAN을 설계했습니다. 객체 탐지 측면에서 GELAN은 다양한 연산 블록과 깊이 설정에서도 강력하고 안정적인 성능을 보여주며, 다양한 추론 장치에 적합한 모델로 폭넓게 확장될 수 있습니다. 앞서 언급한 두 가지 문제에 대해, PGI의 도입은 경량 모델과 깊은 모델 모두가 정확도에서 획기적인 향상을 이루도록 만들었습니다. PGI와 GELAN을 결합하여 설계한 YOLOv9은 강력한 경쟁력을 입증했습니다. 이 탁월한 설계 덕분에 깊은 모델은 YOLOv8과 비교해 파라미터 수를 49%, 연산량을 43% 줄이면서도 MS COCO 데이터셋에서 여전히 0.6%의 AP 향상을 달성했습니다.
+</p>
+
+<h2>7. 감사의 글 (Acknowledgements)</h2>
+<p>
+  저자들은 연산 및 저장 자원을 제공해 준 대만 국가고속네트워크컴퓨팅센터(NCHC, National Center for High-performance Computing)에 감사를 표합니다.
+</p>
+
+<h2>참고 문헌 (References)</h2>
+<p>본 논문에는 총 82편의 참고 문헌이 수록되어 있으며, 주요 기반 문헌은 다음과 같습니다.</p>
+<ul>
+  <li><strong>[3] Cai et al. (2023)</strong>, <em>Reversible column networks (RevCol)</em>, ICLR — 다중 수준 가역 네트워크 아키텍처 기반.</li>
+  <li><strong>[7] Chen et al. (2023)</strong>, <em>YOLO-MS: rethinking multi-scale representation learning for real-time object detection</em>, arXiv:2308.05480 — 깊이별 합성곱 기반 최신 비교 모델.</li>
+  <li><strong>[14], [15] Glenn Jocher (2022, 2024)</strong>, <em>YOLOv5 v7.0 / YOLOv8 v8.1.0</em>, Ultralytics — 주요 실시간 객체 탐지 비교 기준.</li>
+  <li><strong>[21], [22] He et al. (2016)</strong>, <em>Deep residual learning (ResNet) / Identity mappings (PreAct ResNet)</em>, CVPR / ECCV — 잔차 연결 및 가역성 분석 기준.</li>
+  <li><strong>[28], [54], [68] Lee et al. (2015), Szegedy et al. (2015), Wang et al. (2015)</strong> — 심층 지도(Deep Supervision) 관련 선행 연구.</li>
+  <li><strong>[34], [36] Liang et al. (2022), Lin et al. (2023)</strong>, <em>CBNet / DynamicDet</em>, TIP / CVPR — 복합 백본(DHLC) 및 가역 분기 설계 기반.</li>
+  <li><strong>[37] Liu et al. (2018)</strong>, <em>Path aggregation network (PAN)</em>, CVPR — 특징 피라미드 통합 구조.</li>
+  <li><strong>[43] Lv et al. (2023)</strong>, <em>DETRs beat YOLOs on real-time object detection (RT-DETR)</em>, arXiv:2304.08069 — 트랜스포머 기반 실시간 객체 탐지기 비교 대상.</li>
+  <li><strong>[59] Tishby &amp; Zaslavsky (2015)</strong>, <em>Deep learning and the information bottleneck principle</em>, ITW — 정보 병목 원리의 이론적 토대.</li>
+  <li><strong>[63] Wang et al. (2023)</strong>, <em>YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors</em>, CVPR — YOLOv9의 베이스라인 및 보조 헤드 설정 기반.</li>
+  <li><strong>[64], [65] Wang et al. (2020, 2023)</strong>, <em>CSPNet / Designing network design strategies through gradient path analysis (ELAN)</em>, CVPRW / JISE — 그래디언트 경로 계획 및 GELAN의 설계 기반.</li>
+</ul>
+
+<h2>부록 (Appendix)</h2>
+
+<h3>A. 구현 세부 사항 (Implementation Details)</h3>
+<p>
+  YOLOv9의 학습 파라미터는 부록 표 1에 제시되어 있습니다. 우리는 YOLOv7 AF [63]의 설정을 완전히 따르며, SGD 옵티마이저를 사용하여 500 에폭 동안 학습합니다. 먼저 3 에폭 동안 웜업(warm-up)을 수행하며, 웜업 단계에서는 편향(bias)만 업데이트합니다. 이후 초기 학습률 0.01에서 0.0001까지 선형 감쇠(linear decay) 방식으로 낮추며, 데이터 증강 설정은 부록 표 1의 하단에 나열되어 있습니다. 마지막 15 에폭에서는 모자이크(mosaic) 데이터 증강 연산을 중단합니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>부록 표 1. YOLOv9의 하이퍼파라미터 설정</caption>
+    <thead>
+      <tr>
+        <th>하이퍼파라미터 (Hyperparameter)</th>
+        <th>값 (Value)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>학습 에폭 (epochs)</td><td>500</td></tr>
+      <tr><td>옵티마이저 (optimizer)</td><td>SGD</td></tr>
+      <tr><td>초기 학습률 (initial learning rate)</td><td>0.01</td></tr>
+      <tr><td>종료 학습률 (finish learning rate)</td><td>0.0001</td></tr>
+      <tr><td>학습률 감쇠 (learning rate decay)</td><td>linear</td></tr>
+      <tr><td>모멘텀 (momentum)</td><td>0.937</td></tr>
+      <tr><td>가중치 감쇠 (weight decay)</td><td>0.0005</td></tr>
+      <tr><td>웜업 에폭 (warm-up epochs)</td><td>3</td></tr>
+      <tr><td>웜업 모멘텀 (warm-up momentum)</td><td>0.8</td></tr>
+      <tr><td>웜업 편향 학습률 (warm-up bias learning rate)</td><td>0.1</td></tr>
+      <tr><td>박스 손실 가중치 (box loss gain)</td><td>7.5</td></tr>
+      <tr><td>분류 손실 가중치 (class loss gain)</td><td>0.5</td></tr>
+      <tr><td>DFL 손실 가중치 (DFL loss gain)</td><td>1.5</td></tr>
+      <tr><td>HSV 채도 증강 (HSV saturation augmentation)</td><td>0.7</td></tr>
+      <tr><td>HSV 명도 증강 (HSV value augmentation)</td><td>0.4</td></tr>
+      <tr><td>평행 이동 증강 (translation augmentation)</td><td>0.1</td></tr>
+      <tr><td>크기 조절 증강 (scale augmentation)</td><td>0.9</td></tr>
+      <tr><td>모자이크 증강 (mosaic augmentation)</td><td>1.0</td></tr>
+      <tr><td>MixUp 증강 (MixUp augmentation)</td><td>0.15</td></tr>
+      <tr><td>Copy &amp; Paste 증강 (copy &amp; paste augmentation)</td><td>0.3</td></tr>
+      <tr><td>모자이크 종료 에폭 (close mosaic epochs)</td><td>15</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  YOLOv9의 네트워크 위상(topology)은 YOLOv7 AF [63]를 완전히 따르며, 즉 ELAN을 제안하는 CSP-ELAN 블록으로 교체했습니다. 부록 표 2에 나열된 바와 같이, CSP-ELAN의 깊이(Depth) 파라미터는 각각 ELAN 깊이와 CSP 깊이로 표현됩니다. CSP-ELAN의 필터(Filters) 파라미터는 각각 ELAN 출력 필터, CSP 출력 필터, CSP 내부 필터를 나타냅니다. 다운샘플링 모듈 부분에서는 CSP-DOWN 모듈을 DOWN 모듈로 단순화했습니다. DOWN 모듈은 크기 2, 스트라이드(stride) 1의 풀링(pooling) 계층과 크기 3, 스트라이드 2의 Conv 계층으로 구성됩니다. 마지막으로 예측 계층(prediction layer)을 최적화하여 회귀 분기(regression branch)의 상·하·좌·우(top, left, bottom, right) 예측을 분리된 분기(decoupled branch)로 대체했습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>부록 표 2. YOLOv9의 네트워크 구성 (Network Configurations)</caption>
+    <thead>
+      <tr>
+        <th>Index</th>
+        <th>모듈 (Module)</th>
+        <th>경로 (Route)</th>
+        <th>필터 (Filters)</th>
+        <th>깊이 (Depth)</th>
+        <th>크기 (Size)</th>
+        <th>스트라이드 (Stride)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>0</td><td>Conv</td><td>–</td><td>64</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>1</td><td>Conv</td><td>0</td><td>128</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>2</td><td>CSP-ELAN</td><td>1</td><td>256, 128, 64</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>3</td><td>DOWN</td><td>2</td><td>256</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>4</td><td>CSP-ELAN</td><td>3</td><td>512, 256, 128</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>5</td><td>DOWN</td><td>4</td><td>512</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>6</td><td>CSP-ELAN</td><td>5</td><td>512, 512, 256</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>7</td><td>DOWN</td><td>6</td><td>512</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>8</td><td>CSP-ELAN</td><td>7</td><td>512, 512, 256</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>9</td><td>SPP-ELAN</td><td>8</td><td>512, 256, 256</td><td>3, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>10</td><td>Up</td><td>9</td><td>512</td><td>–</td><td>–</td><td>2</td></tr>
+      <tr><td>11</td><td>Concat</td><td>10, 6</td><td>1024</td><td>–</td><td>–</td><td>1</td></tr>
+      <tr><td>12</td><td>CSP-ELAN</td><td>11</td><td>512, 512, 256</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>13</td><td>Up</td><td>12</td><td>512</td><td>–</td><td>–</td><td>2</td></tr>
+      <tr><td>14</td><td>Concat</td><td>13, 4</td><td>1024</td><td>–</td><td>–</td><td>1</td></tr>
+      <tr><td>15</td><td>CSP-ELAN</td><td>14</td><td>256, 256, 128</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>16</td><td>DOWN</td><td>15</td><td>256</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>17</td><td>Concat</td><td>16, 12</td><td>768</td><td>–</td><td>–</td><td>1</td></tr>
+      <tr><td>18</td><td>CSP-ELAN</td><td>17</td><td>512, 512, 256</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>19</td><td>DOWN</td><td>18</td><td>512</td><td>–</td><td>3</td><td>2</td></tr>
+      <tr><td>20</td><td>Concat</td><td>19, 9</td><td>1024</td><td>–</td><td>–</td><td>1</td></tr>
+      <tr><td>21</td><td>CSP-ELAN</td><td>20</td><td>512, 512, 256</td><td>2, 1</td><td>–</td><td>1</td></tr>
+      <tr><td>22</td><td>Predict</td><td>15, 18, 21</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>B. 추가 비교 실험 (More Comparison)</h3>
+<p>
+  서로 다른 학습 방법으로 훈련된 최신 실시간 객체 탐지기들과 YOLOv9을 비교합니다. 비교에는 크게 네 가지 학습 방식이 포함됩니다: (1) <strong>처음부터 학습(Train-from-scratch)</strong>: 본문에서 대부분의 비교를 이미 완료했으며, 여기서는 비교를 위해 DynamicDet [36]의 추가 데이터만 함께 나열했습니다. (2) <strong>ImageNet 사전 학습(ImageNet Pretrained)</strong>: 지도 사전 학습(supervised pretrain)과 자기지도 사전 학습(self-supervised pretrain) 두 가지 방식을 포함합니다. (3) <strong>지식 증류(Knowledge Distillation)</strong>: 학습 완료 후 추가적인 자기 증류(self-distillation)를 수행하는 기법입니다. (4) <strong>복합 설정(Complex Setting)</strong>: ImageNet 사전 학습, 지식 증류, DAMO-YOLO, 심지어 추가적인 대규모 객체 탐지 데이터셋 사전 학습까지 결합한 복합 학습 절차입니다. 결과는 부록 표 3에 제시되어 있습니다. 이 표에서 제안한 YOLOv9이 다른 모든 방법보다 우수한 성능을 보임을 확인할 수 있습니다. ImageNet과 Objects365를 모두 사용하여 학습된 PPYOLOE+-X와 비교하더라도, 우리의 방법은 파라미터 수를 55%, 연산량을 11% 줄이면서 AP를 0.4% 향상시켰습니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>부록 표 3. 다양한 학습 설정에 따른 최신 객체 탐지기 비교</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)</th>
+        <th>파라미터 수 (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{50}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{75}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{S}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{M}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{L}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="9"><strong>Train-from-scratch (처음부터 학습)</strong></td></tr>
+      <tr><td>Dy-YOLOv7 [36]</td><td>–</td><td>181.7</td><td>53.9</td><td>72.2</td><td>58.7</td><td>35.3</td><td>57.6</td><td>66.4</td></tr>
+      <tr><td>Dy-YOLOv7-X [36]</td><td>–</td><td>307.9</td><td>55.0</td><td>73.2</td><td>60.0</td><td>36.6</td><td>58.7</td><td>68.5</td></tr>
+      <tr><td>YOLOv9-S (Ours)</td><td>7.1</td><td>26.4</td><td>46.8</td><td>63.4</td><td>50.7</td><td>26.6</td><td>56.0</td><td>64.5</td></tr>
+      <tr><td>YOLOv9-M (Ours)</td><td>20.0</td><td>76.3</td><td>51.4</td><td>68.1</td><td>56.1</td><td>33.6</td><td>57.0</td><td>68.0</td></tr>
+      <tr><td>YOLOv9-C (Ours)</td><td>25.3</td><td>102.1</td><td>53.0</td><td>70.2</td><td>57.8</td><td>36.2</td><td>58.5</td><td>69.3</td></tr>
+      <tr><td>YOLOv9-E (Ours)</td><td>34.7</td><td>147.1</td><td>54.5</td><td>71.7</td><td>59.2</td><td>38.1</td><td>59.9</td><td>70.3</td></tr>
+      <tr><td>YOLOv9-E (Ours)</td><td>44.0</td><td>183.9</td><td>55.1</td><td>72.3</td><td>60.7</td><td>38.7</td><td>60.6</td><td>71.4</td></tr>
+      <tr><td><strong>YOLOv9-E (Ours)</strong></td><td>57.3</td><td>189.0</td><td><strong>55.6</strong></td><td><strong>72.8</strong></td><td>60.6</td><td>40.2</td><td>61.0</td><td>71.4</td></tr>
+      <tr><td colspan="9"><strong>ImageNet Pretrained (ImageNet 사전 학습)</strong></td></tr>
+      <tr><td>RTMDet-T [44]</td><td>4.8</td><td>12.6</td><td>41.1</td><td>57.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-S [44]</td><td>9.0</td><td>25.6</td><td>44.6</td><td>61.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-M [44]</td><td>24.7</td><td>78.6</td><td>49.4</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-L [44]</td><td>52.3</td><td>160.4</td><td>51.5</td><td>68.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-X [44]</td><td>94.9</td><td>283.4</td><td>52.8</td><td>70.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE-S [74]</td><td>7.9</td><td>14.4</td><td>43.0</td><td>60.5</td><td>46.6</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>PPYOLOE-M [74]</td><td>23.4</td><td>49.9</td><td>49.0</td><td>66.5</td><td>53.0</td><td>28.6</td><td>52.9</td><td>63.8</td></tr>
+      <tr><td>PPYOLOE-L [74]</td><td>52.2</td><td>110.1</td><td>51.4</td><td>68.9</td><td>55.6</td><td>31.4</td><td>55.3</td><td>66.1</td></tr>
+      <tr><td>PPYOLOE-X [74]</td><td>98.4</td><td>206.6</td><td>52.3</td><td>69.5</td><td>56.8</td><td>35.1</td><td>57.0</td><td>68.6</td></tr>
+      <tr><td>RT DETR-L [43]</td><td>32</td><td>110</td><td>53.0</td><td>71.6</td><td>57.3</td><td>34.6</td><td>57.3</td><td>71.2</td></tr>
+      <tr><td>RT DETR-X [43]</td><td>67</td><td>234</td><td>54.8</td><td>73.1</td><td>59.4</td><td>35.7</td><td>59.6</td><td>72.9</td></tr>
+      <tr><td>RT DETR-R18 [43]</td><td>20</td><td>60</td><td>46.5</td><td>63.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R34 [43]</td><td>31</td><td>92</td><td>48.9</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R50M [43]</td><td>36</td><td>100</td><td>51.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R50 [43]</td><td>42</td><td>136</td><td>53.1</td><td>71.3</td><td>57.7</td><td>34.8</td><td>58.0</td><td>70.0</td></tr>
+      <tr><td>RT DETR-R101 [43]</td><td>76</td><td>259</td><td>54.3</td><td>72.7</td><td>58.6</td><td>36.0</td><td>58.8</td><td>72.1</td></tr>
+      <tr><td>Gold YOLO-S [61]</td><td>21.5</td><td>46.0</td><td>45.5</td><td>62.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61]</td><td>41.3</td><td>57.5</td><td>50.2</td><td>67.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61]</td><td>75.1</td><td>151.7</td><td>52.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td colspan="9"><strong>Knowledge Distillation (지식 증류)</strong></td></tr>
+      <tr><td>YOLOv6-N v3.0 [30]</td><td>4.7</td><td>11.4</td><td>37.5</td><td>53.1</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-S v3.0 [30]</td><td>18.5</td><td>45.3</td><td>45.0</td><td>61.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-M v3.0 [30]</td><td>34.9</td><td>85.8</td><td>50.0</td><td>66.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-L v3.0 [30]</td><td>59.6</td><td>150.7</td><td>52.8</td><td>70.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>DAMO YOLO-T [75]</td><td>8.5</td><td>18.1</td><td>43.6</td><td>59.4</td><td>46.6</td><td>23.3</td><td>47.4</td><td>61.0</td></tr>
+      <tr><td>DAMO YOLO-S [75]</td><td>16.3</td><td>37.8</td><td>47.7</td><td>63.5</td><td>51.1</td><td>26.9</td><td>51.7</td><td>64.9</td></tr>
+      <tr><td>DAMO YOLO-M [75]</td><td>28.2</td><td>61.8</td><td>50.4</td><td>67.2</td><td>55.1</td><td>31.6</td><td>55.3</td><td>67.1</td></tr>
+      <tr><td>DAMO YOLO-L [75]</td><td>42.1</td><td>97.3</td><td>51.9</td><td>68.5</td><td>56.7</td><td>33.3</td><td>57.0</td><td>67.6</td></tr>
+      <tr><td>Gold YOLO-N [61]</td><td>5.6</td><td>12.1</td><td>39.9</td><td>55.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61]</td><td>21.5</td><td>46.0</td><td>46.1</td><td>63.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61]</td><td>41.3</td><td>57.5</td><td>50.9</td><td>68.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61]</td><td>75.1</td><td>151.7</td><td>53.2</td><td>70.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td colspan="9"><strong>Complex Setting (복합 설정)</strong></td></tr>
+      <tr><td>Gold YOLO-S [61]</td><td>21.5</td><td>46.0</td><td>46.4</td><td>63.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61]</td><td>41.3</td><td>57.5</td><td>51.1</td><td>68.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61]</td><td>75.1</td><td>151.7</td><td>53.3</td><td>70.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOR-CSP [66]</td><td>52.9</td><td>120.4</td><td>52.8</td><td>71.2</td><td>57.6</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOR-CSP-X [66]</td><td>96.9</td><td>226.8</td><td>54.8</td><td>73.1</td><td>59.7</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE+-S [74]</td><td>7.9</td><td>14.4</td><td>43.7</td><td>60.6</td><td>47.9</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>PPYOLOE+-M [74]</td><td>23.4</td><td>49.9</td><td>49.8</td><td>67.1</td><td>54.5</td><td>31.8</td><td>53.9</td><td>66.2</td></tr>
+      <tr><td>PPYOLOE+-L [74]</td><td>52.2</td><td>110.1</td><td>52.9</td><td>70.1</td><td>57.9</td><td>35.2</td><td>57.5</td><td>69.1</td></tr>
+      <tr><td>PPYOLOE+-X [74]</td><td>98.4</td><td>206.6</td><td>54.7</td><td>72.0</td><td>59.9</td><td>37.9</td><td>59.3</td><td>70.4</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+  부록 표 4는 파라미터 수 기준으로 정렬한 모든 모델의 성능을 보여줍니다. 제안한 YOLOv9은 모든 크기의 모델에서 파레토 최적(Pareto optimal)을 달성했습니다. 그중에서도 파라미터 수 20M 이상의 모델에서는 다른 어떤 방법도 파레토 최적을 달성하지 못했습니다. 위 실험 데이터는 YOLOv9이 뛰어난 파라미터 활용 효율을 갖추고 있음을 입증합니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>부록 표 4. 다양한 학습 설정의 최신 객체 탐지기 비교 (파라미터 수 기준 정렬)</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)<sup>1</sup></th>
+        <th>파라미터 수 (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{50}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{75}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{S}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{M}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{L}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-N v3.0 [30] (D)</td><td>4.7</td><td>11.4</td><td>37.5</td><td>53.1</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-T [44] (I)</td><td>4.8</td><td>12.6</td><td>41.1</td><td>57.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-N [61] (D)</td><td>5.6</td><td>12.1</td><td>39.9</td><td>55.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-S (S)</strong></td><td>7.1</td><td>26.4</td><td><strong>46.8</strong></td><td><strong>63.4</strong></td><td>50.7</td><td>26.6</td><td>56.0</td><td>64.5</td></tr>
+      <tr><td>PPYOLOE+-S [74] (C)</td><td>7.9</td><td>14.4</td><td>43.7</td><td>60.6</td><td>47.9</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>PPYOLOE-S [74] (I)</td><td>7.9</td><td>14.4</td><td>43.0</td><td>60.5</td><td>46.6</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>DAMO YOLO-T [75] (D)</td><td>8.5</td><td>18.1</td><td>43.6</td><td>59.4</td><td>46.6</td><td>23.3</td><td>47.4</td><td>61.0</td></tr>
+      <tr><td>RTMDet-S [44] (I)</td><td>9.0</td><td>25.6</td><td>44.6</td><td>61.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>DAMO YOLO-S [75] (D)</td><td>16.3</td><td>37.8</td><td>47.7</td><td>63.5</td><td>51.1</td><td>26.9</td><td>51.7</td><td>64.9</td></tr>
+      <tr><td>YOLOv6-S v3.0 [30] (D)</td><td>18.5</td><td>45.3</td><td>45.0</td><td>61.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R18 [43] (I)</td><td>20</td><td>60</td><td>46.5</td><td>63.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-M (S)</strong></td><td>20.0</td><td>76.3</td><td><strong>51.4</strong></td><td><strong>68.1</strong></td><td>56.1</td><td>33.6</td><td>57.0</td><td>68.0</td></tr>
+      <tr><td>Gold YOLO-S [61] (C)</td><td>21.5</td><td>46.0</td><td>46.4</td><td>63.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61] (D)</td><td>21.5</td><td>46.0</td><td>46.1</td><td>63.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61] (I)</td><td>21.5</td><td>46.0</td><td>45.5</td><td>62.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE+-M [74] (C)</td><td>23.4</td><td>49.9</td><td>49.8</td><td>67.1</td><td>54.5</td><td>31.8</td><td>53.9</td><td>66.2</td></tr>
+      <tr><td>PPYOLOE-M [74] (I)</td><td>23.4</td><td>49.9</td><td>49.0</td><td>66.5</td><td>53.0</td><td>28.6</td><td>52.9</td><td>63.8</td></tr>
+      <tr><td>RTMDet-M [44] (I)</td><td>24.7</td><td>78.6</td><td>49.4</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-C (S)</strong></td><td>25.3</td><td>102.1</td><td><strong>53.0</strong></td><td><strong>70.2</strong></td><td>57.8</td><td>36.2</td><td>58.5</td><td>69.3</td></tr>
+      <tr><td>DAMO YOLO-M [75] (D)</td><td>28.2</td><td>61.8</td><td>50.4</td><td>67.2</td><td>55.1</td><td>31.6</td><td>55.3</td><td>67.1</td></tr>
+      <tr><td>RT DETR-R34 [43] (I)</td><td>31</td><td>92</td><td>48.9</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-L [43] (I)</td><td>32</td><td>110</td><td>53.0</td><td>71.6</td><td>57.3</td><td>34.6</td><td>57.3</td><td>71.2</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>34.7</td><td>147.1</td><td><strong>54.5</strong></td><td><strong>71.7</strong></td><td>59.2</td><td>38.1</td><td>59.9</td><td>70.3</td></tr>
+      <tr><td>YOLOv6-M v3.0 [30] (D)</td><td>34.9</td><td>85.8</td><td>50.0</td><td>66.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R50M [43] (I)</td><td>36</td><td>100</td><td>51.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61] (C)</td><td>41.3</td><td>57.5</td><td>51.1</td><td>68.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61] (D)</td><td>41.3</td><td>57.5</td><td>50.9</td><td>68.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61] (I)</td><td>41.3</td><td>57.5</td><td>50.2</td><td>67.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R50 [43] (I)</td><td>42</td><td>136</td><td>53.1</td><td>71.3</td><td>57.7</td><td>34.8</td><td>58.0</td><td>70.0</td></tr>
+      <tr><td>DAMO YOLO-L [75] (D)</td><td>42.1</td><td>97.3</td><td>51.9</td><td>68.5</td><td>56.7</td><td>33.3</td><td>57.0</td><td>67.6</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>44.0</td><td>183.9</td><td><strong>55.1</strong></td><td><strong>72.3</strong></td><td>60.7</td><td>38.7</td><td>60.6</td><td>71.4</td></tr>
+      <tr><td>PPYOLOE+-L [74] (C)</td><td>52.2</td><td>110.1</td><td>52.9</td><td>70.1</td><td>57.9</td><td>35.2</td><td>57.5</td><td>69.1</td></tr>
+      <tr><td>PPYOLOE-L [74] (I)</td><td>52.2</td><td>110.1</td><td>51.4</td><td>68.9</td><td>55.6</td><td>31.4</td><td>55.3</td><td>66.1</td></tr>
+      <tr><td>RTMDet-L [44] (I)</td><td>52.3</td><td>160.4</td><td>51.5</td><td>68.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOR-CSP [66] (C)</td><td>52.9</td><td>120.4</td><td>52.8</td><td>71.2</td><td>57.6</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>57.3</td><td>189.0</td><td><strong>55.6</strong></td><td><strong>72.8</strong></td><td>60.6</td><td>40.2</td><td>61.0</td><td>71.4</td></tr>
+      <tr><td>YOLOv6-L v3.0 [30] (D)</td><td>59.6</td><td>150.7</td><td>52.8</td><td>70.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-X [43] (I)</td><td>67</td><td>234</td><td>54.8</td><td>73.1</td><td>59.4</td><td>35.7</td><td>59.6</td><td>72.9</td></tr>
+      <tr><td>Gold YOLO-L [61] (C)</td><td>75.1</td><td>151.7</td><td>53.3</td><td>70.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61] (D)</td><td>75.1</td><td>151.7</td><td>53.2</td><td>70.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61] (I)</td><td>75.1</td><td>151.7</td><td>52.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R101 [43] (I)</td><td>76</td><td>259</td><td>54.3</td><td>72.7</td><td>58.6</td><td>36.0</td><td>58.8</td><td>72.1</td></tr>
+      <tr><td>RTMDet-X [44] (I)</td><td>94.9</td><td>283.4</td><td>52.8</td><td>70.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOR-CSP-X [66] (C)</td><td>96.9</td><td>226.8</td><td>54.8</td><td>73.1</td><td>59.7</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE+-X [74] (C)</td><td>98.4</td><td>206.6</td><td>54.7</td><td>72.0</td><td>59.9</td><td>37.9</td><td>59.3</td><td>70.4</td></tr>
+      <tr><td>PPYOLOE-X [74] (I)</td><td>98.4</td><td>206.6</td><td>52.3</td><td>69.5</td><td>56.8</td><td>35.1</td><td>57.0</td><td>68.6</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> (S), (I), (D), (C)는 각각 처음부터 학습(train-from-scratch), ImageNet 사전 학습(ImageNet pretrained), 지식 증류(knowledge distillation), 복합 설정(complex setting)을 나타낸다.
+  </p>
+</div>
+
+<p>
+  부록 표 5에는 연산량(FLOPs) 기준으로 정렬한 모든 참여 모델의 성능이 나타나 있습니다. 제안된 YOLOv9은 서로 다른 모든 규모의 모델에서 파레토 최적을 달성했습니다. 60 GFLOPs 이상의 모델 중에서는 오직 ELAN 기반의 DAMO-YOLO와 DETR 기반의 RT-DETR만이 제안된 YOLOv9과 견줄 수 있습니다. 이상의 비교 결과는 YOLOv9이 계산 복잡도와 정확도 간의 절충안(trade-off)에서 가장 탁월한 성능을 발휘함을 보여줍니다.
+</p>
+
+<div class="table-wrap">
+  <table>
+    <caption>부록 표 5. 다양한 학습 설정의 최신 객체 탐지기 비교 (연산량 기준 정렬)</caption>
+    <thead>
+      <tr>
+        <th>모델 (Model)<sup>1</sup></th>
+        <th>파라미터 수 (M)</th>
+        <th>FLOPs (G)</th>
+        <th>$\text{AP}^{\text{val}}_{50:95}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{50}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{75}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{S}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{M}$ (%)</th>
+        <th>$\text{AP}^{\text{val}}_{L}$ (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>YOLOv6-N v3.0 [30] (D)</td><td>4.7</td><td>11.4</td><td>37.5</td><td>53.1</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-N [61] (D)</td><td>5.6</td><td>12.1</td><td>39.9</td><td>55.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-T [44] (I)</td><td>4.8</td><td>12.6</td><td>41.1</td><td>57.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE+-S [74] (C)</td><td>7.9</td><td>14.4</td><td>43.7</td><td>60.6</td><td>47.9</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>PPYOLOE-S [74] (I)</td><td>7.9</td><td>14.4</td><td>43.0</td><td>60.5</td><td>46.6</td><td>23.2</td><td>46.4</td><td>56.9</td></tr>
+      <tr><td>DAMO YOLO-T [75] (D)</td><td>8.5</td><td>18.1</td><td>43.6</td><td>59.4</td><td>46.6</td><td>23.3</td><td>47.4</td><td>61.0</td></tr>
+      <tr><td>RTMDet-S [44] (I)</td><td>9.0</td><td>25.6</td><td>44.6</td><td>61.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-S (S)</strong></td><td>7.1</td><td>26.4</td><td><strong>46.8</strong></td><td><strong>63.4</strong></td><td>50.7</td><td>26.6</td><td>56.0</td><td>64.5</td></tr>
+      <tr><td>DAMO YOLO-S [75] (D)</td><td>16.3</td><td>37.8</td><td>47.7</td><td>63.5</td><td>51.1</td><td>26.9</td><td>51.7</td><td>64.9</td></tr>
+      <tr><td>YOLOv6-S v3.0 [30] (D)</td><td>18.5</td><td>45.3</td><td>45.0</td><td>61.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61] (C)</td><td>21.5</td><td>46.0</td><td>46.4</td><td>63.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61] (D)</td><td>21.5</td><td>46.0</td><td>46.1</td><td>63.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-S [61] (I)</td><td>21.5</td><td>46.0</td><td>45.5</td><td>62.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>PPYOLOE+-M [74] (C)</td><td>23.4</td><td>49.9</td><td>49.8</td><td>67.1</td><td>54.5</td><td>31.8</td><td>53.9</td><td>66.2</td></tr>
+      <tr><td>PPYOLOE-M [74] (I)</td><td>23.4</td><td>49.9</td><td>49.0</td><td>66.5</td><td>53.0</td><td>28.6</td><td>52.9</td><td>63.8</td></tr>
+      <tr><td>Gold YOLO-M [61] (C)</td><td>41.3</td><td>57.5</td><td>51.1</td><td>68.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61] (D)</td><td>41.3</td><td>57.5</td><td>50.9</td><td>68.2</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-M [61] (I)</td><td>41.3</td><td>57.5</td><td>50.2</td><td>67.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R18 [43] (I)</td><td>20</td><td>60</td><td>46.5</td><td>63.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>DAMO YOLO-M [75] (D)</td><td>28.2</td><td>61.8</td><td>50.4</td><td>67.2</td><td>55.1</td><td>31.6</td><td>55.3</td><td>67.1</td></tr>
+      <tr><td><strong>YOLOv9-M (S)</strong></td><td>20.0</td><td>76.3</td><td><strong>51.4</strong></td><td><strong>68.1</strong></td><td>56.1</td><td>33.6</td><td>57.0</td><td>68.0</td></tr>
+      <tr><td>RTMDet-M [44] (I)</td><td>24.7</td><td>78.6</td><td>49.4</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>YOLOv6-M v3.0 [30] (D)</td><td>34.9</td><td>85.8</td><td>50.0</td><td>66.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R34 [43] (I)</td><td>31</td><td>92</td><td>48.9</td><td>66.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>DAMO YOLO-L [75] (D)</td><td>42.1</td><td>97.3</td><td>51.9</td><td>68.5</td><td>56.7</td><td>33.3</td><td>57.0</td><td>67.6</td></tr>
+      <tr><td>RT DETR-R50M [43] (I)</td><td>36</td><td>100</td><td>51.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td><strong>YOLOv9-C (S)</strong></td><td>25.3</td><td>102.1</td><td><strong>53.0</strong></td><td><strong>70.2</strong></td><td>57.8</td><td>36.2</td><td>58.5</td><td>69.3</td></tr>
+      <tr><td>RT DETR-L [43] (I)</td><td>32</td><td>110</td><td>53.0</td><td>71.6</td><td>57.3</td><td>34.6</td><td>57.3</td><td>71.2</td></tr>
+      <tr><td>PPYOLOE+-L [74] (C)</td><td>52.2</td><td>110.1</td><td>52.9</td><td>70.1</td><td>57.9</td><td>35.2</td><td>57.5</td><td>69.1</td></tr>
+      <tr><td>PPYOLOE-L [74] (I)</td><td>52.2</td><td>110.1</td><td>51.4</td><td>68.9</td><td>55.6</td><td>31.4</td><td>55.3</td><td>66.1</td></tr>
+      <tr><td>YOLOR-CSP [66] (C)</td><td>52.9</td><td>120.4</td><td>52.8</td><td>71.2</td><td>57.6</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-R50 [43] (I)</td><td>42</td><td>136</td><td>53.1</td><td>71.3</td><td>57.7</td><td>34.8</td><td>58.0</td><td>70.0</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>34.7</td><td>147.1</td><td><strong>54.5</strong></td><td><strong>71.7</strong></td><td>59.2</td><td>38.1</td><td>59.9</td><td>70.3</td></tr>
+      <tr><td>YOLOv6-L v3.0 [30] (D)</td><td>59.6</td><td>150.7</td><td>52.8</td><td>70.3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61] (C)</td><td>75.1</td><td>151.7</td><td>53.3</td><td>70.9</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61] (D)</td><td>75.1</td><td>151.7</td><td>53.2</td><td>70.5</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Gold YOLO-L [61] (I)</td><td>75.1</td><td>151.7</td><td>52.3</td><td>69.6</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RTMDet-L [44] (I)</td><td>52.3</td><td>160.4</td><td>51.5</td><td>68.8</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Dy-YOLOv7 [36] (S)</td><td>–</td><td>181.7</td><td>53.9</td><td>72.2</td><td>58.7</td><td>35.3</td><td>57.6</td><td>66.4</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>44.0</td><td>183.9</td><td><strong>55.1</strong></td><td><strong>72.3</strong></td><td>60.7</td><td>38.7</td><td>60.6</td><td>71.4</td></tr>
+      <tr><td><strong>YOLOv9-E (S)</strong></td><td>57.3</td><td>189.0</td><td><strong>55.6</strong></td><td><strong>72.8</strong></td><td>60.6</td><td>40.2</td><td>61.0</td><td>71.4</td></tr>
+      <tr><td>PPYOLOE+-X [74] (C)</td><td>98.4</td><td>206.6</td><td>54.7</td><td>72.0</td><td>59.9</td><td>37.9</td><td>59.3</td><td>70.4</td></tr>
+      <tr><td>PPYOLOE-X [74] (I)</td><td>98.4</td><td>206.6</td><td>52.3</td><td>69.5</td><td>56.8</td><td>35.1</td><td>57.0</td><td>68.6</td></tr>
+      <tr><td>YOLOR-CSP-X [66] (C)</td><td>96.9</td><td>226.8</td><td>54.8</td><td>73.1</td><td>59.7</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>RT DETR-X [43] (I)</td><td>67</td><td>234</td><td>54.8</td><td>73.1</td><td>59.4</td><td>35.7</td><td>59.6</td><td>72.9</td></tr>
+      <tr><td>RT DETR-R101 [43] (I)</td><td>76</td><td>259</td><td>54.3</td><td>72.7</td><td>58.6</td><td>36.0</td><td>58.8</td><td>72.1</td></tr>
+      <tr><td>RTMDet-X [44] (I)</td><td>94.9</td><td>283.4</td><td>52.8</td><td>70.4</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Dy-YOLOv7-X [36] (S)</td><td>–</td><td>307.9</td><td>55.0</td><td>73.2</td><td>60.0</td><td>36.6</td><td>58.7</td><td>68.5</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9em; margin-top: 0.4em;">
+    <sup>1</sup> (S), (I), (D), (C)는 각각 처음부터 학습(train-from-scratch), ImageNet 사전 학습(ImageNet pretrained), 지식 증류(knowledge distillation), 복합 설정(complex setting)을 나타낸다.
+  </p>
+</div>

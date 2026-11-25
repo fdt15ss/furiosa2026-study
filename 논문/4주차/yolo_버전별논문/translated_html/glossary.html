@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI · AI Agent · YOLO 핵심 용어집</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError:false});"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --analogy-bg: #fefce8;
+      --analogy-border: #facc15;
+      --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+    [data-theme="dark"] {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #60a5fa;
+      --accent-soft: #1e3a5f;
+      --analogy-bg: #1e1b11;
+      --analogy-border: #ca8a04;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.72;
+    }
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: var(--shadow);
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.56rem 1.08rem;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.94rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, border-color 0.14s ease;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .hero {
+      max-width: 1120px;
+      margin: 1.75rem auto 1.2rem;
+      padding: 0 1.25rem;
+    }
+    .hero-box {
+      background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 2rem;
+      box-shadow: var(--shadow);
+    }
+    .hero-box h1 { margin: 0 0 0.45rem; font-size: 1.85rem; }
+    .hero-box p { margin: 0; color: var(--text-muted); }
+    .controls {
+      max-width: 1120px;
+      margin: 0 auto 1.25rem;
+      padding: 0 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .tab-btn .cnt {
+      opacity: 0.8;
+      font-size: 0.8em;
+      margin-left: 0.2rem;
+    }
+    .status-line {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .grid {
+      max-width: 1120px;
+      margin: 0 auto 4rem;
+      padding: 0 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      gap: 1.25rem;
+    }
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .term-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.35rem 1.45rem;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .term-card:target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.22);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cat-badge {
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .lvl-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.18rem 0.55rem;
+      border-radius: 6px;
+    }
+    .lvl-easy { background: #dcfce7; color: #166534; }
+    .lvl-mid { background: #fef9c3; color: #854d0e; }
+    .lvl-hard { background: #fee2e2; color: #991b1b; }
+    [data-theme="dark"] .lvl-easy { background: #14532d; color: #bbf7d0; }
+    [data-theme="dark"] .lvl-mid { background: #422006; color: #fef08a; }
+    [data-theme="dark"] .lvl-hard { background: #450a0a; color: #fecaca; }
+    .term-card h2 {
+      margin: 0.1rem 0 0;
+      font-size: 1.22rem;
+      line-height: 1.35;
+    }
+    .en-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: -0.35rem;
+    }
+    .one-line {
+      font-size: 0.96rem;
+      background: var(--surface-2);
+      padding: 0.65rem 0.85rem;
+      border-radius: 9px;
+    }
+    .analogy-box {
+      background: var(--analogy-bg);
+      border-left: 4px solid var(--analogy-border);
+      padding: 0.65rem 0.9rem;
+      border-radius: 0 9px 9px 0;
+      font-size: 0.92rem;
+    }
+    .analogy-box p, .detail-box p { margin: 0.25rem 0 0; }
+    .detail-box {
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+    .detail-box code {
+      background: var(--surface-2);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .rel-row {
+      margin-top: auto;
+      padding-top: 0.45rem;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+    }
+    .rel-label { color: var(--text-muted); font-weight: 600; }
+    .rel-chip {
+      text-decoration: none;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .rel-chip:hover { text-decoration: underline; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="nav-btn" href="index.html">← YOLO 논문 번역 목록으로</a>
+    <button class="nav-btn" onclick="toggleTheme()" id="themeBtn">🌙 다크 모드</button>
+  </header>
+
+  <section class="hero">
+    <div class="hero-box">
+      <h1>📘 AI · AI Agent · YOLO 핵심 용어집</h1>
+      <p>어려운 AI 에이전트(Agent) 개념부터 YOLO v1~26 논문에 자주 등장하는 딥러닝·객체 탐지 전문 용어까지, <strong>한 줄 요약 + 쉬운 일상 비유 + 실전 원리</strong>로 알기 쉽게 정리했습니다. (90개 핵심 용어 수록)</p>
+    </div>
+  </section>
+
+  <section class="controls">
+    <input type="search" id="searchBox" class="search-input" placeholder="궁금한 용어를 검색해 보세요 (예: MCP, RAG, NMS, IoU, 백본, 환각, 양자화...)" />
+    <div class="tabs" id="tabBar"><button class="tab-btn active" data-cat="전체 보기">전체 보기 <span class="cnt">90</span></button>
+<button class="tab-btn" data-cat="AI Agent 핵심">AI Agent 핵심 <span class="cnt">23</span></button>
+<button class="tab-btn" data-cat="딥러닝 기초 · 학습">딥러닝 기초 · 학습 <span class="cnt">22</span></button>
+<button class="tab-btn" data-cat="YOLO · 객체 탐지">YOLO · 객체 탐지 <span class="cnt">36</span></button>
+<button class="tab-btn" data-cat="성능 지표 · 데이터셋 · 배포">성능 지표 · 데이터셋 · 배포 <span class="cnt">9</span></button></div>
+    <div class="status-line" id="statusLine">총 90개 용어 표시 중</div>
+  </section>
+
+  <main class="grid" id="cardGrid">
+    
+      <article class="term-card" id="ai-agent" data-cat="AI Agent 핵심" data-search="ai 에이전트 (ai agent) artificial intelligence agent ai agent 핵심 단순히 질문에 답만 하는 챗봇을 넘어, 스스로 목표를 세우고 도구를 사용해 작업을 끝까지 완수하는 자율형 ai 시스템. 일반 챗봇이 &#x27;레시피를 알려주는 요리책&#x27;이라면, ai 에이전트는 &#x27;냉장고를 열어 재료를 확인하고, 부족한 걸 주문하고, 직접 요리까지 해내는 셰프&#x27;입니다. 전통적인 llm은 사용자가 한 번 묻고 답하면 끝납니다. 반면 ai 에이전트는 &lt;strong&gt;관찰(observe) → 계획(plan) → 도구 실행(act) → 결과 확인 및 수정(reflect)&lt;/strong&gt; 루프를 스스로 반복합니다. 예를 들어 코딩 에이전트는 코드를 읽고, 터미널에서 테스트를 돌리고, 에러가 나면 원인을 파악해 고친 뒤 다시 테스트합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>AI 에이전트 (AI Agent)</h2>
+        <div class="en-sub">Artificial Intelligence Agent</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 단순히 질문에 답만 하는 챗봇을 넘어, 스스로 목표를 세우고 도구를 사용해 작업을 끝까지 완수하는 자율형 AI 시스템.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>일반 챗봇이 '레시피를 알려주는 요리책'이라면, AI 에이전트는 '냉장고를 열어 재료를 확인하고, 부족한 걸 주문하고, 직접 요리까지 해내는 셰프'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>전통적인 LLM은 사용자가 한 번 묻고 답하면 끝납니다. 반면 AI 에이전트는 <strong>관찰(Observe) → 계획(Plan) → 도구 실행(Act) → 결과 확인 및 수정(Reflect)</strong> 루프를 스스로 반복합니다. 예를 들어 코딩 에이전트는 코드를 읽고, 터미널에서 테스트를 돌리고, 에러가 나면 원인을 파악해 고친 뒤 다시 테스트합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#llm">#거대 언어 모델</a> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a> <a class="rel-chip" href="#react">#ReAct 패턴</a> <a class="rel-chip" href="#agentic-workflow">#에이전틱 워크플로우 vs 자율 에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="llm" data-cat="AI Agent 핵심" data-search="거대 언어 모델 (llm) large language model ai agent 핵심 방대한 텍스트를 학습해 사람처럼 문장을 이해·추론·생성하는 ai 에이전트의 &#x27;두뇌&#x27; 역할을 하는 핵심 모델. 세상의 수많은 책과 문서를 다 읽고 맥락을 파악해 가장 그럴듯한 다음 말을 이어주는 초고속 백과사전형 두뇌입니다. gpt, gemini, claude 등이 대표적입니다. 에이전트 시스템에서 llm은 사용자의 모호한 요청을 해석하고, 어떤 도구를 어떤 순서로 호출할지 결정하며, 도구 실행 결과를 바탕으로 다음 행동을 판단하는 중앙 제어기(controller) 역할을 맡습니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>거대 언어 모델 (LLM)</h2>
+        <div class="en-sub">Large Language Model</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 방대한 텍스트를 학습해 사람처럼 문장을 이해·추론·생성하는 AI 에이전트의 &#x27;두뇌&#x27; 역할을 하는 핵심 모델.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>세상의 수많은 책과 문서를 다 읽고 맥락을 파악해 가장 그럴듯한 다음 말을 이어주는 초고속 백과사전형 두뇌입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>GPT, Gemini, Claude 등이 대표적입니다. 에이전트 시스템에서 LLM은 사용자의 모호한 요청을 해석하고, 어떤 도구를 어떤 순서로 호출할지 결정하며, 도구 실행 결과를 바탕으로 다음 행동을 판단하는 중앙 제어기(Controller) 역할을 맡습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#token-context">#토큰 &amp; 컨텍스트 윈도우</a> <a class="rel-chip" href="#hallucination">#환각</a> <a class="rel-chip" href="#prompt-engineering">#프롬프트 엔지니어링 &amp; 시스템 프롬프트</a></div>
+      </article>
+    
+      <article class="term-card" id="tool-calling" data-cat="AI Agent 핵심" data-search="도구 호출 / 함수 호출 tool calling / function calling ai agent 핵심 ai가 말만 하는 대신, 외부 api·검색·파일 읽기·코드 실행 같은 실제 기능을 정해진 형식(json)으로 호출해 사용하는 능력. 아무리 똑똑한 사람도 계산기나 스마트폰 없이 모든 걸 암산할 수 없듯, ai에게 &#x27;손과 발(계산기, 웹 브라우저, db 접속기)&#x27;을 달아주는 기능입니다. llm이 직접 인터넷이나 로컬 파일에 접근할 수는 없지만, 개발자가 제공한 도구 목록과 스키마(입력 형식)를 보고 &lt;code&gt;{&quot;tool&quot;: &quot;search_web&quot;, &quot;query&quot;: &quot;...&quot;}&lt;/code&gt;처럼 구조화된 호출 요청을 생성합니다. 호스트 프로그램이 이를 실제 실행해 결과를 돌려주면 ai가 그 값을 보고 다음 단계를 이어갑니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>도구 호출 / 함수 호출</h2>
+        <div class="en-sub">Tool Calling / Function Calling</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 말만 하는 대신, 외부 API·검색·파일 읽기·코드 실행 같은 실제 기능을 정해진 형식(JSON)으로 호출해 사용하는 능력.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>아무리 똑똑한 사람도 계산기나 스마트폰 없이 모든 걸 암산할 수 없듯, AI에게 '손과 발(계산기, 웹 브라우저, DB 접속기)'을 달아주는 기능입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>LLM이 직접 인터넷이나 로컬 파일에 접근할 수는 없지만, 개발자가 제공한 도구 목록과 스키마(입력 형식)를 보고 <code>{"tool": "search_web", "query": "..."}</code>처럼 구조화된 호출 요청을 생성합니다. 호스트 프로그램이 이를 실제 실행해 결과를 돌려주면 AI가 그 값을 보고 다음 단계를 이어갑니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#mcp">#MCP</a> <a class="rel-chip" href="#structured-output">#구조화된 출력</a> <a class="rel-chip" href="#sandbox">#샌드박스 &amp; 실행 환경</a></div>
+      </article>
+    
+      <article class="term-card" id="mcp" data-cat="AI Agent 핵심" data-search="mcp (모델 컨텍스트 프로토콜) model context protocol ai agent 핵심 ai 모델과 외부 데이터·도구(github, slack, db 등)를 표준화된 하나의 규격으로 연결해 주는 개방형 통신 프로토콜. 예전엔 기기마다 충전기 단자가 달랐지만 지금은 usb-c 하나로 다 연결되듯, mcp는 다양한 ai 앱과 외부 도구를 꽂아 쓰는 &#x27;ai 시대의 usb-c 표준&#x27;입니다. anthropic 등이 주도해 공개한 표준으로, ai 에이전트(client)가 각각의 서비스마다 제각각 연동 코드를 짤 필요 없이 mcp 서버만 연결하면 파일·db·api 도구와 컨텍스트를 일관된 방식으로 읽고 실행할 수 있게 해줍니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>MCP (모델 컨텍스트 프로토콜)</h2>
+        <div class="en-sub">Model Context Protocol</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI 모델과 외부 데이터·도구(GitHub, Slack, DB 등)를 표준화된 하나의 규격으로 연결해 주는 개방형 통신 프로토콜.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>예전엔 기기마다 충전기 단자가 달랐지만 지금은 USB-C 하나로 다 연결되듯, MCP는 다양한 AI 앱과 외부 도구를 꽂아 쓰는 'AI 시대의 USB-C 표준'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>Anthropic 등이 주도해 공개한 표준으로, AI 에이전트(Client)가 각각의 서비스마다 제각각 연동 코드를 짤 필요 없이 MCP 서버만 연결하면 파일·DB·API 도구와 컨텍스트를 일관된 방식으로 읽고 실행할 수 있게 해줍니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#rag">#검색 증강 생성</a></div>
+      </article>
+    
+      <article class="term-card" id="rag" data-cat="AI Agent 핵심" data-search="검색 증강 생성 (rag) retrieval-augmented generation ai agent 핵심 ai가 답하기 전에 외부 문서나 사내 db에서 관련 최신 정보를 먼저 &#x27;검색&#x27;해 와서 그 근거를 바탕으로 답변하게 만드는 기술. 기억력에만 의존해 시험을 보는(파인튜닝) 대신, 시험장에 &#x27;교과서를 들고 들어가서 관련 페이지를 찾아보고 답을 쓰는 오픈북 시험&#x27;입니다. llm은 학습 시점 이후의 최신 정보나 회사 내부 문서를 모르고, 모를 때 그럴듯한 거짓말(환각)을 할 수 있습니다. rag는 문서를 잘게 쪼개 벡터 db에 저장해 두었다가 질문과 관련된 조각만 찾아 프롬프트에 끼워 넣어 정확성과 최신성을 크게 높입니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>검색 증강 생성 (RAG)</h2>
+        <div class="en-sub">Retrieval-Augmented Generation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 답하기 전에 외부 문서나 사내 DB에서 관련 최신 정보를 먼저 &#x27;검색&#x27;해 와서 그 근거를 바탕으로 답변하게 만드는 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>기억력에만 의존해 시험을 보는(파인튜닝) 대신, 시험장에 '교과서를 들고 들어가서 관련 페이지를 찾아보고 답을 쓰는 오픈북 시험'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>LLM은 학습 시점 이후의 최신 정보나 회사 내부 문서를 모르고, 모를 때 그럴듯한 거짓말(환각)을 할 수 있습니다. RAG는 문서를 잘게 쪼개 벡터 DB에 저장해 두었다가 질문과 관련된 조각만 찾아 프롬프트에 끼워 넣어 정확성과 최신성을 크게 높입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#embedding-vectordb">#임베딩</a> <a class="rel-chip" href="#hallucination">#환각</a> <a class="rel-chip" href="#fine-tuning">#파인튜닝</a></div>
+      </article>
+    
+      <article class="term-card" id="react" data-cat="AI Agent 핵심" data-search="react 패턴 (추론 + 행동) reasoning and acting ai agent 핵심 ai가 &#x27;생각하기(thought) → 도구 실행(action) → 결과 관찰(observation)&#x27;을 번갈아 반복하며 문제를 푸는 대표적 에이전트 루프. 탐정이 &#x27;단서가 부족하네(생각) → cctv를 확인하자(행동) → 용의자가 3시에 나갔군(관찰) → 그럼 알리바이를 조사하자(다음 생각)&#x27; 식으로 추리해 나가는 과정입니다. 단순히 한 번에 정답을 내놓는 대신, 중간 추론 과정을 언어로 내뱉고 실제 도구 실행 결과를 관찰해 다음 추론을 보정하므로 복잡한 다단계 문제에서 오류율이 크게 줄어듭니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>ReAct 패턴 (추론 + 행동)</h2>
+        <div class="en-sub">Reasoning and Acting</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 &#x27;생각하기(Thought) → 도구 실행(Action) → 결과 관찰(Observation)&#x27;을 번갈아 반복하며 문제를 푸는 대표적 에이전트 루프.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>탐정이 '단서가 부족하네(생각) → CCTV를 확인하자(행동) → 용의자가 3시에 나갔군(관찰) → 그럼 알리바이를 조사하자(다음 생각)' 식으로 추리해 나가는 과정입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>단순히 한 번에 정답을 내놓는 대신, 중간 추론 과정을 언어로 내뱉고 실제 도구 실행 결과를 관찰해 다음 추론을 보정하므로 복잡한 다단계 문제에서 오류율이 크게 줄어듭니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#cot">#사고의 연쇄</a> <a class="rel-chip" href="#planning-reflection">#계획 수립 및 자기 성찰</a> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a></div>
+      </article>
+    
+      <article class="term-card" id="cot" data-cat="AI Agent 핵심" data-search="사고의 연쇄 (chain-of-thought, cot) chain-of-thought reasoning ai agent 핵심 ai가 바로 최종 정답을 내뱉지 않고, 단계별 풀이 과정을 차근차근 글로 전개한 뒤 답을 도출하도록 유도하는 추론 기법. 복잡한 수학 문제를 암산으로 바로 답 적는 것보다, 연습장에 중간 풀이 과정을 한 줄씩 적어가며 풀면 실수가 훨씬 줄어드는 것과 같습니다. 최신 추론 모델(reasoning models)은 답변을 출력하기 전에 내부적으로 긴 생각(thinking) 단계를 거쳐 가설을 세우고 검증한 후 사용자에게 깔끔한 최종 결과만 전달합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>사고의 연쇄 (Chain-of-Thought, CoT)</h2>
+        <div class="en-sub">Chain-of-Thought Reasoning</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 바로 최종 정답을 내뱉지 않고, 단계별 풀이 과정을 차근차근 글로 전개한 뒤 답을 도출하도록 유도하는 추론 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>복잡한 수학 문제를 암산으로 바로 답 적는 것보다, 연습장에 중간 풀이 과정을 한 줄씩 적어가며 풀면 실수가 훨씬 줄어드는 것과 같습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>최신 추론 모델(Reasoning Models)은 답변을 출력하기 전에 내부적으로 긴 생각(Thinking) 단계를 거쳐 가설을 세우고 검증한 후 사용자에게 깔끔한 최종 결과만 전달합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#react">#ReAct 패턴</a> <a class="rel-chip" href="#planning-reflection">#계획 수립 및 자기 성찰</a> <a class="rel-chip" href="#llm">#거대 언어 모델</a></div>
+      </article>
+    
+      <article class="term-card" id="planning-reflection" data-cat="AI Agent 핵심" data-search="계획 수립 및 자기 성찰 (planning &amp; reflection) planning and self-reflection ai agent 핵심 큰 작업을 작은 단계로 쪼개 계획을 세우고(planning), 실행 결과가 기대에 못 미치면 스스로 검토·수정(reflection)하는 능력. 보고서를 쓸 때 먼저 목차(계획)를 짜고, 초안을 쓴 뒤 오탈자나 논리 비약이 없는지 직접 다시 읽어보고 고치는(성찰) 과정입니다. 에이전트가 한 번 실패했을 때 같은 실수를 무한 반복하지 않으려면 &#x27;왜 실패했는지&#x27;를 스스로 평가하고 다른 전략을 택하는 성찰 단계가 필수적입니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>계획 수립 및 자기 성찰 (Planning &amp; Reflection)</h2>
+        <div class="en-sub">Planning and Self-Reflection</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 큰 작업을 작은 단계로 쪼개 계획을 세우고(Planning), 실행 결과가 기대에 못 미치면 스스로 검토·수정(Reflection)하는 능력.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>보고서를 쓸 때 먼저 목차(계획)를 짜고, 초안을 쓴 뒤 오탈자나 논리 비약이 없는지 직접 다시 읽어보고 고치는(성찰) 과정입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>에이전트가 한 번 실패했을 때 같은 실수를 무한 반복하지 않으려면 '왜 실패했는지'를 스스로 평가하고 다른 전략을 택하는 성찰 단계가 필수적입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#react">#ReAct 패턴</a> <a class="rel-chip" href="#multi-agent">#멀티 에이전트 / 오케스트레이션 / 스웜</a> <a class="rel-chip" href="#evals">#이밸스</a></div>
+      </article>
+    
+      <article class="term-card" id="multi-agent" data-cat="AI Agent 핵심" data-search="멀티 에이전트 / 오케스트레이션 / 스웜 multi-agent system / orchestration / swarm ai agent 핵심 혼자 모든 걸 처리하는 대신, 조사·코딩·검수 등 전문 역할을 나눈 여러 ai 에이전트가 협업·조율하며 큰 일을 해결하는 구조. 1인 기업 사장이 혼자 기획·개발·디자인·qa를 다 하는 대신, 팀장(오케스트레이터)이 각 분야 전문가(서브에이전트)에게 업무를 분배하고 취합하는 &#x27;회사 조직&#x27;입니다. 단일 에이전트에 너무 많은 역할과 긴 맥락을 몰아주면 성능이 떨어집니다. 역할을 쪼개 병렬(parallel)로 실행하거나 파이프라인(pipeline)으로 넘겨주면 속도, 전문성, 컨텍스트 관리 효율이 크게 올라갑니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>멀티 에이전트 / 오케스트레이션 / 스웜</h2>
+        <div class="en-sub">Multi-Agent System / Orchestration / Swarm</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 혼자 모든 걸 처리하는 대신, 조사·코딩·검수 등 전문 역할을 나눈 여러 AI 에이전트가 협업·조율하며 큰 일을 해결하는 구조.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>1인 기업 사장이 혼자 기획·개발·디자인·QA를 다 하는 대신, 팀장(오케스트레이터)이 각 분야 전문가(서브에이전트)에게 업무를 분배하고 취합하는 '회사 조직'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>단일 에이전트에 너무 많은 역할과 긴 맥락을 몰아주면 성능이 떨어집니다. 역할을 쪼개 병렬(Parallel)로 실행하거나 파이프라인(Pipeline)으로 넘겨주면 속도, 전문성, 컨텍스트 관리 효율이 크게 올라갑니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#subagent">#서브에이전트</a> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#agentic-workflow">#에이전틱 워크플로우 vs 자율 에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="subagent" data-cat="AI Agent 핵심" data-search="서브에이전트 (subagent) subagent ai agent 핵심 메인 에이전트가 특정 하위 작업(예: 코드베이스 탐색, 브라우저 조작, 개별 논문 번역)을 위임하기 위해 호출하는 독립된 작업자 에이전트. 주방장(메인 에이전트)이 &#x27;소스 담당 보조 셰프(서브에이전트)&#x27;에게 &#x27;양파 썰고 소스만 만들어서 보고해&#x27;라고 맡기고, 주방장은 전체 요리의 흐름만 챙기는 것과 같습니다. 서브에이전트는 자기만의 깨끗한 컨텍스트 창에서 수십 번의 파일 읽기/검색을 수행한 뒤, 깔끔한 요약 결과만 메인 에이전트에게 보고합니다. 덕분에 메인 에이전트의 컨텍스트가 지저분한 로그로 꽉 차는 것을 막아줍니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>서브에이전트 (Subagent)</h2>
+        <div class="en-sub">Subagent</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 메인 에이전트가 특정 하위 작업(예: 코드베이스 탐색, 브라우저 조작, 개별 논문 번역)을 위임하기 위해 호출하는 독립된 작업자 에이전트.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>주방장(메인 에이전트)이 '소스 담당 보조 셰프(서브에이전트)'에게 '양파 썰고 소스만 만들어서 보고해'라고 맡기고, 주방장은 전체 요리의 흐름만 챙기는 것과 같습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>서브에이전트는 자기만의 깨끗한 컨텍스트 창에서 수십 번의 파일 읽기/검색을 수행한 뒤, 깔끔한 요약 결과만 메인 에이전트에게 보고합니다. 덕분에 메인 에이전트의 컨텍스트가 지저분한 로그로 꽉 차는 것을 막아줍니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#multi-agent">#멀티 에이전트 / 오케스트레이션 / 스웜</a> <a class="rel-chip" href="#memory-context">#메모리 &amp; 컨텍스트 엔지니어링</a> <a class="rel-chip" href="#token-context">#토큰 &amp; 컨텍스트 윈도우</a></div>
+      </article>
+    
+      <article class="term-card" id="memory-context" data-cat="AI Agent 핵심" data-search="메모리 &amp; 컨텍스트 엔지니어링 short/long-term memory &amp; context engineering ai agent 핵심 에이전트가 현재 대화(단기 메모리)와 과거 경험·사용자 선호(장기 메모리) 중 꼭 필요한 정보만 골라 두뇌에 올려놓는 관리 기술. 책상 위(단기 메모리)에는 지금 당장 볼 서류만 올려두고, 오래된 자료는 서랍장(장기 메모리/db)에 정리해 두었다가 필요할 때만 꺼내 보는 작업 방식입니다. 컨텍스트 창에 불필요한 정보가 너무 많으면 ai가 핵심을 놓치는 &#x27;컨텍스트 부패(context rot)&#x27;가 발생합니다. 무엇을 기억하고, 요약하고, 버릴지 설계하는 것이 현대 에이전트 성능의 핵심입니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>메모리 &amp; 컨텍스트 엔지니어링</h2>
+        <div class="en-sub">Short/Long-Term Memory &amp; Context Engineering</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 에이전트가 현재 대화(단기 메모리)와 과거 경험·사용자 선호(장기 메모리) 중 꼭 필요한 정보만 골라 두뇌에 올려놓는 관리 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>책상 위(단기 메모리)에는 지금 당장 볼 서류만 올려두고, 오래된 자료는 서랍장(장기 메모리/DB)에 정리해 두었다가 필요할 때만 꺼내 보는 작업 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>컨텍스트 창에 불필요한 정보가 너무 많으면 AI가 핵심을 놓치는 '컨텍스트 부패(Context Rot)'가 발생합니다. 무엇을 기억하고, 요약하고, 버릴지 설계하는 것이 현대 에이전트 성능의 핵심입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#token-context">#토큰 &amp; 컨텍스트 윈도우</a> <a class="rel-chip" href="#rag">#검색 증강 생성</a> <a class="rel-chip" href="#subagent">#서브에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="token-context" data-cat="AI Agent 핵심" data-search="토큰 &amp; 컨텍스트 윈도우 token &amp; context window ai agent 핵심 토큰은 ai가 글자를 쪼개 읽는 최소 단위이고, 컨텍스트 윈도우는 ai가 한 번에 기억하고 처리할 수 있는 최대 작업 공간(용량)입니다. 토큰이 &#x27;단어 블록(레고 조각)&#x27;이라면, 컨텍스트 윈도우는 그 블록을 한꺼번에 올려놓고 조립할 수 있는 &#x27;책상 크기&#x27;입니다. 영어는 대략 1단어가 1.3토큰, 한국어는 조사·음절 구조 때문에 1글자~2글자당 1토큰 이상을 차지하는 경우가 많습니다. 컨텍스트 한계를 넘기면 앞부분 대화를 잊거나 비용과 응답 속도가 느려집니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>토큰 &amp; 컨텍스트 윈도우</h2>
+        <div class="en-sub">Token &amp; Context Window</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 토큰은 AI가 글자를 쪼개 읽는 최소 단위이고, 컨텍스트 윈도우는 AI가 한 번에 기억하고 처리할 수 있는 최대 작업 공간(용량)입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>토큰이 '단어 블록(레고 조각)'이라면, 컨텍스트 윈도우는 그 블록을 한꺼번에 올려놓고 조립할 수 있는 '책상 크기'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>영어는 대략 1단어가 1.3토큰, 한국어는 조사·음절 구조 때문에 1글자~2글자당 1토큰 이상을 차지하는 경우가 많습니다. 컨텍스트 한계를 넘기면 앞부분 대화를 잊거나 비용과 응답 속도가 느려집니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#memory-context">#메모리 &amp; 컨텍스트 엔지니어링</a> <a class="rel-chip" href="#llm">#거대 언어 모델</a> <a class="rel-chip" href="#subagent">#서브에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="prompt-engineering" data-cat="AI Agent 핵심" data-search="프롬프트 엔지니어링 &amp; 시스템 프롬프트 prompt engineering &amp; system prompt ai agent 핵심 ai에게 원하는 역할·규칙·출력 형식을 정확히 전달해 최선의 결과를 끌어내는 지시문 설계 기술. 시스템 프롬프트가 직원에게 처음 입사할 때 주는 &#x27;사내 업무 매뉴얼 및 행동 강령&#x27;이라면, 유저 프롬프트는 &#x27;오늘 처리할 개별 업무 지시서&#x27;입니다. 모호한 지시 대신 구체적인 제약 조건, 예시(few-shot), 판단 기준, 금지 사항을 명확히 적을수록 에이전트가 엉뚱한 행동을 하지 않고 안정적으로 동작합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>프롬프트 엔지니어링 &amp; 시스템 프롬프트</h2>
+        <div class="en-sub">Prompt Engineering &amp; System Prompt</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI에게 원하는 역할·규칙·출력 형식을 정확히 전달해 최선의 결과를 끌어내는 지시문 설계 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>시스템 프롬프트가 직원에게 처음 입사할 때 주는 '사내 업무 매뉴얼 및 행동 강령'이라면, 유저 프롬프트는 '오늘 처리할 개별 업무 지시서'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>모호한 지시 대신 구체적인 제약 조건, 예시(Few-shot), 판단 기준, 금지 사항을 명확히 적을수록 에이전트가 엉뚱한 행동을 하지 않고 안정적으로 동작합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#llm">#거대 언어 모델</a> <a class="rel-chip" href="#guardrails">#가드레일 &amp; 인간 개입</a> <a class="rel-chip" href="#structured-output">#구조화된 출력</a> <a class="rel-chip" href="#skills-rules">#스킬(Skills) · 룰(Rules) · 훅(Hooks)</a></div>
+      </article>
+    
+      <article class="term-card" id="structured-output" data-cat="AI Agent 핵심" data-search="구조화된 출력 (structured output / json schema) structured output ai agent 핵심 ai가 자유로운 수다 대신, 프로그램이 바로 파싱해 쓸 수 있는 엄격한 json 형식(스키마)에 맞춰 답하도록 강제하는 기능. 자유 에세이 대신 정해진 칸(이름, 날짜, 금액, 체크박스)에만 기입하게 만드는 &#x27;표준 신청서 양식&#x27;입니다. 에이전트가 다른 소프트웨어·db·다음 워크플로우 단계와 연결되려면 응답 형식이 조금도 어긋나면 안 됩니다. json schema를 지정하면 모델이 해당 필드와 타입을 100% 준수해 결과를 반환합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>구조화된 출력 (Structured Output / JSON Schema)</h2>
+        <div class="en-sub">Structured Output</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 자유로운 수다 대신, 프로그램이 바로 파싱해 쓸 수 있는 엄격한 JSON 형식(스키마)에 맞춰 답하도록 강제하는 기능.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>자유 에세이 대신 정해진 칸(이름, 날짜, 금액, 체크박스)에만 기입하게 만드는 '표준 신청서 양식'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>에이전트가 다른 소프트웨어·DB·다음 워크플로우 단계와 연결되려면 응답 형식이 조금도 어긋나면 안 됩니다. JSON Schema를 지정하면 모델이 해당 필드와 타입을 100% 준수해 결과를 반환합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a> <a class="rel-chip" href="#agentic-workflow">#에이전틱 워크플로우 vs 자율 에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="hallucination" data-cat="AI Agent 핵심" data-search="환각 (hallucination) &amp; 그라운딩 (grounding) hallucination &amp; grounding ai agent 핵심 환각은 ai가 없는 사실·파일·코드를 진짜인 것처럼 그럴듯하게 지어내는 현상이고, 그라운딩은 실제 근거(파일, 검색, 실행 결과)에 답변을 단단히 묶어두는 기술입니다. 환각이 &#x27;모르는 길을 아는 척하며 자신 있게 잘못 알려주는 행인&#x27;이라면, 그라운딩은 &#x27;실제 지도 앱을 열어 확인한 뒤 안내하는 네비게이션&#x27;입니다. ai 에이전트에서 환각을 막으려면 반드시 &lt;code&gt;read_file&lt;/code&gt;, 테스트 실행, 검색 결과 등 직접 관찰한 근거만 인용하도록 강제하고, 확인 못 한 내용은 모른다고 말하게 해야 합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>환각 (Hallucination) &amp; 그라운딩 (Grounding)</h2>
+        <div class="en-sub">Hallucination &amp; Grounding</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 환각은 AI가 없는 사실·파일·코드를 진짜인 것처럼 그럴듯하게 지어내는 현상이고, 그라운딩은 실제 근거(파일, 검색, 실행 결과)에 답변을 단단히 묶어두는 기술입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>환각이 '모르는 길을 아는 척하며 자신 있게 잘못 알려주는 행인'이라면, 그라운딩은 '실제 지도 앱을 열어 확인한 뒤 안내하는 네비게이션'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>AI 에이전트에서 환각을 막으려면 반드시 <code>read_file</code>, 테스트 실행, 검색 결과 등 직접 관찰한 근거만 인용하도록 강제하고, 확인 못 한 내용은 모른다고 말하게 해야 합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#rag">#검색 증강 생성</a> <a class="rel-chip" href="#guardrails">#가드레일 &amp; 인간 개입</a> <a class="rel-chip" href="#evals">#이밸스</a></div>
+      </article>
+    
+      <article class="term-card" id="guardrails" data-cat="AI Agent 핵심" data-search="가드레일 &amp; 인간 개입 (guardrails &amp; hitl) guardrails &amp; human-in-the-loop ai agent 핵심 가드레일은 ai가 위험하거나 잘못된 행동을 하지 못하게 막는 안전장치이고, hitl은 중요한 결정 직전에 사람의 승인을 받는 절차입니다. 자동차의 가드레일·자동 긴급제동 장치가 &#x27;가드레일&#x27;이고, 결재를 올릴 때 팀장 도장을 받는 과정이 &#x27;human-in-the-loop(hitl)&#x27;입니다. 파일 삭제, 외부 이메일 발송, 결제, 운영 서버 배포처럼 되돌리기 어려운 작업은 에이전트가 멋대로 실행하지 못하게 권한을 제한하거나 사용자 확인 창을 띄워야 안전합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>가드레일 &amp; 인간 개입 (Guardrails &amp; HITL)</h2>
+        <div class="en-sub">Guardrails &amp; Human-in-the-Loop</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 가드레일은 AI가 위험하거나 잘못된 행동을 하지 못하게 막는 안전장치이고, HITL은 중요한 결정 직전에 사람의 승인을 받는 절차입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>자동차의 가드레일·자동 긴급제동 장치가 '가드레일'이고, 결재를 올릴 때 팀장 도장을 받는 과정이 'Human-in-the-Loop(HITL)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>파일 삭제, 외부 이메일 발송, 결제, 운영 서버 배포처럼 되돌리기 어려운 작업은 에이전트가 멋대로 실행하지 못하게 권한을 제한하거나 사용자 확인 창을 띄워야 안전합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#sandbox">#샌드박스 &amp; 실행 환경</a> <a class="rel-chip" href="#hallucination">#환각</a></div>
+      </article>
+    
+      <article class="term-card" id="agentic-workflow" data-cat="AI Agent 핵심" data-search="에이전틱 워크플로우 vs 자율 에이전트 agentic workflow vs autonomous agent ai agent 핵심 에이전틱 워크플로우는 개발자가 정해둔 흐름(분할·병렬·검증 단계) 속에서 ai가 일하는 구조이고, 자율 에이전트는 흐름 자체도 ai가 즉흥적으로 결정합니다. 워크플로우가 &#x27;정해진 공정 라인을 따라 각 로봇이 조립하는 스마트 공장&#x27;이라면, 자율 에이전트는 &#x27;현장 상황에 따라 직접 순서를 정해 일하는 프리랜서 전문가&#x27;입니다. 이번처럼 12편의 논문을 정해진 형식으로 병렬 번역해 html로 조립하는 작업은 &lt;strong&gt;에이전틱 워크플로우&lt;/strong&gt;가 훨씬 빠르고, 누락이 없으며, 재현성이 높습니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>에이전틱 워크플로우 vs 자율 에이전트</h2>
+        <div class="en-sub">Agentic Workflow vs Autonomous Agent</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 에이전틱 워크플로우는 개발자가 정해둔 흐름(분할·병렬·검증 단계) 속에서 AI가 일하는 구조이고, 자율 에이전트는 흐름 자체도 AI가 즉흥적으로 결정합니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>워크플로우가 '정해진 공정 라인을 따라 각 로봇이 조립하는 스마트 공장'이라면, 자율 에이전트는 '현장 상황에 따라 직접 순서를 정해 일하는 프리랜서 전문가'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>이번처럼 12편의 논문을 정해진 형식으로 병렬 번역해 HTML로 조립하는 작업은 <strong>에이전틱 워크플로우</strong>가 훨씬 빠르고, 누락이 없으며, 재현성이 높습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#multi-agent">#멀티 에이전트 / 오케스트레이션 / 스웜</a> <a class="rel-chip" href="#structured-output">#구조화된 출력</a></div>
+      </article>
+    
+      <article class="term-card" id="sandbox" data-cat="AI Agent 핵심" data-search="샌드박스 &amp; 실행 환경 (sandbox) execution sandbox ai agent 핵심 ai 에이전트가 코드를 실행하거나 브라우저를 조종할 때, 사용자의 실제 pc·서버에 피해를 주지 않도록 격리해 둔 안전한 실험 공간. 아이들이 모래성을 쌓고 부숴도 거실이 어질러지지 않도록 정해진 울타리 안에 만들어 둔 &#x27;놀이터 모래밭(sandbox)&#x27;입니다. 에이전트가 잘못된 명령을 내리거나 악성 웹사이트 코드에 노출되어도 샌드박스 내부로 피해가 격리되므로 보안 사고를 막을 수 있습니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>샌드박스 &amp; 실행 환경 (Sandbox)</h2>
+        <div class="en-sub">Execution Sandbox</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI 에이전트가 코드를 실행하거나 브라우저를 조종할 때, 사용자의 실제 PC·서버에 피해를 주지 않도록 격리해 둔 안전한 실험 공간.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>아이들이 모래성을 쌓고 부숴도 거실이 어질러지지 않도록 정해진 울타리 안에 만들어 둔 '놀이터 모래밭(Sandbox)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>에이전트가 잘못된 명령을 내리거나 악성 웹사이트 코드에 노출되어도 샌드박스 내부로 피해가 격리되므로 보안 사고를 막을 수 있습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a> <a class="rel-chip" href="#guardrails">#가드레일 &amp; 인간 개입</a> <a class="rel-chip" href="#computer-use">#컴퓨터 유즈 / 브라우저 에이전트</a></div>
+      </article>
+    
+      <article class="term-card" id="computer-use" data-cat="AI Agent 핵심" data-search="컴퓨터 유즈 / 브라우저 에이전트 computer use / browser agent ai agent 핵심 api가 없는 웹사이트나 프로그램도 사람처럼 화면(스크린샷)을 보고 마우스 클릭·스크롤·타이핑으로 직접 조작하는 에이전트 기술. 전산망 연결(api)이 안 되는 구형 웹사이트 업무를 처리할 때, 직원이 직접 모니터를 보며 마우스를 클릭해 처리해 주는 것과 같습니다. 웹 페이지의 dom 구조나 화면 이미지를 입력받아 클릭 좌표와 입력 텍스트를 출력하며, 로그인·예약·대량 ui 정리 등 다양한 작업을 수행합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>컴퓨터 유즈 / 브라우저 에이전트</h2>
+        <div class="en-sub">Computer Use / Browser Agent</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> API가 없는 웹사이트나 프로그램도 사람처럼 화면(스크린샷)을 보고 마우스 클릭·스크롤·타이핑으로 직접 조작하는 에이전트 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>전산망 연결(API)이 안 되는 구형 웹사이트 업무를 처리할 때, 직원이 직접 모니터를 보며 마우스를 클릭해 처리해 주는 것과 같습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>웹 페이지의 DOM 구조나 화면 이미지를 입력받아 클릭 좌표와 입력 텍스트를 출력하며, 로그인·예약·대량 UI 정리 등 다양한 작업을 수행합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#ai-agent">#AI 에이전트</a> <a class="rel-chip" href="#sandbox">#샌드박스 &amp; 실행 환경</a> <a class="rel-chip" href="#tool-calling">#도구 호출 / 함수 호출</a></div>
+      </article>
+    
+      <article class="term-card" id="skills-rules" data-cat="AI Agent 핵심" data-search="스킬(skills) · 룰(rules) · 훅(hooks) skills, rules, and hooks ai agent 핵심 스킬은 &#x27;특정 작업 매뉴얼 묶음&#x27;, 룰은 &#x27;항상 지켜야 할 원칙&#x27;, 훅은 &#x27;특정 이벤트 전후에 자동 실행되는 스크립트&#x27;입니다. 요리사에게 룰은 &#x27;위생 장갑 착용 필수&#x27;, 스킬은 &#x27;파스타 레시피 카드(필요할 때만 꺼내 봄)&#x27;, 훅은 &#x27;불 끄면 자동으로 환풍기 켜지는 센서&#x27;입니다. 에이전트 시스템을 잘 설계하면 모든 지침을 한꺼번에 프롬프트에 넣지 않고, 상황에 맞는 스킬만 필요할 때 불러와(progressive disclosure) 컨텍스트를 아끼고 정확도를 높입니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>스킬(Skills) · 룰(Rules) · 훅(Hooks)</h2>
+        <div class="en-sub">Skills, Rules, and Hooks</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 스킬은 &#x27;특정 작업 매뉴얼 묶음&#x27;, 룰은 &#x27;항상 지켜야 할 원칙&#x27;, 훅은 &#x27;특정 이벤트 전후에 자동 실행되는 스크립트&#x27;입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>요리사에게 룰은 '위생 장갑 착용 필수', 스킬은 '파스타 레시피 카드(필요할 때만 꺼내 봄)', 훅은 '불 끄면 자동으로 환풍기 켜지는 센서'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>에이전트 시스템을 잘 설계하면 모든 지침을 한꺼번에 프롬프트에 넣지 않고, 상황에 맞는 스킬만 필요할 때 불러와(Progressive Disclosure) 컨텍스트를 아끼고 정확도를 높입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#prompt-engineering">#프롬프트 엔지니어링 &amp; 시스템 프롬프트</a> <a class="rel-chip" href="#memory-context">#메모리 &amp; 컨텍스트 엔지니어링</a> <a class="rel-chip" href="#mcp">#MCP</a></div>
+      </article>
+    
+      <article class="term-card" id="embedding-vectordb" data-cat="AI Agent 핵심" data-search="임베딩 (embedding) &amp; 벡터 db embedding &amp; vector database ai agent 핵심 임베딩은 글자·이미지의 &#x27;의미&#x27;를 숫자 좌표(벡터)로 바꾸는 기술이고, 벡터 db는 비슷한 의미의 좌표를 빛의 속도로 찾아주는 저장소입니다. 도서관에서 책 제목 가나다순이 아니라 &#x27;내용과 분위기가 비슷한 책끼리&#x27; 가깝게 꽂아두고, &#x27;우울할 때 읽기 좋은 책&#x27;을 바로 집어오는 마법의 서가입니다. 예를 들어 &#x27;강아지&#x27;와 &#x27;멍멍이&#x27;는 글자는 달라도 임베딩 벡터 공간에서는 아주 가까운 위치에 놓입니다. rag 검색의 핵심 엔진입니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>임베딩 (Embedding) &amp; 벡터 DB</h2>
+        <div class="en-sub">Embedding &amp; Vector Database</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 임베딩은 글자·이미지의 &#x27;의미&#x27;를 숫자 좌표(벡터)로 바꾸는 기술이고, 벡터 DB는 비슷한 의미의 좌표를 빛의 속도로 찾아주는 저장소입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>도서관에서 책 제목 가나다순이 아니라 '내용과 분위기가 비슷한 책끼리' 가깝게 꽂아두고, '우울할 때 읽기 좋은 책'을 바로 집어오는 마법의 서가입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>예를 들어 '강아지'와 '멍멍이'는 글자는 달라도 임베딩 벡터 공간에서는 아주 가까운 위치에 놓입니다. RAG 검색의 핵심 엔진입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#rag">#검색 증강 생성</a> <a class="rel-chip" href="#llm">#거대 언어 모델</a></div>
+      </article>
+    
+      <article class="term-card" id="evals" data-cat="AI Agent 핵심" data-search="이밸스 (evals) &amp; 벤치마크 evaluations &amp; benchmarks ai agent 핵심 ai나 에이전트가 프롬프트·모델 변경 후 실제로 더 똑똑해졌는지 객관적 시험 문제(테스트셋)로 채점하는 평가 체계. 새로운 공부법을 도입했을 때 &#x27;기분이 좋아진 것 같다&#x27;가 아니라, 실제 모의고사를 쳐서 점수가 올랐는지 확인하는 과정입니다. 에이전트는 같은 입력에도 출력이 달라질 수 있어 일반 소프트웨어 단위 테스트만으로는 부족합니다. 정답 비교, llm 심사관(llm-as-a-judge), 성공률·비용·지연시간 지표를 종합해 평가합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>이밸스 (Evals) &amp; 벤치마크</h2>
+        <div class="en-sub">Evaluations &amp; Benchmarks</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI나 에이전트가 프롬프트·모델 변경 후 실제로 더 똑똑해졌는지 객관적 시험 문제(테스트셋)로 채점하는 평가 체계.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>새로운 공부법을 도입했을 때 '기분이 좋아진 것 같다'가 아니라, 실제 모의고사를 쳐서 점수가 올랐는지 확인하는 과정입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>에이전트는 같은 입력에도 출력이 달라질 수 있어 일반 소프트웨어 단위 테스트만으로는 부족합니다. 정답 비교, LLM 심사관(LLM-as-a-Judge), 성공률·비용·지연시간 지표를 종합해 평가합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#hallucination">#환각</a> <a class="rel-chip" href="#planning-reflection">#계획 수립 및 자기 성찰</a> <a class="rel-chip" href="#map">#AP &amp; mAP</a></div>
+      </article>
+    
+      <article class="term-card" id="fine-tuning" data-cat="AI Agent 핵심" data-search="파인튜닝 (fine-tuning) &amp; lora fine-tuning &amp; low-rank adaptation ai agent 핵심 이미 잘 훈련된 거대 모델을 우리 회사 말투·도메인·특수 작업에 맞게 추가 학습시켜 성격을 다듬는 기법. 의대·인턴 과정을 마친 의사(사전학습 모델)에게 &#x27;정형외과 전문의 수련(파인튜닝)&#x27;을 시키는 것이며, lora는 두꺼운 교과서 전체 대신 핵심 요약 노트(소수 파라미터)만 덧붙여 빠르게 수련하는 방법입니다. 새로운 지식을 자주 넣어야 할 때는 rag가 유리하고, 특정 형식이나 말투·분류 패턴을 몸에 배게 하려면 파인튜닝(또는 lora)이 유리합니다.">
+        <div class="card-top">
+          <span class="cat-badge">AI Agent 핵심</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>파인튜닝 (Fine-tuning) &amp; LoRA</h2>
+        <div class="en-sub">Fine-tuning &amp; Low-Rank Adaptation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 이미 잘 훈련된 거대 모델을 우리 회사 말투·도메인·특수 작업에 맞게 추가 학습시켜 성격을 다듬는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>의대·인턴 과정을 마친 의사(사전학습 모델)에게 '정형외과 전문의 수련(파인튜닝)'을 시키는 것이며, LoRA는 두꺼운 교과서 전체 대신 핵심 요약 노트(소수 파라미터)만 덧붙여 빠르게 수련하는 방법입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>새로운 지식을 자주 넣어야 할 때는 RAG가 유리하고, 특정 형식이나 말투·분류 패턴을 몸에 배게 하려면 파인튜닝(또는 LoRA)이 유리합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#rag">#검색 증강 생성</a> <a class="rel-chip" href="#llm">#거대 언어 모델</a> <a class="rel-chip" href="#knowledge-distillation">#지식 증류</a></div>
+      </article>
+    
+      <article class="term-card" id="cnn" data-cat="딥러닝 기초 · 학습" data-search="합성곱 신경망 (cnn) convolutional neural network 딥러닝 기초 · 학습 이미지를 작은 돋보기(필터/커널)로 훑어가며 선·모서리 → 무늬 → 물체 형태 순으로 특징을 뽑아내는 영상 인식의 핵심 신경망. 거대한 그림을 한눈에 다 외우는 대신, 작은 돋보기로 구석구석 훑으며 &#x27;여긴 뾰족한 귀, 여긴 수염, 합쳐보니 고양이네!&#x27; 하고 알아채는 방식입니다. yolov1부터 yolov10, 그리고 최신 하이브리드 모델(yolov12·v13·yolo26)까지 여전히 뼈대의 큰 부분을 cnn(합성곱 계층)이 담당합니다. 주변 픽셀 간의 공간적 관계를 적은 연산으로 아주 효율적으로 포착합니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>합성곱 신경망 (CNN)</h2>
+        <div class="en-sub">Convolutional Neural Network</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 이미지를 작은 돋보기(필터/커널)로 훑어가며 선·모서리 → 무늬 → 물체 형태 순으로 특징을 뽑아내는 영상 인식의 핵심 신경망.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>거대한 그림을 한눈에 다 외우는 대신, 작은 돋보기로 구석구석 훑으며 '여긴 뾰족한 귀, 여긴 수염, 합쳐보니 고양이네!' 하고 알아채는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1부터 YOLOv10, 그리고 최신 하이브리드 모델(YOLOv12·v13·YOLO26)까지 여전히 뼈대의 큰 부분을 CNN(합성곱 계층)이 담당합니다. 주변 픽셀 간의 공간적 관계를 적은 연산으로 아주 효율적으로 포착합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#feature-map">#특징 맵</a> <a class="rel-chip" href="#receptive-field">#수용 영역</a> <a class="rel-chip" href="#depthwise-conv">#깊이별 분리 합성곱</a></div>
+      </article>
+    
+      <article class="term-card" id="depthwise-conv" data-cat="딥러닝 기초 · 학습" data-search="깊이별 분리 합성곱 (depthwise separable conv) depthwise separable convolution 딥러닝 기초 · 학습 일반 합성곱을 &#x27;채널별 공간 필터(depthwise)&#x27;와 &#x27;채널 섞기(1x1 pointwise)&#x27; 두 단계로 쪼개 연산량(flops)을 획기적으로 줄이는 경량화 기법. 10명이 동시에 모든 재료를 섞어 요리하는 대신, 각자 자기 재료만 먼저 다듬고(depthwise) 마지막에 한 번에 버무리는(pointwise) 분업 방식입니다. 모바일·엣지 디바이스용 경량 yolo(예: yolov13의 dsconv/ds-c3k2)에서 파라미터와 연산량을 크게 줄이면서도 표현력을 유지하기 위해 폭넓게 사용됩니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>깊이별 분리 합성곱 (Depthwise Separable Conv)</h2>
+        <div class="en-sub">Depthwise Separable Convolution</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 일반 합성곱을 &#x27;채널별 공간 필터(Depthwise)&#x27;와 &#x27;채널 섞기(1x1 Pointwise)&#x27; 두 단계로 쪼개 연산량(FLOPs)을 획기적으로 줄이는 경량화 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>10명이 동시에 모든 재료를 섞어 요리하는 대신, 각자 자기 재료만 먼저 다듬고(Depthwise) 마지막에 한 번에 버무리는(Pointwise) 분업 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>모바일·엣지 디바이스용 경량 YOLO(예: YOLOv13의 DSConv/DS-C3k2)에서 파라미터와 연산량을 크게 줄이면서도 표현력을 유지하기 위해 폭넓게 사용됩니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cnn">#합성곱 신경망</a> <a class="rel-chip" href="#flops-params">#FLOPs</a></div>
+      </article>
+    
+      <article class="term-card" id="feature-map" data-cat="딥러닝 기초 · 학습" data-search="특징 맵 (feature map) feature map 딥러닝 기초 · 학습 이미지가 신경망 층을 통과할 때마다 추출되는 &#x27;핵심 단서 지도&#x27;(예: 여기는 세로선 강함, 여기는 바퀴 모양 존재). 원본 위성 사진에서 &#x27;도로만 표시한 투명 필름&#x27;, &#x27;건물만 표시한 투명 필름&#x27;처럼 의미 있는 정보만 따로 뽑아낸 투명 지도 여러 장의 묶음입니다. 신경망의 앞쪽 층 특징 맵은 해상도가 크고 세밀한 윤곽(작은 물체 탐색에 유리)을 담고, 뒤쪽 층 특징 맵은 해상도는 작아지지만 &#x27;사람인지 차인지&#x27; 같은 고수준 의미 정보를 담습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>특징 맵 (Feature Map)</h2>
+        <div class="en-sub">Feature Map</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 이미지가 신경망 층을 통과할 때마다 추출되는 &#x27;핵심 단서 지도&#x27;(예: 여기는 세로선 강함, 여기는 바퀴 모양 존재).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>원본 위성 사진에서 '도로만 표시한 투명 필름', '건물만 표시한 투명 필름'처럼 의미 있는 정보만 따로 뽑아낸 투명 지도 여러 장의 묶음입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>신경망의 앞쪽 층 특징 맵은 해상도가 크고 세밀한 윤곽(작은 물체 탐색에 유리)을 담고, 뒤쪽 층 특징 맵은 해상도는 작아지지만 '사람인지 차인지' 같은 고수준 의미 정보를 담습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cnn">#합성곱 신경망</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#receptive-field">#수용 영역</a></div>
+      </article>
+    
+      <article class="term-card" id="receptive-field" data-cat="딥러닝 기초 · 학습" data-search="수용 영역 (receptive field) receptive field 딥러닝 기초 · 학습 특징 맵의 한 점(픽셀)이 원본 입력 이미지의 얼마나 넓은 영역을 보고 만들어졌는지를 나타내는 시야 범위. 망원경 배율과 비슷합니다. 수용 영역이 좁으면 바늘구멍으로 코끼리 다리만 보고, 수용 영역이 넓어야 코끼리 전체 모습을 파악합니다. 작은 물체는 좁은 수용 영역에서도 잘 보이지만, 큰 물체나 문맥(배경과의 관계)을 파악하려면 넓은 수용 영역이 필요합니다. spp/sppf, 큰 커널, attention 등이 수용 영역을 넓히는 대표 기술입니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>수용 영역 (Receptive Field)</h2>
+        <div class="en-sub">Receptive Field</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 특징 맵의 한 점(픽셀)이 원본 입력 이미지의 얼마나 넓은 영역을 보고 만들어졌는지를 나타내는 시야 범위.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>망원경 배율과 비슷합니다. 수용 영역이 좁으면 바늘구멍으로 코끼리 다리만 보고, 수용 영역이 넓어야 코끼리 전체 모습을 파악합니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>작은 물체는 좁은 수용 영역에서도 잘 보이지만, 큰 물체나 문맥(배경과의 관계)을 파악하려면 넓은 수용 영역이 필요합니다. SPP/SPPF, 큰 커널, Attention 등이 수용 영역을 넓히는 대표 기술입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cnn">#합성곱 신경망</a> <a class="rel-chip" href="#sppf">#SPP / SPPF</a> <a class="rel-chip" href="#attention">#어텐션</a></div>
+      </article>
+    
+      <article class="term-card" id="residual" data-cat="딥러닝 기초 · 학습" data-search="잔차 연결 (residual connection / skip connection) residual / skip connection 딥러닝 기초 · 학습 신경망 층이 깊어질 때 입력 신호를 건너뛰어(지름길) 출력에 그대로 더해주어, 학습 신호(기울기)가 중간에 사라지지 않게 하는 연결. 전달 게임(속삭이기)에서 50명을 거치면 말이 다 왜곡되지만, 중간중간 원본 메모지를 직접 전달해(지름길) 내용이 훼손되지 않게 하는 장치입니다. resnet에서 도입된 이후 darknet-53(yolov3), cspnet, elan 등 거의 모든 현대 yolo 백본의 기본 토대가 되었습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>잔차 연결 (Residual Connection / Skip Connection)</h2>
+        <div class="en-sub">Residual / Skip Connection</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 신경망 층이 깊어질 때 입력 신호를 건너뛰어(지름길) 출력에 그대로 더해주어, 학습 신호(기울기)가 중간에 사라지지 않게 하는 연결.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>전달 게임(속삭이기)에서 50명을 거치면 말이 다 왜곡되지만, 중간중간 원본 메모지를 직접 전달해(지름길) 내용이 훼손되지 않게 하는 장치입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>ResNet에서 도입된 이후 Darknet-53(YOLOv3), CSPNet, ELAN 등 거의 모든 현대 YOLO 백본의 기본 토대가 되었습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cspnet">#CSPNet</a> <a class="rel-chip" href="#pgi">#PGI</a> <a class="rel-chip" href="#cnn">#합성곱 신경망</a></div>
+      </article>
+    
+      <article class="term-card" id="batch-norm" data-cat="딥러닝 기초 · 학습" data-search="배치 정규화 (batch normalization, bn) batch normalization 딥러닝 기초 · 학습 학습 중 각 층을 지나가는 숫자들의 평균과 분산을 일정하게 맞춰주어, 학습이 폭발하거나 멈추지 않고 빠르게 수렴하게 하는 기법. 반마다 시험 난이도가 들쑥날쑥할 때, 매 과목 점수를 표준점수(평균 0, 표준편차 1)로 환산해 안정적으로 성적을 비교·학습하는 것과 같습니다. yolov2에서 모든 합성곱 층에 batchnorm을 도입하면서 드롭아웃 없이도 map가 2% 이상 향상되었고, 추론 시에는 앞선 conv 가중치에 합쳐(fusion) 추가 속도 저하 없이 쓸 수 있습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>배치 정규화 (Batch Normalization, BN)</h2>
+        <div class="en-sub">Batch Normalization</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습 중 각 층을 지나가는 숫자들의 평균과 분산을 일정하게 맞춰주어, 학습이 폭발하거나 멈추지 않고 빠르게 수렴하게 하는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>반마다 시험 난이도가 들쑥날쑥할 때, 매 과목 점수를 표준점수(평균 0, 표준편차 1)로 환산해 안정적으로 성적을 비교·학습하는 것과 같습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv2에서 모든 합성곱 층에 BatchNorm을 도입하면서 드롭아웃 없이도 mAP가 2% 이상 향상되었고, 추론 시에는 앞선 Conv 가중치에 합쳐(Fusion) 추가 속도 저하 없이 쓸 수 있습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#repvgg">#구조적 재매개변수화</a> <a class="rel-chip" href="#cnn">#합성곱 신경망</a></div>
+      </article>
+    
+      <article class="term-card" id="data-augmentation" data-cat="딥러닝 기초 · 학습" data-search="데이터 증강 (mosaic · mixup · cutmix) data augmentation 딥러닝 기초 · 학습 학습 이미지를 뒤집거나 자르고, 여러 장을 한 장에 이어 붙여서(mosaic) 데이터가 적은 상황에서도 모델이 다양한 장면에 강해지게 만드는 기법. 한 가지 자세로 찍은 사진만 외우지 않도록, 사진을 비틀고 4장을 콜라주로 합쳐서(mosaic) &#x27;어떤 배경·크기에서도 찾아내라&#x27;고 훈련시키는 문제집 변형입니다. yolov4에서 대중화한 &lt;strong&gt;mosaic&lt;/strong&gt;은 서로 다른 4장의 이미지를 한 장으로 합쳐 한 번에 작은 물체와 다양한 배경을 학습하게 합니다. 이 기법들을 논문에서는 &#x27;추론 속도는 안 느려지고 학습만 좋아지는 공짜 선물(bag of freebies)&#x27;이라 부릅니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>데이터 증강 (Mosaic · MixUp · CutMix)</h2>
+        <div class="en-sub">Data Augmentation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습 이미지를 뒤집거나 자르고, 여러 장을 한 장에 이어 붙여서(Mosaic) 데이터가 적은 상황에서도 모델이 다양한 장면에 강해지게 만드는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>한 가지 자세로 찍은 사진만 외우지 않도록, 사진을 비틀고 4장을 콜라주로 합쳐서(Mosaic) '어떤 배경·크기에서도 찾아내라'고 훈련시키는 문제집 변형입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv4에서 대중화한 <strong>Mosaic</strong>은 서로 다른 4장의 이미지를 한 장으로 합쳐 한 번에 작은 물체와 다양한 배경을 학습하게 합니다. 이 기법들을 논문에서는 '추론 속도는 안 느려지고 학습만 좋아지는 공짜 선물(Bag of Freebies)'이라 부릅니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cnn">#합성곱 신경망</a> <a class="rel-chip" href="#yolo-bof">#Bag of Freebies</a></div>
+      </article>
+    
+      <article class="term-card" id="loss-function" data-cat="딥러닝 기초 · 학습" data-search="손실 함수 (loss function) loss function 딥러닝 기초 · 학습 ai가 예측한 답과 실제 정답 사이의 &#x27;오답 정도(벌점)&#x27;를 숫자로 계산해, 모델이 어느 방향으로 고쳐야 할지 알려주는 나침반. 양궁에서 과녁 중심에서 얼마나 빗나갔는지 재는 &#x27;거리 측정기&#x27;입니다. 이 점수가 0에 가까워지도록 자세를 교정하는 것이 학습입니다. yolo의 손실 함수는 보통 3가지를 합칩니다: ① 박스 위치가 얼마나 정확한가(box/iou loss), ② 물체가 있는지 없는지(objectness), ③ 어떤 물체인지(classification loss).">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>손실 함수 (Loss Function)</h2>
+        <div class="en-sub">Loss Function</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> AI가 예측한 답과 실제 정답 사이의 &#x27;오답 정도(벌점)&#x27;를 숫자로 계산해, 모델이 어느 방향으로 고쳐야 할지 알려주는 나침반.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>양궁에서 과녁 중심에서 얼마나 빗나갔는지 재는 '거리 측정기'입니다. 이 점수가 0에 가까워지도록 자세를 교정하는 것이 학습입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO의 손실 함수는 보통 3가지를 합칩니다: ① 박스 위치가 얼마나 정확한가(Box/IoU Loss), ② 물체가 있는지 없는지(Objectness), ③ 어떤 물체인지(Classification Loss).</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#dfl">#DFL</a> <a class="rel-chip" href="#optimizer">#옵티마이저</a></div>
+      </article>
+    
+      <article class="term-card" id="optimizer" data-cat="딥러닝 기초 · 학습" data-search="옵티마이저 (sgd · adamw · muon · musgd) optimizer 딥러닝 기초 · 학습 손실 함수(오답 점수)를 줄이기 위해 신경망의 수백만 개 가중치를 실제로 조금씩 업데이트해 주는 최적화 알고리즘. 안개 낀 산에서 가장 낮은 골짜기(최소 오차)를 찾아 내려갈 때, 발밑 경사를 보고 어느 쪽으로 보폭을 얼마나 내디딜지 정하는 등산 전략입니다. 전통적으로 yolo는 sgd(확률적 경사하강법)를 많이 썼으나, &lt;strong&gt;yolo26&lt;/strong&gt;에서는 거대 언어 모델 학습에서 영감을 받은 &lt;strong&gt;musgd&lt;/strong&gt;(muon + sgd 하이브리드)를 도입해 더 빠르고 안정적인 수렴을 달성했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>옵티마이저 (SGD · AdamW · Muon · MuSGD)</h2>
+        <div class="en-sub">Optimizer</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 손실 함수(오답 점수)를 줄이기 위해 신경망의 수백만 개 가중치를 실제로 조금씩 업데이트해 주는 최적화 알고리즘.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>안개 낀 산에서 가장 낮은 골짜기(최소 오차)를 찾아 내려갈 때, 발밑 경사를 보고 어느 쪽으로 보폭을 얼마나 내디딜지 정하는 등산 전략입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>전통적으로 YOLO는 SGD(확률적 경사하강법)를 많이 썼으나, <strong>YOLO26</strong>에서는 거대 언어 모델 학습에서 영감을 받은 <strong>MuSGD</strong>(Muon + SGD 하이브리드)를 도입해 더 빠르고 안정적인 수렴을 달성했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#batch-norm">#배치 정규화</a></div>
+      </article>
+    
+      <article class="term-card" id="knowledge-distillation" data-cat="딥러닝 기초 · 학습" data-search="지식 증류 (knowledge distillation) knowledge distillation 딥러닝 기초 · 학습 크고 똑똑하지만 무거운 &#x27;교사 모델(teacher)&#x27;의 판단 요령을 작고 빠른 &#x27;학생 모델(student)&#x27;에게 전수해 소형 모델의 성능을 끌어올리는 기법. 일타 강사(거대 모델)가 핵심 노하우와 헷갈리는 보기 구분법까지 압축해 과외(증류)해 주면, 어린 학생(경량 모델)도 적은 암기량으로 높은 점수를 받는 원리입니다. yolov6 등 산업용 yolo 모델에서 nano/small 같은 초경량 모델의 정확도를 높이거나 양자화(quantization) 후 떨어지는 성능을 복구할 때 적극 활용됩니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>지식 증류 (Knowledge Distillation)</h2>
+        <div class="en-sub">Knowledge Distillation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 크고 똑똑하지만 무거운 &#x27;교사 모델(Teacher)&#x27;의 판단 요령을 작고 빠른 &#x27;학생 모델(Student)&#x27;에게 전수해 소형 모델의 성능을 끌어올리는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>일타 강사(거대 모델)가 핵심 노하우와 헷갈리는 보기 구분법까지 압축해 과외(증류)해 주면, 어린 학생(경량 모델)도 적은 암기량으로 높은 점수를 받는 원리입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv6 등 산업용 YOLO 모델에서 Nano/Small 같은 초경량 모델의 정확도를 높이거나 양자화(Quantization) 후 떨어지는 성능을 복구할 때 적극 활용됩니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#quantization">#양자화</a> <a class="rel-chip" href="#fine-tuning">#파인튜닝</a></div>
+      </article>
+    
+      <article class="term-card" id="quantization" data-cat="딥러닝 기초 · 학습" data-search="양자화 (quantization, fp32 → fp16 / int8) model quantization 딥러닝 기초 · 학습 모델 내부의 정밀한 소수점 숫자(32비트)를 더 가벼운 반정밀도(16비트)나 정수(8비트)로 줄여 메모리와 추론 속도를 몇 배 빠르게 만드는 경량화 기술. 원주율을 3.1415926535...로 매번 계산하는 대신 상황에 맞게 &#x27;3.14&#x27;로 반올림해 계산하면 암산 속도와 필기 공간이 확 줄어드는 것과 같습니다. 엣지 디바이스(드론, 스마트폰, cctv 칩)에 yolo를 올릴 때 필수입니다. yolov6는 repvgg 구조 때문에 양자화 시 정확도가 급락하는 문제를 repoptimizer와 qat(양자화 인식 학습)로 해결했고, yolo26 역시 int8 양자화 친화적 구조를 설계했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>양자화 (Quantization, FP32 → FP16 / INT8)</h2>
+        <div class="en-sub">Model Quantization</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 모델 내부의 정밀한 소수점 숫자(32비트)를 더 가벼운 반정밀도(16비트)나 정수(8비트)로 줄여 메모리와 추론 속도를 몇 배 빠르게 만드는 경량화 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>원주율을 3.1415926535...로 매번 계산하는 대신 상황에 맞게 '3.14'로 반올림해 계산하면 암산 속도와 필기 공간이 확 줄어드는 것과 같습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>엣지 디바이스(드론, 스마트폰, CCTV 칩)에 YOLO를 올릴 때 필수입니다. YOLOv6는 RepVGG 구조 때문에 양자화 시 정확도가 급락하는 문제를 RepOptimizer와 QAT(양자화 인식 학습)로 해결했고, YOLO26 역시 INT8 양자화 친화적 구조를 설계했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#knowledge-distillation">#지식 증류</a> <a class="rel-chip" href="#repvgg">#구조적 재매개변수화</a> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a></div>
+      </article>
+    
+      <article class="term-card" id="object-detection" data-cat="YOLO · 객체 탐지" data-search="객체 탐지 (object detection) vs 분류 vs 분할 object detection vs classification vs segmentation yolo · 객체 탐지 분류(classification)는 &#x27;사진에 무엇이 있나&#x27;, 객체 탐지(detection)는 &#x27;어디에 무엇이 있나(네모 박스)&#x27;, 분할(segmentation)은 &#x27;픽셀 단위로 정확한 윤곽이 어디인가&#x27;를 맞힙니다. 고양이 사진에서 분류는 &#x27;고양이!&#x27;, 객체 탐지는 &#x27;왼쪽 아래 네모 칸에 고양이, 오른쪽 위에 강아지!&#x27;, 분할은 &#x27;고양이 털 한 올 윤곽대로 색칠하기&#x27;입니다. yolo(you only look once)는 과거 r-cnn처럼 &#x27;물체가 있을 법한 후보 박스를 수천 개 뽑고(1단계) → 각각 분류하는(2단계)&#x27; 방식(2-stage)을 깨고, 이미지를 단 한 번만 보고 위치와 종류를 동시에 예측하는 1-stage 탐지기의 대명사입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>객체 탐지 (Object Detection) vs 분류 vs 분할</h2>
+        <div class="en-sub">Object Detection vs Classification vs Segmentation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 분류(Classification)는 &#x27;사진에 무엇이 있나&#x27;, 객체 탐지(Detection)는 &#x27;어디에 무엇이 있나(네모 박스)&#x27;, 분할(Segmentation)은 &#x27;픽셀 단위로 정확한 윤곽이 어디인가&#x27;를 맞힙니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>고양이 사진에서 분류는 '고양이!', 객체 탐지는 '왼쪽 아래 네모 칸에 고양이, 오른쪽 위에 강아지!', 분할은 '고양이 털 한 올 윤곽대로 색칠하기'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO(You Only Look Once)는 과거 R-CNN처럼 '물체가 있을 법한 후보 박스를 수천 개 뽑고(1단계) → 각각 분류하는(2단계)' 방식(2-Stage)을 깨고, 이미지를 단 한 번만 보고 위치와 종류를 동시에 예측하는 1-Stage 탐지기의 대명사입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#obb">#회전 바운딩 박스</a> <a class="rel-chip" href="#confidence-score">#신뢰도 점수</a></div>
+      </article>
+    
+      <article class="term-card" id="bounding-box" data-cat="YOLO · 객체 탐지" data-search="바운딩 박스 (bounding box, bbox) bounding box yolo · 객체 탐지 이미지 안에서 특정 물체를 꼭 맞게 둘러싸는 사각형 좌표 $(x, y, w, h)$. 단체 사진에서 내 얼굴 주위에 네모난 테두리를 그려 &#x27;여기 나!&#x27; 하고 표시하는 사각형 프레임입니다. 보통 중심 좌표 $(x, y)$와 너비·높이 $(w, h)$로 표현하거나 좌상단·우하단 좌표 $(x_1, y_1, x_2, y_2)$로 나타냅니다. 최근 모델(yolov8~yolo26)은 회전된 물체(항공사진 속 배·자동차)를 위한 회전 박스(obb)도 지원합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>바운딩 박스 (Bounding Box, BBox)</h2>
+        <div class="en-sub">Bounding Box</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 이미지 안에서 특정 물체를 꼭 맞게 둘러싸는 사각형 좌표 $(x, y, w, h)$.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>단체 사진에서 내 얼굴 주위에 네모난 테두리를 그려 '여기 나!' 하고 표시하는 사각형 프레임입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>보통 중심 좌표 $(x, y)$와 너비·높이 $(w, h)$로 표현하거나 좌상단·우하단 좌표 $(x_1, y_1, x_2, y_2)$로 나타냅니다. 최근 모델(YOLOv8~YOLO26)은 회전된 물체(항공사진 속 배·자동차)를 위한 회전 박스(OBB)도 지원합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#object-detection">#객체 탐지</a> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#anchor-box">#앵커 박스</a> <a class="rel-chip" href="#obb">#회전 바운딩 박스</a></div>
+      </article>
+    
+      <article class="term-card" id="obb" data-cat="YOLO · 객체 탐지" data-search="회전 바운딩 박스 (obb) oriented bounding box yolo · 객체 탐지 수평·수직 사각형이 아니라, 물체의 기울어진 각도 $\theta$까지 맞춰 회전된 사각형으로 탐지하는 기법. 대각선으로 주차된 자동차를 삐뚤어진 큰 수평 네모로 감싸는 대신, 자동차 방향에 맞춰 사각형을 45도 돌려 딱 맞게 감싸는 것입니다. 위성/항공 사진, 문서 스캔, 로봇 집게(grasping) 작업에 매우 중요합니다. yolo26은 정사각형에 가까운 물체에서 각도 모호성으로 생기는 문제를 개선한 특화 손실(angle loss)을 도입했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>회전 바운딩 박스 (OBB)</h2>
+        <div class="en-sub">Oriented Bounding Box</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 수평·수직 사각형이 아니라, 물체의 기울어진 각도 $\theta$까지 맞춰 회전된 사각형으로 탐지하는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>대각선으로 주차된 자동차를 삐뚤어진 큰 수평 네모로 감싸는 대신, 자동차 방향에 맞춰 사각형을 45도 돌려 딱 맞게 감싸는 것입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>위성/항공 사진, 문서 스캔, 로봇 집게(Grasping) 작업에 매우 중요합니다. YOLO26은 정사각형에 가까운 물체에서 각도 모호성으로 생기는 문제를 개선한 특화 손실(Angle Loss)을 도입했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#object-detection">#객체 탐지</a></div>
+      </article>
+    
+      <article class="term-card" id="confidence-score" data-cat="YOLO · 객체 탐지" data-search="신뢰도 점수 (confidence score) confidence score yolo · 객체 탐지 모델이 예측한 박스 안에 진짜 물체가 있을 확률과 그 박스가 얼마나 정확한지를 종합해 0~1 사이 숫자로 나타낸 확신도. 퀴즈 프로그램에서 답을 적으며 &#x27;이 답에 대한 내 확신은 92%!&#x27;라고 옆에 적는 자신감 점수입니다. 실전 추론에서는 보통 신뢰도 임계값(예: 0.25) 이하의 애매한 예측은 먼저 버린 뒤, 남은 박스들을 대상으로 중복 제거(nms)를 수행합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>신뢰도 점수 (Confidence Score)</h2>
+        <div class="en-sub">Confidence Score</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 모델이 예측한 박스 안에 진짜 물체가 있을 확률과 그 박스가 얼마나 정확한지를 종합해 0~1 사이 숫자로 나타낸 확신도.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>퀴즈 프로그램에서 답을 적으며 '이 답에 대한 내 확신은 92%!'라고 옆에 적는 자신감 점수입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>실전 추론에서는 보통 신뢰도 임계값(예: 0.25) 이하의 애매한 예측은 먼저 버린 뒤, 남은 박스들을 대상으로 중복 제거(NMS)를 수행합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#nms">#비최대 억제</a> <a class="rel-chip" href="#precision-recall">#정밀도</a></div>
+      </article>
+    
+      <article class="term-card" id="iou" data-cat="YOLO · 객체 탐지" data-search="iou (교집합 대 합집합 비율) &amp; giou / ciou intersection over union yolo · 객체 탐지 정답 박스와 모델이 예측한 박스가 얼마나 겹치는지를 나타내는 정확도 척도 (겹친 넓이 ÷ 전체 합친 넓이). 원래 도장 찍힌 자리 위에 내가 도장을 겹쳐 찍었을 때, 완벽히 일치하면 1.0(100%), 반만 겹치면 0.33, 아예 어긋나면 0.0인 점수입니다. 기존 iou는 두 박스가 아예 안 겹치면 무조건 0이라 학습 기울기가 사라지는 단점이 있었습니다. 이를 해결하기 위해 거리와 가로세로 비율(종횡비)까지 함께 고려하는 &lt;strong&gt;giou, diou, ciou&lt;/strong&gt; 손실이 yolo v4 이후 표준으로 쓰입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>IoU (교집합 대 합집합 비율) &amp; GIoU / CIoU</h2>
+        <div class="en-sub">Intersection over Union</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 정답 박스와 모델이 예측한 박스가 얼마나 겹치는지를 나타내는 정확도 척도 (겹친 넓이 ÷ 전체 합친 넓이).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>원래 도장 찍힌 자리 위에 내가 도장을 겹쳐 찍었을 때, 완벽히 일치하면 1.0(100%), 반만 겹치면 0.33, 아예 어긋나면 0.0인 점수입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>기존 IoU는 두 박스가 아예 안 겹치면 무조건 0이라 학습 기울기가 사라지는 단점이 있었습니다. 이를 해결하기 위해 거리와 가로세로 비율(종횡비)까지 함께 고려하는 <strong>GIoU, DIoU, CIoU</strong> 손실이 YOLO v4 이후 표준으로 쓰입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#map">#AP &amp; mAP</a> <a class="rel-chip" href="#nms">#비최대 억제</a></div>
+      </article>
+    
+      <article class="term-card" id="nms" data-cat="YOLO · 객체 탐지" data-search="비최대 억제 (nms) &amp; nms-free (end-to-end) non-maximum suppression &amp; nms-free yolo · 객체 탐지 nms는 한 물체 주위에 겹쳐 나온 여러 예측 박스 중 가장 점수 높은 1개만 남기고 나머지를 지우는 후처리 단계이며, nms-free는 이 후처리 없이 모델이 처음부터 딱 1개만 출력하는 방식입니다. 똑같은 사람 주위에 카메라가 &#x27;사람 0.95&#x27;, &#x27;사람 0.88&#x27;, &#x27;사람 0.72&#x27;라고 박스를 3개나 쳐놨을 때, 1등(0.95)만 남기고 겹치는 2, 3등은 지우개로 지우는 정리 작업입니다. yolov1~v9까지는 cpu에서 도는 nms 후처리가 추론 시간 병목과 하이퍼파라미터 튜닝 문제를 일으켰습니다. &lt;strong&gt;yolov10&lt;/strong&gt;과 &lt;strong&gt;yolo26&lt;/strong&gt;은 1:1(one-to-one) 매칭 학습을 통해 nms가 전혀 필요 없는 진정한 &lt;strong&gt;end-to-end(종단간) 실시간 탐지&lt;/strong&gt;를 구현했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>비최대 억제 (NMS) &amp; NMS-Free (End-to-End)</h2>
+        <div class="en-sub">Non-Maximum Suppression &amp; NMS-Free</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> NMS는 한 물체 주위에 겹쳐 나온 여러 예측 박스 중 가장 점수 높은 1개만 남기고 나머지를 지우는 후처리 단계이며, NMS-Free는 이 후처리 없이 모델이 처음부터 딱 1개만 출력하는 방식입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>똑같은 사람 주위에 카메라가 '사람 0.95', '사람 0.88', '사람 0.72'라고 박스를 3개나 쳐놨을 때, 1등(0.95)만 남기고 겹치는 2, 3등은 지우개로 지우는 정리 작업입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1~v9까지는 CPU에서 도는 NMS 후처리가 추론 시간 병목과 하이퍼파라미터 튜닝 문제를 일으켰습니다. <strong>YOLOv10</strong>과 <strong>YOLO26</strong>은 1:1(One-to-One) 매칭 학습을 통해 NMS가 전혀 필요 없는 진정한 <strong>End-to-End(종단간) 실시간 탐지</strong>를 구현했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#one-to-one">#일대다(One-to-Many) vs 일대일(One-to-One) 매칭</a> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#confidence-score">#신뢰도 점수</a> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a></div>
+      </article>
+    
+      <article class="term-card" id="one-to-one" data-cat="YOLO · 객체 탐지" data-search="일대다(one-to-many) vs 일대일(one-to-one) 매칭 one-to-many vs one-to-one label assignment yolo · 객체 탐지 학습 시 정답 물체 1개당 여러 예측 후보를 정답으로 가르치느냐(1:n, 학습 풍부·중복 발생), 오직 단 1개만 정답으로 가르치느냐(1:1, nms 불필요)의 차이입니다. 1:n은 &#x27;비슷한 답을 낸 학생 10명에게 다 칭찬해 학습 의욕을 높인 뒤 시험 때 1등만 뽑는 방식(nms 필요)&#x27;이고, 1:1은 &#x27;처음부터 반에서 딱 1명만 대표로 나서게 훈련하는 방식&#x27;입니다. 1:1만 쓰면 학습 신호가 부족해 정확도가 떨어지기 쉬운데, &lt;strong&gt;yolov10&lt;/strong&gt;은 &#x27;일관된 이중 할당(consistent dual assignments)&#x27;으로, &lt;strong&gt;yolo26&lt;/strong&gt;은 학습 초반엔 1:n 비중을 높였다가 점진적으로 1:1로 옮기는 &lt;strong&gt;progloss&lt;/strong&gt;로 두 마리 토끼를 다 잡았습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>일대다(One-to-Many) vs 일대일(One-to-One) 매칭</h2>
+        <div class="en-sub">One-to-Many vs One-to-One Label Assignment</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습 시 정답 물체 1개당 여러 예측 후보를 정답으로 가르치느냐(1:N, 학습 풍부·중복 발생), 오직 단 1개만 정답으로 가르치느냐(1:1, NMS 불필요)의 차이입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>1:N은 '비슷한 답을 낸 학생 10명에게 다 칭찬해 학습 의욕을 높인 뒤 시험 때 1등만 뽑는 방식(NMS 필요)'이고, 1:1은 '처음부터 반에서 딱 1명만 대표로 나서게 훈련하는 방식'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>1:1만 쓰면 학습 신호가 부족해 정확도가 떨어지기 쉬운데, <strong>YOLOv10</strong>은 '일관된 이중 할당(Consistent Dual Assignments)'으로, <strong>YOLO26</strong>은 학습 초반엔 1:N 비중을 높였다가 점진적으로 1:1로 옮기는 <strong>ProgLoss</strong>로 두 마리 토끼를 다 잡았습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#nms">#비최대 억제</a> <a class="rel-chip" href="#tal">#TAL &amp; STAL</a> <a class="rel-chip" href="#loss-function">#손실 함수</a></div>
+      </article>
+    
+      <article class="term-card" id="anchor-box" data-cat="YOLO · 객체 탐지" data-search="앵커 박스 (anchor box) &amp; 앵커 프리 (anchor-free) anchor box &amp; anchor-free yolo · 객체 탐지 앵커 박스는 &#x27;사람은 길쭉, 차는 넓적&#x27;처럼 미리 정해둔 기준 틀에서 크기를 살짝 보정해 예측하는 방식이고, 앵커 프리는 기준 틀 없이 중심점에서 바로 거리를 예측하는 방식입니다. 앵커 기반이 &#x27;s, m, l 기성복 사이즈 중 하나를 고른 뒤 수선하기&#x27;라면, 앵커 프리는 &#x27;처음부터 신체 치수를 재서 바로 맞춤 제작하기&#x27;입니다. yolov2~v7은 데이터셋별 k-means 클러스터링 등으로 앵커를 설계했으나 튜닝이 번거로웠습니다. yolov6(일부)·v8·v10·v12·v13·26 등 최신 모델은 대부분 더 단순하고 범용적인 &lt;strong&gt;anchor-free&lt;/strong&gt;를 채택합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>앵커 박스 (Anchor Box) &amp; 앵커 프리 (Anchor-Free)</h2>
+        <div class="en-sub">Anchor Box &amp; Anchor-Free</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 앵커 박스는 &#x27;사람은 길쭉, 차는 넓적&#x27;처럼 미리 정해둔 기준 틀에서 크기를 살짝 보정해 예측하는 방식이고, 앵커 프리는 기준 틀 없이 중심점에서 바로 거리를 예측하는 방식입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>앵커 기반이 'S, M, L 기성복 사이즈 중 하나를 고른 뒤 수선하기'라면, 앵커 프리는 '처음부터 신체 치수를 재서 바로 맞춤 제작하기'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv2~v7은 데이터셋별 k-means 클러스터링 등으로 앵커를 설계했으나 튜닝이 번거로웠습니다. YOLOv6(일부)·v8·v10·v12·v13·26 등 최신 모델은 대부분 더 단순하고 범용적인 <strong>Anchor-Free</strong>를 채택합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#grid-cell">#그리드 셀</a> <a class="rel-chip" href="#dfl">#DFL</a></div>
+      </article>
+    
+      <article class="term-card" id="grid-cell" data-cat="YOLO · 객체 탐지" data-search="그리드 셀 (grid cell) grid cell yolo · 객체 탐지 입력 이미지를 $s \times s$ 바둑판처럼 쪼갰을 때 각 칸을 말하며, 물체의 중심점이 떨어진 칸이 그 물체를 책임지고 예측합니다. 보물찾기 지도 위에 모눈종이를 대고 &#x27;강아지 코(중심점)가 3행 4열 칸에 들어갔으니 3행 4열 담당자가 강아지를 보고해!&#x27;라고 구역을 분담하는 방식입니다. yolov1은 7×7 단일 그리드만 써서 작은 물체가 뭉쳐 있으면 놓치기 쉬웠지만, yolov3 이후부터는 큰·중간·작은 3가지 해상도의 다중 스케일 그리드(예: 80×80, 40×40, 20×20)를 사용합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>그리드 셀 (Grid Cell)</h2>
+        <div class="en-sub">Grid Cell</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 입력 이미지를 $S \times S$ 바둑판처럼 쪼갰을 때 각 칸을 말하며, 물체의 중심점이 떨어진 칸이 그 물체를 책임지고 예측합니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>보물찾기 지도 위에 모눈종이를 대고 '강아지 코(중심점)가 3행 4열 칸에 들어갔으니 3행 4열 담당자가 강아지를 보고해!'라고 구역을 분담하는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1은 7×7 단일 그리드만 써서 작은 물체가 뭉쳐 있으면 놓치기 쉬웠지만, YOLOv3 이후부터는 큰·중간·작은 3가지 해상도의 다중 스케일 그리드(예: 80×80, 40×40, 20×20)를 사용합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#anchor-box">#앵커 박스</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a></div>
+      </article>
+    
+      <article class="term-card" id="backbone-neck-head" data-cat="YOLO · 객체 탐지" data-search="백본 (backbone) · 넥 (neck) · 헤드 (head) backbone, neck, and head yolo · 객체 탐지 현대 객체 탐지기의 3단 구조: 백본(특징 추출) → 넥(다양한 크기의 특징 융합) → 헤드(최종 위치·종류 예측). 회사에 비유하면, &lt;strong&gt;백본&lt;/strong&gt;은 현장에서 데이터를 수집해 요약하는 &#x27;실무팀&#x27;, &lt;strong&gt;넥&lt;/strong&gt;은 여러 부서 보고서를 종합·조율하는 &#x27;기획실&#x27;, &lt;strong&gt;헤드&lt;/strong&gt;는 최종 결정을 내리는 &#x27;임원진&#x27;입니다. yolov4 이후 모든 yolo 아키텍처는 이 3단 분업으로 설명됩니다. 예를 들어 백본에 cspdarknet·elan·ds-c3k2를 쓰고, 넥에 fpn/pan/hyperace를 쓰며, 헤드에 decoupled head나 1:1 head를 얹습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>백본 (Backbone) · 넥 (Neck) · 헤드 (Head)</h2>
+        <div class="en-sub">Backbone, Neck, and Head</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 현대 객체 탐지기의 3단 구조: 백본(특징 추출) → 넥(다양한 크기의 특징 융합) → 헤드(최종 위치·종류 예측).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>회사에 비유하면, <strong>백본</strong>은 현장에서 데이터를 수집해 요약하는 '실무팀', <strong>넥</strong>은 여러 부서 보고서를 종합·조율하는 '기획실', <strong>헤드</strong>는 최종 결정을 내리는 '임원진'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv4 이후 모든 YOLO 아키텍처는 이 3단 분업으로 설명됩니다. 예를 들어 백본에 CSPDarknet·ELAN·DS-C3k2를 쓰고, 넥에 FPN/PAN/HyperACE를 쓰며, 헤드에 Decoupled Head나 1:1 Head를 얹습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#cspnet">#CSPNet</a> <a class="rel-chip" href="#elan">#ELAN &amp; GELAN</a> <a class="rel-chip" href="#feature-map">#특징 맵</a></div>
+      </article>
+    
+      <article class="term-card" id="fpn-panet" data-cat="YOLO · 객체 탐지" data-search="fpn &amp; panet (특징 피라미드 융합) feature pyramid network &amp; path aggregation network yolo · 객체 탐지 고해상도(세밀함·작은 물체) 특징과 저해상도(문맥·큰 물체) 특징을 위아래로 섞어 모든 크기의 물체를 잘 찾게 만드는 &#x27;넥(neck)&#x27; 구조. 숲 전체를 보는 위성 지도(고수준 문맥)와 골목길까지 보이는 상세 지도(고해상도)를 서로 겹쳐 참고해 큰 빌딩도, 작은 자전거도 다 잘 찾게 만드는 것입니다. fpn이 위(추상적)에서 아래(세밀함)로만 정보를 내려보냈다면, panet(yolov4 이후 표준)은 다시 아래에서 위로 한 번 더 올려보내 위치 정확도와 의미 정보를 모두 강화합니다. yolov13은 여기에 &lt;strong&gt;fullpad&lt;/strong&gt; 하이퍼그래프 터널을 추가해 전 계층 정보를 더욱 촘촘히 연결합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>FPN &amp; PANet (특징 피라미드 융합)</h2>
+        <div class="en-sub">Feature Pyramid Network &amp; Path Aggregation Network</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 고해상도(세밀함·작은 물체) 특징과 저해상도(문맥·큰 물체) 특징을 위아래로 섞어 모든 크기의 물체를 잘 찾게 만드는 &#x27;넥(Neck)&#x27; 구조.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>숲 전체를 보는 위성 지도(고수준 문맥)와 골목길까지 보이는 상세 지도(고해상도)를 서로 겹쳐 참고해 큰 빌딩도, 작은 자전거도 다 잘 찾게 만드는 것입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>FPN이 위(추상적)에서 아래(세밀함)로만 정보를 내려보냈다면, PANet(YOLOv4 이후 표준)은 다시 아래에서 위로 한 번 더 올려보내 위치 정확도와 의미 정보를 모두 강화합니다. YOLOv13은 여기에 <strong>FullPAD</strong> 하이퍼그래프 터널을 추가해 전 계층 정보를 더욱 촘촘히 연결합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#backbone-neck-head">#백본</a> <a class="rel-chip" href="#feature-map">#특징 맵</a> <a class="rel-chip" href="#hypergraph">#하이퍼그래프</a></div>
+      </article>
+    
+      <article class="term-card" id="sppf" data-cat="YOLO · 객체 탐지" data-search="spp / sppf (공간 피라미드 풀링) spatial pyramid pooling (-fast) yolo · 객체 탐지 다양한 크기의 풀링(pooling) 창을 동시에 적용해, 추가 연산을 거의 늘리지 않고도 신경망의 시야(수용 영역)를 한 번에 넓혀주는 모듈. 같은 풍경을 5배, 9배, 13배 광각 렌즈로 동시에 찍어 합쳐둠으로써 큰 배경 맥락과 작은 물체를 한꺼번에 파악하는 장치입니다. yolov4에서 spp가 도입되었고, ultralytics(yolov5·v8·11·26)는 5×5 풀링을 직렬로 3번 연결해 결과는 똑같으면서 속도를 훨씬 빠르게 만든 &lt;strong&gt;sppf&lt;/strong&gt;를 사용합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>SPP / SPPF (공간 피라미드 풀링)</h2>
+        <div class="en-sub">Spatial Pyramid Pooling (-Fast)</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 다양한 크기의 풀링(Pooling) 창을 동시에 적용해, 추가 연산을 거의 늘리지 않고도 신경망의 시야(수용 영역)를 한 번에 넓혀주는 모듈.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>같은 풍경을 5배, 9배, 13배 광각 렌즈로 동시에 찍어 합쳐둠으로써 큰 배경 맥락과 작은 물체를 한꺼번에 파악하는 장치입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv4에서 SPP가 도입되었고, Ultralytics(YOLOv5·v8·11·26)는 5×5 풀링을 직렬로 3번 연결해 결과는 똑같으면서 속도를 훨씬 빠르게 만든 <strong>SPPF</strong>를 사용합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#receptive-field">#수용 영역</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="cspnet" data-cat="YOLO · 객체 탐지" data-search="cspnet (cross stage partial network) cross stage partial network yolo · 객체 탐지 특징 맵을 절반으로 나누어 한쪽만 깊은 연산을 거치고 나머지 절반은 곧장 합류시켜, 중복 연산을 없애고 기울기 흐름을 개선한 백본 구조. 서류 100장을 전부 다 두꺼운 결재 라인에 돌리지 않고, 50장만 상세 심사를 돌리고 50장은 요약본으로 바로 합쳐 속도와 정확도를 동시에 챙기는 효율화 방식입니다. yolov4(cspdarknet53)에서 처음 채택된 이후 yolov5, v7, v8(c2f), v11/13/26(c3k2)까지 이어지는 yolo 백본 설계의 핵심 dna입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>CSPNet (Cross Stage Partial Network)</h2>
+        <div class="en-sub">Cross Stage Partial Network</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 특징 맵을 절반으로 나누어 한쪽만 깊은 연산을 거치고 나머지 절반은 곧장 합류시켜, 중복 연산을 없애고 기울기 흐름을 개선한 백본 구조.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>서류 100장을 전부 다 두꺼운 결재 라인에 돌리지 않고, 50장만 상세 심사를 돌리고 50장은 요약본으로 바로 합쳐 속도와 정확도를 동시에 챙기는 효율화 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv4(CSPDarknet53)에서 처음 채택된 이후 YOLOv5, v7, v8(C2f), v11/13/26(C3k2)까지 이어지는 YOLO 백본 설계의 핵심 DNA입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#residual">#잔차 연결</a> <a class="rel-chip" href="#elan">#ELAN &amp; GELAN</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="elan" data-cat="YOLO · 객체 탐지" data-search="elan &amp; gelan efficient layer aggregation network &amp; generalized elan yolo · 객체 탐지 yolov7의 elan은 가장 짧은 경로와 긴 경로를 모두 제어해 깊은 망도 잘 학습되게 한 구조이고, yolov9의 gelan은 여기에 어떤 연산 블록이든 끼워 넣을 수 있도록 일반화한 구조입니다. 건물 여러 층을 엘리베이터(직통)와 계단(단계별)으로 촘촘히 연결해 층간 소통이 막히지 않게 설계한 고급 빌딩 동선입니다. yolov9의 gelan은 cspnet의 분할 아이디어와 elan의 다중 경로 집계 구조를 결합해, 더 적은 파라미터로도 높은 정확도와 추론 속도를 끌어냈습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>ELAN &amp; GELAN</h2>
+        <div class="en-sub">Efficient Layer Aggregation Network &amp; Generalized ELAN</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLOv7의 ELAN은 가장 짧은 경로와 긴 경로를 모두 제어해 깊은 망도 잘 학습되게 한 구조이고, YOLOv9의 GELAN은 여기에 어떤 연산 블록이든 끼워 넣을 수 있도록 일반화한 구조입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>건물 여러 층을 엘리베이터(직통)와 계단(단계별)으로 촘촘히 연결해 층간 소통이 막히지 않게 설계한 고급 빌딩 동선입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv9의 GELAN은 CSPNet의 분할 아이디어와 ELAN의 다중 경로 집계 구조를 결합해, 더 적은 파라미터로도 높은 정확도와 추론 속도를 끌어냈습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cspnet">#CSPNet</a> <a class="rel-chip" href="#pgi">#PGI</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="repvgg" data-cat="YOLO · 객체 탐지" data-search="구조적 재매개변수화 (repvgg / repconv) structural re-parameterization yolo · 객체 탐지 학습할 때는 성능이 좋은 여러 갈래(3×3 + 1×1 + 지름길) 구조로 훈련하고, 실제 배포(추론)할 때는 수학적으로 하나의 단순한 3×3 합성곱으로 합쳐서 속도를 극대화하는 마법 같은 기법. 공부할 때는 3권의 참고서를 펼쳐놓고 공부하지만(다중 분기), 시험장에 갈 때는 그 내용을 1장의 핵심 암기 카드로 완벽히 압축(단일 conv)해 가져가는 전략입니다. yolov6(meituan)와 yolov7(planned repconv)에서 gpu 추론 속도를 극한으로 끌어올리는 데 핵심 역할을 했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>구조적 재매개변수화 (RepVGG / RepConv)</h2>
+        <div class="en-sub">Structural Re-parameterization</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습할 때는 성능이 좋은 여러 갈래(3×3 + 1×1 + 지름길) 구조로 훈련하고, 실제 배포(추론)할 때는 수학적으로 하나의 단순한 3×3 합성곱으로 합쳐서 속도를 극대화하는 마법 같은 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>공부할 때는 3권의 참고서를 펼쳐놓고 공부하지만(다중 분기), 시험장에 갈 때는 그 내용을 1장의 핵심 암기 카드로 완벽히 압축(단일 Conv)해 가져가는 전략입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv6(Meituan)와 YOLOv7(Planned RepConv)에서 GPU 추론 속도를 극한으로 끌어올리는 데 핵심 역할을 했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#batch-norm">#배치 정규화</a> <a class="rel-chip" href="#quantization">#양자화</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="pgi" data-cat="YOLO · 객체 탐지" data-search="pgi (프로그래머블 그래디언트 정보) programmable gradient information yolo · 객체 탐지 딥러닝 망이 깊어지면서 입력 정보가 사라지는 &#x27;정보 병목&#x27;을 막기 위해, 학습 중에만 보조 가역 분기를 붙여 완벽한 오차 신호를 전달하고 추론 때는 떼어내는 yolov9의 핵심 기법. 자전거를 처음 배울 때만 뒤에서 잡아주는 &#x27;보조 바퀴(auxiliary reversible branch)&#x27;를 달아 올바른 균형 감각을 익히게 한 뒤, 실전 주행(추론) 때는 보조 바퀴를 완전히 떼어버리는 방식입니다. 경량 모델일수록 층을 거치며 정보가 많이 손실되는데, pgi는 추가 추론 비용 0으로 소형 모델의 정보 보존력을 극대화했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>PGI (프로그래머블 그래디언트 정보)</h2>
+        <div class="en-sub">Programmable Gradient Information</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 딥러닝 망이 깊어지면서 입력 정보가 사라지는 &#x27;정보 병목&#x27;을 막기 위해, 학습 중에만 보조 가역 분기를 붙여 완벽한 오차 신호를 전달하고 추론 때는 떼어내는 YOLOv9의 핵심 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>자전거를 처음 배울 때만 뒤에서 잡아주는 '보조 바퀴(Auxiliary Reversible Branch)'를 달아 올바른 균형 감각을 익히게 한 뒤, 실전 주행(추론) 때는 보조 바퀴를 완전히 떼어버리는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>경량 모델일수록 층을 거치며 정보가 많이 손실되는데, PGI는 추가 추론 비용 0으로 소형 모델의 정보 보존력을 극대화했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#elan">#ELAN &amp; GELAN</a> <a class="rel-chip" href="#residual">#잔차 연결</a> <a class="rel-chip" href="#loss-function">#손실 함수</a></div>
+      </article>
+    
+      <article class="term-card" id="tal" data-cat="YOLO · 객체 탐지" data-search="tal &amp; stal (작업 정렬 라벨 할당) task-aligned assigner &amp; small-object tal yolo · 객체 탐지 학습 중 정답 박스에 가장 잘 어울리는 예측 후보를 고를 때 &#x27;분류 확신도&#x27;와 &#x27;위치 iou&#x27;를 동시에 곱해 평가·매칭하는 똑똑한 정답 배정기. 축구 선수를 선발할 때 슈팅만 잘하거나 달리기만 빠른 선수 대신, &#x27;슈팅 × 스피드&#x27;가 모두 균형 있게 높은 선수를 주전으로 뽑는 기준입니다. yolo26에서는 기존 tal이 작은 물체(small object)에 대해 후보를 너무 적게 배정하는 문제를 개선한 &lt;strong&gt;stal(small-object tal)&lt;/strong&gt;을 도입해 작은 객체 탐지 성능을 끌어올렸습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>TAL &amp; STAL (작업 정렬 라벨 할당)</h2>
+        <div class="en-sub">Task-Aligned Assigner &amp; Small-Object TAL</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습 중 정답 박스에 가장 잘 어울리는 예측 후보를 고를 때 &#x27;분류 확신도&#x27;와 &#x27;위치 IoU&#x27;를 동시에 곱해 평가·매칭하는 똑똑한 정답 배정기.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>축구 선수를 선발할 때 슈팅만 잘하거나 달리기만 빠른 선수 대신, '슈팅 × 스피드'가 모두 균형 있게 높은 선수를 주전으로 뽑는 기준입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO26에서는 기존 TAL이 작은 물체(Small Object)에 대해 후보를 너무 적게 배정하는 문제를 개선한 <strong>STAL(Small-Object TAL)</strong>을 도입해 작은 객체 탐지 성능을 끌어올렸습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#one-to-one">#일대다(One-to-Many) vs 일대일(One-to-One) 매칭</a> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#loss-function">#손실 함수</a></div>
+      </article>
+    
+      <article class="term-card" id="dfl" data-cat="YOLO · 객체 탐지" data-search="dfl (distribution focal loss) distribution focal loss yolo · 객체 탐지 박스 테두리 위치를 &#x27;정확히 15.3픽셀&#x27;처럼 하나의 숫자로 찍는 대신, 확률 분포(14~17 사이에 있을 확률들)로 예측해 모호한 경계까지 정밀하게 잡는 손실 함수. 사물의 경계가 뿌옇게 흐릴 때 &#x27;딱 100cm&#x27;라고 우기는 대신 &#x27;99cm일 확률 30%, 100cm 50%, 101cm 20%&#x27;처럼 분포로 표현해 기대값을 구하는 방식입니다. yolov8~v13에서 정밀도를 높여주었지만, 추론 시 분포를 적분(softmax+합산)하는 연산이 엣지/npu 배포 시 부담이 되기도 했습니다. &lt;strong&gt;yolo26&lt;/strong&gt;은 배포 단순화와 속도 향상을 위해 dfl을 과감히 제거하면서도 progloss+stal로 정확도를 지켜냈습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>DFL (Distribution Focal Loss)</h2>
+        <div class="en-sub">Distribution Focal Loss</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 박스 테두리 위치를 &#x27;정확히 15.3픽셀&#x27;처럼 하나의 숫자로 찍는 대신, 확률 분포(14~17 사이에 있을 확률들)로 예측해 모호한 경계까지 정밀하게 잡는 손실 함수.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>사물의 경계가 뿌옇게 흐릴 때 '딱 100cm'라고 우기는 대신 '99cm일 확률 30%, 100cm 50%, 101cm 20%'처럼 분포로 표현해 기대값을 구하는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv8~v13에서 정밀도를 높여주었지만, 추론 시 분포를 적분(Softmax+합산)하는 연산이 엣지/NPU 배포 시 부담이 되기도 했습니다. <strong>YOLO26</strong>은 배포 단순화와 속도 향상을 위해 DFL을 과감히 제거하면서도 ProgLoss+STAL로 정확도를 지켜냈습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a> <a class="rel-chip" href="#quantization">#양자화</a></div>
+      </article>
+    
+      <article class="term-card" id="attention" data-cat="YOLO · 객체 탐지" data-search="어텐션 (attention) &amp; 영역 어텐션 (area attention) self-attention &amp; area attention (a2) yolo · 객체 탐지 이미지나 문장 속 먼 곳에 있는 요소들끼리도 서로 얼마나 관련이 있는지 가중치를 계산해 연결하는 메커니즘이며, area attention은 이를 구역별로 나눠 초고속으로 처리한 yolov12의 기법입니다. 수업 시간에 모든 학생이 서로 1:1로 대화하면 시끄럽고 시간이 오래 걸리지만($o(n^2)$), 4개 분단(area)으로 나눠 토론하면 핵심 맥락은 다 챙기면서도 훨씬 빨리 끝나는 원리입니다. transformer의 self-attention은 성능이 좋지만 너무 느려 실시간 yolo에 넣기 어려웠습니다. yolov12는 특징 맵을 가로/세로 4등분 등으로 단순 분할하는 &lt;strong&gt;area attention(a2)&lt;/strong&gt;과 &lt;strong&gt;flashattention&lt;/strong&gt;을 결합해 어텐션 중심(attention-centric) 실시간 yolo를 최초로 실현했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>어텐션 (Attention) &amp; 영역 어텐션 (Area Attention)</h2>
+        <div class="en-sub">Self-Attention &amp; Area Attention (A2)</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 이미지나 문장 속 먼 곳에 있는 요소들끼리도 서로 얼마나 관련이 있는지 가중치를 계산해 연결하는 메커니즘이며, Area Attention은 이를 구역별로 나눠 초고속으로 처리한 YOLOv12의 기법입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>수업 시간에 모든 학생이 서로 1:1로 대화하면 시끄럽고 시간이 오래 걸리지만($O(N^2)$), 4개 분단(Area)으로 나눠 토론하면 핵심 맥락은 다 챙기면서도 훨씬 빨리 끝나는 원리입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>Transformer의 Self-Attention은 성능이 좋지만 너무 느려 실시간 YOLO에 넣기 어려웠습니다. YOLOv12는 특징 맵을 가로/세로 4등분 등으로 단순 분할하는 <strong>Area Attention(A2)</strong>과 <strong>FlashAttention</strong>을 결합해 어텐션 중심(Attention-Centric) 실시간 YOLO를 최초로 실현했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#receptive-field">#수용 영역</a> <a class="rel-chip" href="#llm">#거대 언어 모델</a> <a class="rel-chip" href="#hypergraph">#하이퍼그래프</a></div>
+      </article>
+    
+      <article class="term-card" id="hypergraph" data-cat="YOLO · 객체 탐지" data-search="하이퍼그래프 (hypergraph) &amp; hyperace hypergraph &amp; hypergraph-based adaptive correlation enhancement yolo · 객체 탐지 일반 그래프가 두 점(1:1 쌍)만 선으로 잇는다면, 하이퍼그래프는 &#x27;여러 요소(다대다, high-order)&#x27;를 하나의 하이퍼엣지로 동시에 묶어 복잡한 고차 관계를 학습하는 yolov13의 핵심 기술입니다. 일반 그래프가 &#x27;1:1 전화 통화&#x27;라면, 하이퍼그래프는 &#x27;공통 관심사를 가진 여러 명이 동시에 참여하는 단체 채팅방(하이퍼엣지)&#x27;입니다. 장면 속에서 &#x27;책상·의자·모니터·키보드&#x27;처럼 여러 객체/특징이 동시에 얽힌 고차 상관관계를 &lt;strong&gt;hyperace&lt;/strong&gt;로 자동 포착하고 &lt;strong&gt;fullpad&lt;/strong&gt;로 전체 네트워크에 전달해 yolov13의 탐지력을 높였습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>하이퍼그래프 (Hypergraph) &amp; HyperACE</h2>
+        <div class="en-sub">Hypergraph &amp; Hypergraph-based Adaptive Correlation Enhancement</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 일반 그래프가 두 점(1:1 쌍)만 선으로 잇는다면, 하이퍼그래프는 &#x27;여러 요소(다대다, High-Order)&#x27;를 하나의 하이퍼엣지로 동시에 묶어 복잡한 고차 관계를 학습하는 YOLOv13의 핵심 기술입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>일반 그래프가 '1:1 전화 통화'라면, 하이퍼그래프는 '공통 관심사를 가진 여러 명이 동시에 참여하는 단체 채팅방(하이퍼엣지)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>장면 속에서 '책상·의자·모니터·키보드'처럼 여러 객체/특징이 동시에 얽힌 고차 상관관계를 <strong>HyperACE</strong>로 자동 포착하고 <strong>FullPAD</strong>로 전체 네트워크에 전달해 YOLOv13의 탐지력을 높였습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#attention">#어텐션</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="yolo-bof" data-cat="YOLO · 객체 탐지" data-search="bag of freebies (bof) vs bag of specials (bos) bag of freebies vs bag of specials yolo · 객체 탐지 bof는 학습 방법만 바꿔서 추론 속도는 그대로인데 정확도만 공짜로 올려주는 기술 모음이고, bos는 추론 비용을 아주 조금만 늘리고 정확도를 크게 올리는 모듈 모음입니다. bof가 &#x27;시험 전날 효율적인 암기법으로 공부해 시험 시간 손해 없이 점수를 올리는 것&#x27;이라면, bos는 &#x27;시험장에 허용된 고성능 공학용 계산기를 들고 가는 것(약간의 비용으로 큰 정확도 향상)&#x27;입니다. yolov4와 yolov7 논문에서 방대한 딥러닝 기법들을 체계적으로 분류할 때 사용한 유명한 개념입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>Bag of Freebies (BoF) vs Bag of Specials (BoS)</h2>
+        <div class="en-sub">Bag of Freebies vs Bag of Specials</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> BoF는 학습 방법만 바꿔서 추론 속도는 그대로인데 정확도만 공짜로 올려주는 기술 모음이고, BoS는 추론 비용을 아주 조금만 늘리고 정확도를 크게 올리는 모듈 모음입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>BoF가 '시험 전날 효율적인 암기법으로 공부해 시험 시간 손해 없이 점수를 올리는 것'이라면, BoS는 '시험장에 허용된 고성능 공학용 계산기를 들고 가는 것(약간의 비용으로 큰 정확도 향상)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv4와 YOLOv7 논문에서 방대한 딥러닝 기법들을 체계적으로 분류할 때 사용한 유명한 개념입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#data-augmentation">#데이터 증강</a> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#sppf">#SPP / SPPF</a></div>
+      </article>
+    
+      <article class="term-card" id="precision-recall" data-cat="성능 지표 · 데이터셋 · 배포" data-search="정밀도 (precision) &amp; 재현율 (recall) precision &amp; recall 성능 지표 · 데이터셋 · 배포 정밀도는 &#x27;ai가 맞다고 찾은 것 중 진짜 정답 비율(헛다리 안 짚기)&#x27;, 재현율은 &#x27;실제 존재하는 모든 정답 중 ai가 놓치지 않고 찾아낸 비율(빠뜨리지 않기)&#x27;입니다. 금 사냥꾼에 비유하면, 정밀도는 &#x27;캐온 돌 중에 진짜 금이 얼마나 많나&#x27;, 재현율은 &#x27;산에 묻힌 전체 금 중에 몇 %나 찾아냈나&#x27;입니다. 보통 신뢰도 기준을 높이면 정밀도는 올라가지만 재현율이 떨어지고, 기준을 낮추면 재현율은 올라가지만 오탐(false positive)이 늘어 정밀도가 떨어지는 트레이드오프 관계가 있습니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>정밀도 (Precision) &amp; 재현율 (Recall)</h2>
+        <div class="en-sub">Precision &amp; Recall</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 정밀도는 &#x27;AI가 맞다고 찾은 것 중 진짜 정답 비율(헛다리 안 짚기)&#x27;, 재현율은 &#x27;실제 존재하는 모든 정답 중 AI가 놓치지 않고 찾아낸 비율(빠뜨리지 않기)&#x27;입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>금 사냥꾼에 비유하면, 정밀도는 '캐온 돌 중에 진짜 금이 얼마나 많나', 재현율은 '산에 묻힌 전체 금 중에 몇 %나 찾아냈나'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>보통 신뢰도 기준을 높이면 정밀도는 올라가지만 재현율이 떨어지고, 기준을 낮추면 재현율은 올라가지만 오탐(False Positive)이 늘어 정밀도가 떨어지는 트레이드오프 관계가 있습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#map">#AP &amp; mAP</a> <a class="rel-chip" href="#confidence-score">#신뢰도 점수</a> <a class="rel-chip" href="#evals">#이밸스</a></div>
+      </article>
+    
+      <article class="term-card" id="map" data-cat="성능 지표 · 데이터셋 · 배포" data-search="ap &amp; map (평균 정밀도, map@0.5 / map@0.5:0.95) mean average precision 성능 지표 · 데이터셋 · 배포 객체 탐지 모델의 종합 성적표. 다양한 기준에서의 정밀도-재현율 곡선 아래 면적(ap)을 모든 물체 클래스에 대해 평균낸 대표 점수입니다. 국·영·수·과 모든 과목의 시험 성적과 난이도별 가산점까지 합산해 100점 만점으로 매긴 &#x27;종합 내신 등급 점수&#x27;입니다. &lt;strong&gt;map@0.5&lt;/strong&gt;(voc 기준)는 정답 박스와 50% 이상만 겹쳐도 정답으로 쳐주는 관대한 점수이고, &lt;strong&gt;map@0.5:0.95&lt;/strong&gt;(coco 표준 $\text{ap}_{50:95}$)는 iou 기준을 0.50부터 0.95까지 0.05 간격으로 10번 까다롭게 채점해 평균낸 점수라 위치 정확도까지 엄격히 평가합니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>AP &amp; mAP (평균 정밀도, mAP@0.5 / mAP@0.5:0.95)</h2>
+        <div class="en-sub">Mean Average Precision</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 객체 탐지 모델의 종합 성적표. 다양한 기준에서의 정밀도-재현율 곡선 아래 면적(AP)을 모든 물체 클래스에 대해 평균낸 대표 점수입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>국·영·수·과 모든 과목의 시험 성적과 난이도별 가산점까지 합산해 100점 만점으로 매긴 '종합 내신 등급 점수'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>mAP@0.5</strong>(VOC 기준)는 정답 박스와 50% 이상만 겹쳐도 정답으로 쳐주는 관대한 점수이고, <strong>mAP@0.5:0.95</strong>(COCO 표준 $\text{AP}_{50:95}$)는 IoU 기준을 0.50부터 0.95까지 0.05 간격으로 10번 까다롭게 채점해 평균낸 점수라 위치 정확도까지 엄격히 평가합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#precision-recall">#정밀도</a> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a></div>
+      </article>
+    
+      <article class="term-card" id="fps-latency" data-cat="성능 지표 · 데이터셋 · 배포" data-search="fps &amp; 지연 시간 (latency) frames per second &amp; inference latency 성능 지표 · 데이터셋 · 배포 fps는 1초에 몇 장의 이미지를 처리할 수 있는가(높을수록 빠름), latency는 이미지 1장을 처리하는 데 걸리는 시간(ms, 낮을수록 빠름)입니다. 자동차에 비유하면 fps는 &#x27;1시간에 몇 km 가는지(시속)&#x27;, latency는 &#x27;100m 달리는 데 몇 초 걸리는지(반응 속도)&#x27;입니다. 실시간 영상(보통 30 fps 이상, 즉 latency 33ms 이하)을 끊김 없이 처리하려면 정확도(map)와 속도(latency/fps) 사이의 균형(trade-off)을 잘 맞춰야 합니다. tensorrt fp16 gpu 기준이나 cpu 기준 등 측정 환경에 따라 숫자가 크게 달라집니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>FPS &amp; 지연 시간 (Latency)</h2>
+        <div class="en-sub">Frames Per Second &amp; Inference Latency</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> FPS는 1초에 몇 장의 이미지를 처리할 수 있는가(높을수록 빠름), Latency는 이미지 1장을 처리하는 데 걸리는 시간(ms, 낮을수록 빠름)입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>자동차에 비유하면 FPS는 '1시간에 몇 km 가는지(시속)', Latency는 '100m 달리는 데 몇 초 걸리는지(반응 속도)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>실시간 영상(보통 30 FPS 이상, 즉 Latency 33ms 이하)을 끊김 없이 처리하려면 정확도(mAP)와 속도(Latency/FPS) 사이의 균형(Trade-off)을 잘 맞춰야 합니다. TensorRT FP16 GPU 기준이나 CPU 기준 등 측정 환경에 따라 숫자가 크게 달라집니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#map">#AP &amp; mAP</a> <a class="rel-chip" href="#flops-params">#FLOPs</a> <a class="rel-chip" href="#nms">#비최대 억제</a></div>
+      </article>
+    
+      <article class="term-card" id="flops-params" data-cat="성능 지표 · 데이터셋 · 배포" data-search="flops (연산량) &amp; parameters (파라미터 수) floating point operations &amp; parameters 성능 지표 · 데이터셋 · 배포 파라미터 수는 모델이 외우고 있는 지식(뇌세포 연결) 크기이고, flops는 이미지 1장을 처리할 때 수행하는 더하기·곱하기 계산 횟수입니다. 파라미터가 &#x27;자동차 엔진 배기량/무게&#x27;라면, flops는 &#x27;100km 달릴 때 드는 기름 소모량(연비 역수)&#x27;에 해당합니다. 주의할 점: flops가 낮아도 메모리 접근 비용(mac)이나 병렬화 효율이 나쁘면 실제 latency(지연 시간)는 느릴 수 있습니다(yolov12·yolov6 논문에서 중요하게 다룸). 따라서 실제 gpu/cpu 지연시간을 함께 측정해야 합니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>FLOPs (연산량) &amp; Parameters (파라미터 수)</h2>
+        <div class="en-sub">Floating Point Operations &amp; Parameters</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 파라미터 수는 모델이 외우고 있는 지식(뇌세포 연결) 크기이고, FLOPs는 이미지 1장을 처리할 때 수행하는 더하기·곱하기 계산 횟수입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>파라미터가 '자동차 엔진 배기량/무게'라면, FLOPs는 '100km 달릴 때 드는 기름 소모량(연비 역수)'에 해당합니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>주의할 점: FLOPs가 낮아도 메모리 접근 비용(MAC)이나 병렬화 효율이 나쁘면 실제 Latency(지연 시간)는 느릴 수 있습니다(YOLOv12·YOLOv6 논문에서 중요하게 다룸). 따라서 실제 GPU/CPU 지연시간을 함께 측정해야 합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a> <a class="rel-chip" href="#depthwise-conv">#깊이별 분리 합성곱</a> <a class="rel-chip" href="#quantization">#양자화</a></div>
+      </article>
+    
+      <article class="term-card" id="ground-truth" data-cat="딥러닝 기초 · 학습" data-search="정답 데이터 / 그라운드 트루스 (ground truth) ground truth (gt) 딥러닝 기초 · 학습 모델이 맞춰야 하는 &#x27;진짜 정답&#x27;. 사람이 직접 이미지에 박스 치고 이름을 붙여 놓은 기준 정답지입니다. 모의고사를 채점할 때 쓰는 &#x27;공식 정답지&#x27;입니다. ai의 예측이 얼마나 맞았는지는 전부 이 정답지와 비교해 계산합니다. 객체 탐지 논문에서는 보통 정답 박스를 $b^{gt}$ 또는 gt라고 표기합니다. 정답지가 부정확하면 아무리 좋은 모델도 잘못된 패턴을 배우게 됩니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>정답 데이터 / 그라운드 트루스 (Ground Truth)</h2>
+        <div class="en-sub">Ground Truth (GT)</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 모델이 맞춰야 하는 &#x27;진짜 정답&#x27;. 사람이 직접 이미지에 박스 치고 이름을 붙여 놓은 기준 정답지입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>모의고사를 채점할 때 쓰는 '공식 정답지'입니다. AI의 예측이 얼마나 맞았는지는 전부 이 정답지와 비교해 계산합니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>객체 탐지 논문에서는 보통 정답 박스를 $B^{gt}$ 또는 GT라고 표기합니다. 정답지가 부정확하면 아무리 좋은 모델도 잘못된 패턴을 배우게 됩니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#map">#AP &amp; mAP</a></div>
+      </article>
+    
+      <article class="term-card" id="epoch-batch-warmup" data-cat="딥러닝 기초 · 학습" data-search="에포크 (epoch) · 배치 (batch) · 웜업 (warm-up) epoch, mini-batch &amp; learning rate warm-up 딥러닝 기초 · 학습 에포크는 전체 문제집을 1번 다 푸는 횟수, 배치는 한 번에 묶어 푸는 문제 수, 웜업은 학습 초반에 보폭(학습률)을 천천히 올리는 준비 운동입니다. 문제집 10만 문제를 한 번 다 풀면 1 epoch, 64문제씩 끊어 풀면 batch size 64, 처음부터 전력 질주하다 다치지 않게 가볍게 스트레칭하고 뛰는 것이 warm-up입니다. 대부분의 yolo 논문은 coco 데이터셋을 300~600 에포크 동안 학습하며, 초기 3~5 에포크 동안 학습률을 0에서 목표치까지 서서히 올리는 웜업을 거쳐 학습 초반 폭주를 막습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>에포크 (Epoch) · 배치 (Batch) · 웜업 (Warm-up)</h2>
+        <div class="en-sub">Epoch, Mini-Batch &amp; Learning Rate Warm-up</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 에포크는 전체 문제집을 1번 다 푸는 횟수, 배치는 한 번에 묶어 푸는 문제 수, 웜업은 학습 초반에 보폭(학습률)을 천천히 올리는 준비 운동입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>문제집 10만 문제를 한 번 다 풀면 1 Epoch, 64문제씩 끊어 풀면 Batch Size 64, 처음부터 전력 질주하다 다치지 않게 가볍게 스트레칭하고 뛰는 것이 Warm-up입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>대부분의 YOLO 논문은 COCO 데이터셋을 300~600 에포크 동안 학습하며, 초기 3~5 에포크 동안 학습률을 0에서 목표치까지 서서히 올리는 웜업을 거쳐 학습 초반 폭주를 막습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#optimizer">#옵티마이저</a> <a class="rel-chip" href="#batch-norm">#배치 정규화</a> <a class="rel-chip" href="#pretraining">#사전 학습</a></div>
+      </article>
+    
+      <article class="term-card" id="overfitting-weight-decay" data-cat="딥러닝 기초 · 학습" data-search="과적합 (overfitting) · 가중치 감쇠 (weight decay) · 모멘텀 overfitting, weight decay &amp; momentum 딥러닝 기초 · 학습 과적합은 기출문제만 통째로 외워 새 시험을 망치는 현상이고, 가중치 감쇠는 가중치가 너무 커지지 않게 눌러 과적합을 막는 규제 기법이며, 모멘텀은 이전 이동 방향의 관성을 살려 빠르게 수렴하게 합니다. 과적합이 &#x27;모의고사 답 번호만 외운 학생&#x27;이라면, 가중치 감쇠는 &#x27;극단적인 암기 대신 핵심 원리만 남기게 하는 다이어트&#x27;이고, 모멘텀은 &#x27;언덕을 굴러 내려가는 쇠구슬의 관성&#x27;입니다. yolo 학습 설정(implementation details)에는 거의 빠짐없이 &lt;code&gt;momentum=0.937&lt;/code&gt;, &lt;code&gt;weight decay=0.0005&lt;/code&gt; 같은 수치가 등장합니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>과적합 (Overfitting) · 가중치 감쇠 (Weight Decay) · 모멘텀</h2>
+        <div class="en-sub">Overfitting, Weight Decay &amp; Momentum</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 과적합은 기출문제만 통째로 외워 새 시험을 망치는 현상이고, 가중치 감쇠는 가중치가 너무 커지지 않게 눌러 과적합을 막는 규제 기법이며, 모멘텀은 이전 이동 방향의 관성을 살려 빠르게 수렴하게 합니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>과적합이 '모의고사 답 번호만 외운 학생'이라면, 가중치 감쇠는 '극단적인 암기 대신 핵심 원리만 남기게 하는 다이어트'이고, 모멘텀은 '언덕을 굴러 내려가는 쇠구슬의 관성'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO 학습 설정(Implementation Details)에는 거의 빠짐없이 <code>momentum=0.937</code>, <code>weight decay=0.0005</code> 같은 수치가 등장합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#optimizer">#옵티마이저</a> <a class="rel-chip" href="#data-augmentation">#데이터 증강</a> <a class="rel-chip" href="#epoch-batch-warmup">#에포크</a></div>
+      </article>
+    
+      <article class="term-card" id="gradient-backprop" data-cat="딥러닝 기초 · 학습" data-search="그래디언트 (gradient, 기울기) &amp; 역전파 gradient &amp; backpropagation 딥러닝 기초 · 학습 오답 점수(손실)를 줄이려면 각 가중치를 어느 방향으로 얼마나 고쳐야 하는지 알려주는 &#x27;수정 방향표(미분값)&#x27;가 그래디언트입니다. 요리가 짰을 때 &#x27;간장을 얼마나 줄여야 하는지&#x27; 거꾸로 원인을 추적해 레시피를 고치는 피드백 과정이 역전파이고, 각 재료별 수정량이 그래디언트입니다. 망이 깊어지면 역전파 도중 그래디언트가 0에 가까워져 사라지거나(기울기 소실), 정보 병목으로 핵심 단서가 소실될 수 있습니다. yolov9의 &lt;strong&gt;pgi&lt;/strong&gt;와 yolov7의 &lt;strong&gt;elan&lt;/strong&gt;이 바로 이 그래디언트 흐름을 건강하게 유지하기 위한 설계입니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>그래디언트 (Gradient, 기울기) &amp; 역전파</h2>
+        <div class="en-sub">Gradient &amp; Backpropagation</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 오답 점수(손실)를 줄이려면 각 가중치를 어느 방향으로 얼마나 고쳐야 하는지 알려주는 &#x27;수정 방향표(미분값)&#x27;가 그래디언트입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>요리가 짰을 때 '간장을 얼마나 줄여야 하는지' 거꾸로 원인을 추적해 레시피를 고치는 피드백 과정이 역전파이고, 각 재료별 수정량이 그래디언트입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>망이 깊어지면 역전파 도중 그래디언트가 0에 가까워져 사라지거나(기울기 소실), 정보 병목으로 핵심 단서가 소실될 수 있습니다. YOLOv9의 <strong>PGI</strong>와 YOLOv7의 <strong>ELAN</strong>이 바로 이 그래디언트 흐름을 건강하게 유지하기 위한 설계입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#pgi">#PGI</a> <a class="rel-chip" href="#residual">#잔차 연결</a></div>
+      </article>
+    
+      <article class="term-card" id="stride-downsample" data-cat="딥러닝 기초 · 학습" data-search="스트라이드 (stride) · 다운샘플링 · 업샘플링 stride, downsampling &amp; upsampling 딥러닝 기초 · 학습 스트라이드는 필터가 이미지를 몇 칸씩 건너뛰며 훑는지(보폭)를 뜻하며, 해상도를 줄이는 것이 다운샘플링, 반대로 다시 키우는 것이 업샘플링입니다. 책을 1줄씩 꼼꼼히 읽으면 stride=1, 2줄씩 건너뛰며 요약하면 stride=2(해상도 절반 다운샘플링)입니다. 640×640 이미지가 stride 8, 16, 32 계층을 지나면 각각 80×80(작은 물체용), 40×40(중간 물체용), 20×20(큰 물체용) 특징 맵이 됩니다. yolo26의 stal에서 언급하는 &#x27;스트라이드보다 작은 객체&#x27;란 8픽셀 미만으로 작아져 80×80 격자에서조차 놓치기 쉬운 극소형 물체를 말합니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>스트라이드 (Stride) · 다운샘플링 · 업샘플링</h2>
+        <div class="en-sub">Stride, Downsampling &amp; Upsampling</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 스트라이드는 필터가 이미지를 몇 칸씩 건너뛰며 훑는지(보폭)를 뜻하며, 해상도를 줄이는 것이 다운샘플링, 반대로 다시 키우는 것이 업샘플링입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>책을 1줄씩 꼼꼼히 읽으면 Stride=1, 2줄씩 건너뛰며 요약하면 Stride=2(해상도 절반 다운샘플링)입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>640×640 이미지가 stride 8, 16, 32 계층을 지나면 각각 80×80(작은 물체용), 40×40(중간 물체용), 20×20(큰 물체용) 특징 맵이 됩니다. YOLO26의 STAL에서 언급하는 '스트라이드보다 작은 객체'란 8픽셀 미만으로 작아져 80×80 격자에서조차 놓치기 쉬운 극소형 물체를 말합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#feature-map">#특징 맵</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#tal">#TAL &amp; STAL</a></div>
+      </article>
+    
+      <article class="term-card" id="activation-fn" data-cat="딥러닝 기초 · 학습" data-search="활성화 함수 (leaky relu · mish · silu/swish) activation function 딥러닝 기초 · 학습 신경망 계산 결과에 비선형성(구부러짐)을 더해 단순 직선 계산만으로는 풀 수 없는 복잡한 패턴을 학습하게 만드는 스위치 함수. 전기 신호가 일정 기준을 넘으면 통과시키고 약하면 줄여주는 신경세포의 &#x27;반응 곡선&#x27;입니다. yolov1~v3는 음수를 살짝 살려주는 &lt;strong&gt;leaky relu&lt;/strong&gt;를 썼고, yolov4는 부드러운 곡선형 &lt;strong&gt;mish&lt;/strong&gt;를 도입했으며, yolov5·v8·10·26 등 최신 모델은 부드럽고 미분이 잘 되는 &lt;strong&gt;silu(swish)&lt;/strong&gt;를 표준으로 사용합니다(일부 고속 배포용 모델은 하드웨어 최적화가 쉬운 relu를 쓰기도 합니다).">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>활성화 함수 (Leaky ReLU · Mish · SiLU/Swish)</h2>
+        <div class="en-sub">Activation Function</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 신경망 계산 결과에 비선형성(구부러짐)을 더해 단순 직선 계산만으로는 풀 수 없는 복잡한 패턴을 학습하게 만드는 스위치 함수.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>전기 신호가 일정 기준을 넘으면 통과시키고 약하면 줄여주는 신경세포의 '반응 곡선'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1~v3는 음수를 살짝 살려주는 <strong>Leaky ReLU</strong>를 썼고, YOLOv4는 부드러운 곡선형 <strong>Mish</strong>를 도입했으며, YOLOv5·v8·10·26 등 최신 모델은 부드럽고 미분이 잘 되는 <strong>SiLU(Swish)</strong>를 표준으로 사용합니다(일부 고속 배포용 모델은 하드웨어 최적화가 쉬운 ReLU를 쓰기도 합니다).</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cnn">#합성곱 신경망</a> <a class="rel-chip" href="#batch-norm">#배치 정규화</a></div>
+      </article>
+    
+      <article class="term-card" id="pretraining" data-cat="딥러닝 기초 · 학습" data-search="사전 학습 (pre-training) vs 처음부터 학습 (train-from-scratch) pre-training vs train-from-scratch 딥러닝 기초 · 학습 사전 학습은 imagenet 같은 거대 분류 데이터로 눈을 미리 길러둔 뒤 탐지를 배우는 방식이고, 처음부터 학습은 사전 지식 없이 백지상태(무작위 가중치)에서 곧바로 탐지를 훈련하는 방식입니다. 사전 학습이 &#x27;미술 기초 소묘를 배우고 인물화를 시작하는 것&#x27;이라면, train-from-scratch는 &#x27;기초 없이 곧바로 실전 인물화만 수만 장 그리며 독학하는 것&#x27;입니다. yolov1~v4는 imagenet 사전 학습 백본이 필수였으나, yolov6·v7·v9 등은 데이터가 충분하고 학습 기법(mosaic, 깊은 지도 등)이 좋아져 &lt;strong&gt;train-from-scratch&lt;/strong&gt;만으로도 최고 성능을 달성함을 입증했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>사전 학습 (Pre-training) vs 처음부터 학습 (Train-from-Scratch)</h2>
+        <div class="en-sub">Pre-training vs Train-from-Scratch</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 사전 학습은 ImageNet 같은 거대 분류 데이터로 눈을 미리 길러둔 뒤 탐지를 배우는 방식이고, 처음부터 학습은 사전 지식 없이 백지상태(무작위 가중치)에서 곧바로 탐지를 훈련하는 방식입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>사전 학습이 '미술 기초 소묘를 배우고 인물화를 시작하는 것'이라면, Train-from-Scratch는 '기초 없이 곧바로 실전 인물화만 수만 장 그리며 독학하는 것'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1~v4는 ImageNet 사전 학습 백본이 필수였으나, YOLOv6·v7·v9 등은 데이터가 충분하고 학습 기법(Mosaic, 깊은 지도 등)이 좋아져 <strong>Train-from-Scratch</strong>만으로도 최고 성능을 달성함을 입증했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#fine-tuning">#파인튜닝</a> <a class="rel-chip" href="#data-augmentation">#데이터 증강</a></div>
+      </article>
+    
+      <article class="term-card" id="ablation-sota" data-cat="딥러닝 기초 · 학습" data-search="어블레이션 연구 (ablation study) · 베이스라인 · sota ablation study, baseline &amp; state-of-the-art (sota) 딥러닝 기초 · 학습 베이스라인은 비교 기준 모델, sota는 현재 최고 성능 기록, 어블레이션 연구는 내가 넣은 기술들을 하나씩 뺐다 넣었다 하며 &#x27;진짜 효과가 있는지&#x27; 검증하는 제거 실험입니다. 비법 라면을 끓인 뒤 &#x27;이번엔 대파만 빼고, 다음엔 마늘만 빼고&#x27; 먹어보며 어떤 재료가 진짜 맛을 냈는지 과학적으로 확인하는 실험이 어블레이션 연구입니다. 논문의 실험 섹션에서 &#x27;w/o pgi&#x27;(pgi 없이), &#x27;w/o stal&#x27;처럼 표기된 표들이 모두 어블레이션 연구 결과입니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>어블레이션 연구 (Ablation Study) · 베이스라인 · SOTA</h2>
+        <div class="en-sub">Ablation Study, Baseline &amp; State-of-the-Art (SOTA)</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 베이스라인은 비교 기준 모델, SOTA는 현재 최고 성능 기록, 어블레이션 연구는 내가 넣은 기술들을 하나씩 뺐다 넣었다 하며 &#x27;진짜 효과가 있는지&#x27; 검증하는 제거 실험입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>비법 라면을 끓인 뒤 '이번엔 대파만 빼고, 다음엔 마늘만 빼고' 먹어보며 어떤 재료가 진짜 맛을 냈는지 과학적으로 확인하는 실험이 어블레이션 연구입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>논문의 실험 섹션에서 'w/o PGI'(PGI 없이), 'w/o STAL'처럼 표기된 표들이 모두 어블레이션 연구 결과입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#evals">#이밸스</a> <a class="rel-chip" href="#map">#AP &amp; mAP</a></div>
+      </article>
+    
+      <article class="term-card" id="info-bottleneck" data-cat="딥러닝 기초 · 학습" data-search="정보 병목 (information bottleneck) &amp; 가역 함수 (reversible) information bottleneck &amp; reversible function 딥러닝 기초 · 학습 데이터가 깊은 신경망 층을 거치며 원래 입력의 핵심 정보가 깎여나가는 현상이 &#x27;정보 병목&#x27;이고, 입력을 손실 없이 다시 복원할 수 있는 변환이 &#x27;가역 함수&#x27;입니다. 고화질 사진을 계속 저화질로 재저장하면 디테일이 뭉개지는 게 &#x27;정보 병목&#x27;이고, 원본 raw 파일처럼 언제든 100% 되돌릴 수 있는 변환이 &#x27;가역 함수&#x27;입니다. &lt;strong&gt;yolov9&lt;/strong&gt;은 기존 딥러닝에서 층이 깊어질수록 정보 병목 때문에 중요 특징이 유실된다는 점을 수학적으로 지적하고, 학습 시 &lt;strong&gt;보조 가역 분기(auxiliary reversible branch)&lt;/strong&gt;를 두어 완전한 정보로 그래디언트를 계산하는 pgi를 제안했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>정보 병목 (Information Bottleneck) &amp; 가역 함수 (Reversible)</h2>
+        <div class="en-sub">Information Bottleneck &amp; Reversible Function</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 데이터가 깊은 신경망 층을 거치며 원래 입력의 핵심 정보가 깎여나가는 현상이 &#x27;정보 병목&#x27;이고, 입력을 손실 없이 다시 복원할 수 있는 변환이 &#x27;가역 함수&#x27;입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>고화질 사진을 계속 저화질로 재저장하면 디테일이 뭉개지는 게 '정보 병목'이고, 원본 RAW 파일처럼 언제든 100% 되돌릴 수 있는 변환이 '가역 함수'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>YOLOv9</strong>은 기존 딥러닝에서 층이 깊어질수록 정보 병목 때문에 중요 특징이 유실된다는 점을 수학적으로 지적하고, 학습 시 <strong>보조 가역 분기(Auxiliary Reversible Branch)</strong>를 두어 완전한 정보로 그래디언트를 계산하는 PGI를 제안했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#pgi">#PGI</a> <a class="rel-chip" href="#gradient-backprop">#그래디언트</a> <a class="rel-chip" href="#deep-supervision">#심층 지도</a></div>
+      </article>
+    
+      <article class="term-card" id="intrinsic-rank" data-cat="딥러닝 기초 · 학습" data-search="내재적 랭크 (intrinsic rank) &amp; 순위 기반 블록 설계 intrinsic rank &amp; rank-guided block design 딥러닝 기초 · 학습 신경망의 각 층이 실제로 얼마나 다양하고 중복 없는 특징을 담고 있는지(정보 밀도)를 측정한 값이 내재적 랭크입니다. 책 300페이지 중 실제로 새로운 내용이 50페이지뿐이고 나머지는 중복 설명이라면 &#x27;내재적 랭크&#x27;가 낮다고 볼 수 있습니다. &lt;strong&gt;yolov10&lt;/strong&gt;은 깊은 스테이지일수록 내재적 랭크가 낮아 중복 연산이 많다는 점을 발견하고, 중복이 큰 깊은 층에는 연산을 압축한 &lt;strong&gt;cib(compact inverted block)&lt;/strong&gt;를 배치하는 순위 기반 블록 설계를 적용했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>내재적 랭크 (Intrinsic Rank) &amp; 순위 기반 블록 설계</h2>
+        <div class="en-sub">Intrinsic Rank &amp; Rank-Guided Block Design</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 신경망의 각 층이 실제로 얼마나 다양하고 중복 없는 특징을 담고 있는지(정보 밀도)를 측정한 값이 내재적 랭크입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>책 300페이지 중 실제로 새로운 내용이 50페이지뿐이고 나머지는 중복 설명이라면 '내재적 랭크'가 낮다고 볼 수 있습니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>YOLOv10</strong>은 깊은 스테이지일수록 내재적 랭크가 낮아 중복 연산이 많다는 점을 발견하고, 중복이 큰 깊은 층에는 연산을 압축한 <strong>CIB(Compact Inverted Block)</strong>를 배치하는 순위 기반 블록 설계를 적용했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#cib-psa">#CIB &amp; PSA</a> <a class="rel-chip" href="#flops-params">#FLOPs</a></div>
+      </article>
+    
+      <article class="term-card" id="deep-supervision" data-cat="딥러닝 기초 · 학습" data-search="심층 지도 (deep supervision) &amp; 보조 헤드 (auxiliary head) deep supervision &amp; auxiliary head 딥러닝 기초 · 학습 최종 출력 끝단에서만 채점하지 않고, 신경망 중간 지점에도 임시 채점관(보조 헤드)을 붙여 중간층까지 직접 잘 학습되게 돕는 기법. 기말고사(최종 헤드)만 한 번 보는 대신 중간고사·쪽지시험(보조 헤드)을 중간중간 쳐서 기초 단계부터 탄탄하게 학습시키는 교육 방식입니다. yolov7(lead head vs auxiliary head)과 yolov9(pgi 보조 분기)은 학습할 때만 보조 헤드를 달아 정확도를 높이고, 실제 추론 시에는 보조 헤드를 떼어내 추가 속도 저하가 전혀 없습니다.">
+        <div class="card-top">
+          <span class="cat-badge">딥러닝 기초 · 학습</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>심층 지도 (Deep Supervision) &amp; 보조 헤드 (Auxiliary Head)</h2>
+        <div class="en-sub">Deep Supervision &amp; Auxiliary Head</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 최종 출력 끝단에서만 채점하지 않고, 신경망 중간 지점에도 임시 채점관(보조 헤드)을 붙여 중간층까지 직접 잘 학습되게 돕는 기법.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>기말고사(최종 헤드)만 한 번 보는 대신 중간고사·쪽지시험(보조 헤드)을 중간중간 쳐서 기초 단계부터 탄탄하게 학습시키는 교육 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv7(Lead Head vs Auxiliary Head)과 YOLOv9(PGI 보조 분기)은 학습할 때만 보조 헤드를 달아 정확도를 높이고, 실제 추론 시에는 보조 헤드를 떼어내 추가 속도 저하가 전혀 없습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#coarse-to-fine">#Coarse-to-Fine 라벨 할당 &amp; E-ELAN / R-ELAN</a> <a class="rel-chip" href="#pgi">#PGI</a> <a class="rel-chip" href="#backbone-neck-head">#백본</a></div>
+      </article>
+    
+      <article class="term-card" id="two-stage-detectors" data-cat="YOLO · 객체 탐지" data-search="r-cnn · fast r-cnn · faster r-cnn · rpn · dpm two-stage detectors (r-cnn family) &amp; dpm yolo · 객체 탐지 yolo가 등장하기 전 시대를 주름잡았던 대표 객체 탐지기들. 물체 후보 영역(region proposal)을 먼저 찾고, 그다음에 무엇인지 분류하는 2단계 방식을 주로 썼습니다. 사진에서 &#x27;물건이 있을 법한 네모 2,000개&#x27;를 먼저 가위로 다 오려낸 뒤(1단계), 각 조각을 하나씩 보고 &#x27;이건 개, 이건 배경&#x27; 하고 판별(2단계)하는 꼼꼼하지만 느린 방식입니다. yolov1~v4 논문에서 속도·정확도 비교 기준으로 계속 등장합니다. faster r-cnn은 후보 영역 추출도 신경망(&lt;strong&gt;rpn&lt;/strong&gt;)으로 통합해 빨라졌지만, 여전히 1단계 탐지기(yolo, ssd, fcos)보다는 느렸습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>R-CNN · Fast R-CNN · Faster R-CNN · RPN · DPM</h2>
+        <div class="en-sub">Two-Stage Detectors (R-CNN family) &amp; DPM</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLO가 등장하기 전 시대를 주름잡았던 대표 객체 탐지기들. 물체 후보 영역(Region Proposal)을 먼저 찾고, 그다음에 무엇인지 분류하는 2단계 방식을 주로 썼습니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>사진에서 '물건이 있을 법한 네모 2,000개'를 먼저 가위로 다 오려낸 뒤(1단계), 각 조각을 하나씩 보고 '이건 개, 이건 배경' 하고 판별(2단계)하는 꼼꼼하지만 느린 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1~v4 논문에서 속도·정확도 비교 기준으로 계속 등장합니다. Faster R-CNN은 후보 영역 추출도 신경망(<strong>RPN</strong>)으로 통합해 빨라졌지만, 여전히 1단계 탐지기(YOLO, SSD, FCOS)보다는 느렸습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#object-detection">#객체 탐지</a> <a class="rel-chip" href="#detr">#DETR · RT-DETR</a> <a class="rel-chip" href="#nms">#비최대 억제</a></div>
+      </article>
+    
+      <article class="term-card" id="detr" data-cat="YOLO · 객체 탐지" data-search="detr · rt-detr (트랜스포머 탐지기 &amp; 헝가리안 매칭) detection transformer &amp; real-time detr yolo · 객체 탐지 cnn 대신 트랜스포머와 일대일 헝가리안 매칭을 사용해, 앵커와 nms 없이 이미지 속 물체 집합을 한 번에 예측하는 객체 탐지 패러다임. 100명의 탐정(object query)이 이미지를 같이 보고 1:1 짝짓기(헝가리안 매칭)로 각자 서로 겹치지 않게 물체 1개씩만 맡아 보고하는 방식입니다. 초기 detr은 너무 느렸지만 rt-detr, d-fine 등이 실시간 영역에 진입하며 yolov10·v12·v13·yolo26과 치열하게 파레토 프론티어 경쟁을 벌이는 주요 비교 대상입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>DETR · RT-DETR (트랜스포머 탐지기 &amp; 헝가리안 매칭)</h2>
+        <div class="en-sub">DEtection TRansformer &amp; Real-Time DETR</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> CNN 대신 트랜스포머와 일대일 헝가리안 매칭을 사용해, 앵커와 NMS 없이 이미지 속 물체 집합을 한 번에 예측하는 객체 탐지 패러다임.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>100명의 탐정(Object Query)이 이미지를 같이 보고 1:1 짝짓기(헝가리안 매칭)로 각자 서로 겹치지 않게 물체 1개씩만 맡아 보고하는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>초기 DETR은 너무 느렸지만 RT-DETR, D-FINE 등이 실시간 영역에 진입하며 YOLOv10·v12·v13·YOLO26과 치열하게 파레토 프론티어 경쟁을 벌이는 주요 비교 대상입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#nms">#비최대 억제</a> <a class="rel-chip" href="#one-to-one">#일대다(One-to-Many) vs 일대일(One-to-One) 매칭</a> <a class="rel-chip" href="#attention">#어텐션</a></div>
+      </article>
+    
+      <article class="term-card" id="wordtree" data-cat="YOLO · 객체 탐지" data-search="wordtree &amp; 계층적 분류 (yolov2 / yolo9000) wordtree hierarchical classification yolo · 객체 탐지 단어들의 상위·하위 개념 관계(wordnet)를 나무(tree) 구조로 묶어, &#x27;개&#x27; 데이터와 &#x27;골든 리트리버&#x27; 데이터를 함께 학습하고 9,000종 이상을 탐지하게 한 yolov2의 핵심 아이디어. 생물 도감처럼 &#x27;동물 → 개 → 테리어 → 요크셔테리어&#x27; 계층으로 확률을 쪼개어, 구체적 품종을 몰라도 최소한 &#x27;개&#x27;라고는 정확히 맞힐 수 있게 한 구조입니다. imagenet(분류 데이터, 클래스 수천 개)과 coco(탐지 데이터, 클래스 80개)를 한 모델에서 동시에 학습시켜 &lt;strong&gt;yolo9000&lt;/strong&gt;을 구현했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>WordTree &amp; 계층적 분류 (YOLOv2 / YOLO9000)</h2>
+        <div class="en-sub">WordTree Hierarchical Classification</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 단어들의 상위·하위 개념 관계(WordNet)를 나무(Tree) 구조로 묶어, &#x27;개&#x27; 데이터와 &#x27;골든 리트리버&#x27; 데이터를 함께 학습하고 9,000종 이상을 탐지하게 한 YOLOv2의 핵심 아이디어.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>생물 도감처럼 '동물 → 개 → 테리어 → 요크셔테리어' 계층으로 확률을 쪼개어, 구체적 품종을 몰라도 최소한 '개'라고는 정확히 맞힐 수 있게 한 구조입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>ImageNet(분류 데이터, 클래스 수천 개)과 COCO(탐지 데이터, 클래스 80개)를 한 모델에서 동시에 학습시켜 <strong>YOLO9000</strong>을 구현했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#object-detection">#객체 탐지</a> <a class="rel-chip" href="#coco-voc">#PASCAL VOC · MS COCO · ImageNet</a></div>
+      </article>
+    
+      <article class="term-card" id="focal-vfl" data-cat="YOLO · 객체 탐지" data-search="focal loss &amp; vfl (varifocal loss) focal loss &amp; varifocal loss yolo · 객체 탐지 대부분을 차지하는 &#x27;쉬운 배경&#x27; 오답에 신경 쓰느라 &#x27;어렵고 희귀한 물체&#x27;를 놓치는 불균형 문제를 해결하기 위해, 어려운 샘플의 벌점을 크게 키운 손실 함수. 이미 다 아는 쉬운 영단어 복습은 줄이고, 자꾸 틀리는 어려운 단어에만 가중치를 둬 집중 복습하는 학습법입니다. yolov3에서 retinanet의 focal loss와 비교 논의되었으며, yolov6에서는 분류 신뢰도와 박스 위치 정확도(iou)를 함께 반영해 학습하는 &lt;strong&gt;vfl(varifocal loss)&lt;/strong&gt;이 채택되었습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>Focal Loss &amp; VFL (Varifocal Loss)</h2>
+        <div class="en-sub">Focal Loss &amp; Varifocal Loss</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 대부분을 차지하는 &#x27;쉬운 배경&#x27; 오답에 신경 쓰느라 &#x27;어렵고 희귀한 물체&#x27;를 놓치는 불균형 문제를 해결하기 위해, 어려운 샘플의 벌점을 크게 키운 손실 함수.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>이미 다 아는 쉬운 영단어 복습은 줄이고, 자꾸 틀리는 어려운 단어에만 가중치를 둬 집중 복습하는 학습법입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv3에서 RetinaNet의 Focal Loss와 비교 논의되었으며, YOLOv6에서는 분류 신뢰도와 박스 위치 정확도(IoU)를 함께 반영해 학습하는 <strong>VFL(Varifocal Loss)</strong>이 채택되었습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#tal">#TAL &amp; STAL</a> <a class="rel-chip" href="#dfl">#DFL</a></div>
+      </article>
+    
+      <article class="term-card" id="siou" data-cat="YOLO · 객체 탐지" data-search="siou (scylla-iou) scylla-iou loss yolo · 객체 탐지 두 박스 사이의 겹침·거리·크기뿐 아니라 중심점들이 이루는 &#x27;방향 각도(angle)&#x27;까지 고려해 예측 박스를 정답 쪽으로 훨씬 빠르게 정렬시키는 박스 회귀 손실. 주차할 때 차와 주차선 사이의 직선거리만 보지 않고 &#x27;차가 삐뚤어진 각도&#x27;까지 함께 보고 핸들을 꺾어 한 번에 정렬하는 원리입니다. yolov6(v1/v2)에서 소형 모델의 수렴 속도와 위치 정밀도를 높이기 위해 도입되었습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>SIoU (SCYLLA-IoU)</h2>
+        <div class="en-sub">SCYLLA-IoU Loss</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 두 박스 사이의 겹침·거리·크기뿐 아니라 중심점들이 이루는 &#x27;방향 각도(Angle)&#x27;까지 고려해 예측 박스를 정답 쪽으로 훨씬 빠르게 정렬시키는 박스 회귀 손실.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>주차할 때 차와 주차선 사이의 직선거리만 보지 않고 '차가 삐뚤어진 각도'까지 함께 보고 핸들을 꺾어 한 번에 정렬하는 원리입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv6(v1/v2)에서 소형 모델의 수렴 속도와 위치 정밀도를 높이기 위해 도입되었습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#iou">#IoU</a> <a class="rel-chip" href="#loss-function">#손실 함수</a> <a class="rel-chip" href="#bounding-box">#바운딩 박스</a></div>
+      </article>
+    
+      <article class="term-card" id="decoupled-head" data-cat="YOLO · 객체 탐지" data-search="분리된 탐지 헤드 (decoupled head) decoupled detection head yolo · 객체 탐지 &#x27;이게 무슨 물체인지(분류)&#x27;와 &#x27;네모 박스가 어디인지(위치 회귀)&#x27;를 한 갈래에서 억지로 같이 예측하지 않고, 두 개의 전용 갈래로 분리해 학습하는 헤드 구조. 품종 감별 전문가(분류 갈래)와 줄자 측량 전문가(위치 갈래)에게 각자 잘하는 일을 따로 맡겨 충돌을 없애는 분업입니다. yolox와 yolov6 이후 대부분 최신 yolo의 표준 헤드 구조입니다. yolov6는 여기에 채널 수를 줄인 효율적 하이브리드 분리 헤드를 적용해 속도와 정확도를 모두 잡았습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>분리된 탐지 헤드 (Decoupled Head)</h2>
+        <div class="en-sub">Decoupled Detection Head</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> &#x27;이게 무슨 물체인지(분류)&#x27;와 &#x27;네모 박스가 어디인지(위치 회귀)&#x27;를 한 갈래에서 억지로 같이 예측하지 않고, 두 개의 전용 갈래로 분리해 학습하는 헤드 구조.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>품종 감별 전문가(분류 갈래)와 줄자 측량 전문가(위치 갈래)에게 각자 잘하는 일을 따로 맡겨 충돌을 없애는 분업입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOX와 YOLOv6 이후 대부분 최신 YOLO의 표준 헤드 구조입니다. YOLOv6는 여기에 채널 수를 줄인 효율적 하이브리드 분리 헤드를 적용해 속도와 정확도를 모두 잡았습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#backbone-neck-head">#백본</a> <a class="rel-chip" href="#dfl">#DFL</a> <a class="rel-chip" href="#one-to-one">#일대다(One-to-Many) vs 일대일(One-to-One) 매칭</a></div>
+      </article>
+    
+      <article class="term-card" id="yolov4-tricks" data-cat="YOLO · 객체 탐지" data-search="cmbn · dropblock · sat · sam (yolov4 기법들) cross mini-batch norm, dropblock, self-adversarial training &amp; spatial attention yolo · 객체 탐지 yolov4에서 성능을 끌어올리기 위해 도입한 대표 학습/모듈 기법 모음: 작은 배치 보정(cmbn), 덩어리 가리기(dropblock), 스스로 이미지 교란하기(sat), 공간 주목(sam). dropblock은 공부할 때 단어 한 글자가 아니라 문장 덩어리를 가리고 빈칸을 맞히는 연습이고, sat는 모델이 스스로 사진에 함정 노이즈를 만들어 이겨내는 자기 단련입니다. &lt;strong&gt;cmbn&lt;/strong&gt;은 단일 gpu 내 미니배치 통계만 모아 정규화 정확도를 높였고, &lt;strong&gt;sam&lt;/strong&gt;은 특징 맵에서 중요한 위치에 가중치를 실어주는 경량 공간 어텐션입니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>CmBN · DropBlock · SAT · SAM (YOLOv4 기법들)</h2>
+        <div class="en-sub">Cross mini-Batch Norm, DropBlock, Self-Adversarial Training &amp; Spatial Attention</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLOv4에서 성능을 끌어올리기 위해 도입한 대표 학습/모듈 기법 모음: 작은 배치 보정(CmBN), 덩어리 가리기(DropBlock), 스스로 이미지 교란하기(SAT), 공간 주목(SAM).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>DropBlock은 공부할 때 단어 한 글자가 아니라 문장 덩어리를 가리고 빈칸을 맞히는 연습이고, SAT는 모델이 스스로 사진에 함정 노이즈를 만들어 이겨내는 자기 단련입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>CmBN</strong>은 단일 GPU 내 미니배치 통계만 모아 정규화 정확도를 높였고, <strong>SAM</strong>은 특징 맵에서 중요한 위치에 가중치를 실어주는 경량 공간 어텐션입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#yolo-bof">#Bag of Freebies</a> <a class="rel-chip" href="#batch-norm">#배치 정규화</a> <a class="rel-chip" href="#data-augmentation">#데이터 증강</a></div>
+      </article>
+    
+      <article class="term-card" id="yolov6-modules" data-cat="YOLO · 객체 탐지" data-search="bic · aat · simcspsppf · gray border (yolov6 핵심) bidirectional concatenation, anchor-aided training &amp; gray border problem yolo · 객체 탐지 yolov6(특히 v3.0)의 핵심 개선 요소들: 양방향 특징 결합(bic), 앵커 보조 학습(aat), 경량 공간 풀링(simcspsppf), 그리고 이미지 여백으로 생기는 테두리 오류(gray border). aat는 평소엔 앵커라는 보조 가이드라인을 끼고 연습하다 실전에서는 가이드라인 없이 빠르게 풀게 하는 훈련이고, gray border는 사진을 정사각형에 맞추느라 넣은 회색 여백 때문에 테두리 인식률이 떨어지는 현상입니다. yolov6 v3.0은 bic와 simcspsppf로 다중 스케일 특징 융합을 강화하고, aat로 추론 비용 없이 anchor-free 헤드의 정확도를 끌어올렸습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>BiC · AAT · SimCSPSPPF · Gray Border (YOLOv6 핵심)</h2>
+        <div class="en-sub">Bidirectional Concatenation, Anchor-Aided Training &amp; Gray Border Problem</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLOv6(특히 v3.0)의 핵심 개선 요소들: 양방향 특징 결합(BiC), 앵커 보조 학습(AAT), 경량 공간 풀링(SimCSPSPPF), 그리고 이미지 여백으로 생기는 테두리 오류(Gray Border).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>AAT는 평소엔 앵커라는 보조 가이드라인을 끼고 연습하다 실전에서는 가이드라인 없이 빠르게 풀게 하는 훈련이고, Gray Border는 사진을 정사각형에 맞추느라 넣은 회색 여백 때문에 테두리 인식률이 떨어지는 현상입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv6 v3.0은 BiC와 SimCSPSPPF로 다중 스케일 특징 융합을 강화하고, AAT로 추론 비용 없이 Anchor-Free 헤드의 정확도를 끌어올렸습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#repvgg">#구조적 재매개변수화</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#sppf">#SPP / SPPF</a> <a class="rel-chip" href="#anchor-box">#앵커 박스</a></div>
+      </article>
+    
+      <article class="term-card" id="repoptimizer-qat" data-cat="YOLO · 객체 탐지" data-search="ptq vs qat &amp; repoptimizer (양자화 최적화) post-training quantization, quantization-aware training &amp; repoptimizer yolo · 객체 탐지 ptq는 다 학습된 모델의 숫자를 나중에 반올림해 int8로 줄이는 간편한 방식, qat는 학습 도중부터 반올림 오차를 체험시키며 훈련해 정확도 하락을 막는 방식입니다. ptq가 &#x27;원고 완성 후 급하게 흑백 인쇄하는 것&#x27;이라면, qat는 &#x27;처음부터 흑백 인쇄될 걸 감안해 명암을 맞춰 그리는 것&#x27;입니다. repvgg 구조는 다중 분기 합산 특성상 ptq 시 정확도가 크게 무너지는 문제가 있었는데, &lt;strong&gt;yolov6&lt;/strong&gt;는 가중치 분포를 근본적으로 개선하는 &lt;strong&gt;repoptimizer&lt;/strong&gt;와 qat+지식 증류를 결합해 int8에서도 높은 map를 유지했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>PTQ vs QAT &amp; RepOptimizer (양자화 최적화)</h2>
+        <div class="en-sub">Post-Training Quantization, Quantization-Aware Training &amp; RepOptimizer</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> PTQ는 다 학습된 모델의 숫자를 나중에 반올림해 INT8로 줄이는 간편한 방식, QAT는 학습 도중부터 반올림 오차를 체험시키며 훈련해 정확도 하락을 막는 방식입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>PTQ가 '원고 완성 후 급하게 흑백 인쇄하는 것'이라면, QAT는 '처음부터 흑백 인쇄될 걸 감안해 명암을 맞춰 그리는 것'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>RepVGG 구조는 다중 분기 합산 특성상 PTQ 시 정확도가 크게 무너지는 문제가 있었는데, <strong>YOLOv6</strong>는 가중치 분포를 근본적으로 개선하는 <strong>RepOptimizer</strong>와 QAT+지식 증류를 결합해 INT8에서도 높은 mAP를 유지했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#quantization">#양자화</a> <a class="rel-chip" href="#repvgg">#구조적 재매개변수화</a> <a class="rel-chip" href="#knowledge-distillation">#지식 증류</a></div>
+      </article>
+    
+      <article class="term-card" id="coarse-to-fine" data-cat="YOLO · 객체 탐지" data-search="coarse-to-fine 라벨 할당 &amp; e-elan / r-elan coarse-to-fine label assignment, e-elan &amp; r-elan yolo · 객체 탐지 yolov7의 e-elan은 그룹 합성곱으로 연산을 확장하면서도 그래디언트 경로를 유지하는 블록이고, coarse-to-fine은 보조 헤드에게 더 넓고 너그러운 정답(coarse)을, 주 헤드에게 정밀한 정답(fine)을 주는 학습 전략입니다. 신입(보조 헤드)에게는 &#x27;대충 이 근처면 정답(coarse)&#x27;으로 넓게 감을 잡게 하고, 에이스(주 헤드)에게는 &#x27;정확히 여기만 정답(fine)&#x27;으로 정교하게 훈련시키는 방식입니다. 이후 &lt;strong&gt;yolov12&lt;/strong&gt;에서는 어텐션 블록이 깊어질 때 학습이 불안정해지는 문제를 해결하기 위해 블록 전체에 잔차 연결과 스케일링을 더한 &lt;strong&gt;r-elan(residual elan)&lt;/strong&gt;을 도입했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>Coarse-to-Fine 라벨 할당 &amp; E-ELAN / R-ELAN</h2>
+        <div class="en-sub">Coarse-to-Fine Label Assignment, E-ELAN &amp; R-ELAN</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLOv7의 E-ELAN은 그룹 합성곱으로 연산을 확장하면서도 그래디언트 경로를 유지하는 블록이고, Coarse-to-Fine은 보조 헤드에게 더 넓고 너그러운 정답(Coarse)을, 주 헤드에게 정밀한 정답(Fine)을 주는 학습 전략입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>신입(보조 헤드)에게는 '대충 이 근처면 정답(Coarse)'으로 넓게 감을 잡게 하고, 에이스(주 헤드)에게는 '정확히 여기만 정답(Fine)'으로 정교하게 훈련시키는 방식입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>이후 <strong>YOLOv12</strong>에서는 어텐션 블록이 깊어질 때 학습이 불안정해지는 문제를 해결하기 위해 블록 전체에 잔차 연결과 스케일링을 더한 <strong>R-ELAN(Residual ELAN)</strong>을 도입했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#elan">#ELAN &amp; GELAN</a> <a class="rel-chip" href="#deep-supervision">#심층 지도</a> <a class="rel-chip" href="#attention">#어텐션</a></div>
+      </article>
+    
+      <article class="term-card" id="cib-psa" data-cat="YOLO · 객체 탐지" data-search="cib &amp; psa (yolov10 경량화·전역 문맥 모듈) compact inverted block &amp; partial self-attention yolo · 객체 탐지 cib는 깊이별 합성곱을 조합해 중복 연산을 압축한 고효율 빌딩 블록이고, psa는 특징 채널의 절반만 저렴한 비용으로 self-attention에 통과시켜 전역 문맥을 챙기는 yolov10 모듈입니다. cib가 &#x27;불필요한 부품을 뺀 초경량 엔진&#x27;이라면, psa는 &#x27;모든 승객 대신 절반만 망원경으로 앞을 내다봐 비용은 절반으로 줄이고 시야는 넓히는 전략&#x27;입니다. 두 모듈 덕분에 yolov10은 기존 모델보다 훨씬 적은 파라미터와 지연 시간으로도 높은 map를 기록했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>CIB &amp; PSA (YOLOv10 경량화·전역 문맥 모듈)</h2>
+        <div class="en-sub">Compact Inverted Block &amp; Partial Self-Attention</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> CIB는 깊이별 합성곱을 조합해 중복 연산을 압축한 고효율 빌딩 블록이고, PSA는 특징 채널의 절반만 저렴한 비용으로 Self-Attention에 통과시켜 전역 문맥을 챙기는 YOLOv10 모듈입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>CIB가 '불필요한 부품을 뺀 초경량 엔진'이라면, PSA는 '모든 승객 대신 절반만 망원경으로 앞을 내다봐 비용은 절반으로 줄이고 시야는 넓히는 전략'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>두 모듈 덕분에 YOLOv10은 기존 모델보다 훨씬 적은 파라미터와 지연 시간으로도 높은 mAP를 기록했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#intrinsic-rank">#내재적 랭크</a> <a class="rel-chip" href="#attention">#어텐션</a> <a class="rel-chip" href="#depthwise-conv">#깊이별 분리 합성곱</a></div>
+      </article>
+    
+      <article class="term-card" id="flashattention-mac" data-cat="YOLO · 객체 탐지" data-search="flashattention &amp; 메모리 접근 비용 (mac) flashattention &amp; memory access cost yolo · 객체 탐지 gpu가 계산 자체(flops)보다 느린 메모리(hbm)에서 데이터를 왔다 갔다 퍼오는 시간(mac)이 병목일 때, gpu 내부 초고속 캐시(sram) 안에서 쪼개 한 번에 처리해 어텐션을 비약적으로 가속하는 기술. 요리할 때 재료 하나 썰 때마다 창고(느린 hbm)에 다녀오는 대신, 주방 도마 옆 작은 바구니(빠른 sram)에 한꺼번에 담아와 조리하는 동선 최적화입니다. &lt;strong&gt;yolov12&lt;/strong&gt;는 area attention과 flashattention을 결합해 트랜스포머 어텐션의 메모리 접근 병목을 뚫고 실시간 yolo 속도를 달성했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>FlashAttention &amp; 메모리 접근 비용 (MAC)</h2>
+        <div class="en-sub">FlashAttention &amp; Memory Access Cost</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> GPU가 계산 자체(FLOPs)보다 느린 메모리(HBM)에서 데이터를 왔다 갔다 퍼오는 시간(MAC)이 병목일 때, GPU 내부 초고속 캐시(SRAM) 안에서 쪼개 한 번에 처리해 어텐션을 비약적으로 가속하는 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>요리할 때 재료 하나 썰 때마다 창고(느린 HBM)에 다녀오는 대신, 주방 도마 옆 작은 바구니(빠른 SRAM)에 한꺼번에 담아와 조리하는 동선 최적화입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>YOLOv12</strong>는 Area Attention과 FlashAttention을 결합해 트랜스포머 어텐션의 메모리 접근 병목을 뚫고 실시간 YOLO 속도를 달성했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#attention">#어텐션</a> <a class="rel-chip" href="#flops-params">#FLOPs</a> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a></div>
+      </article>
+    
+      <article class="term-card" id="fullpad-c3ah" data-cat="YOLO · 객체 탐지" data-search="fullpad · c3ah · ds-c3k2 (yolov13 핵심 모듈) full-pipeline aggregation-and-distribution, c3ah &amp; ds-c3k2 yolo · 객체 탐지 yolov13에서 제안한 구조들: 백본·넥·헤드 전 구간을 잇는 정보 터널(fullpad), 적응형 하이퍼그래프 블록(c3ah), 그리고 깊이별 분리 합성곱 기반 초경량 블록(ds-c3k2). fullpad가 &#x27;건물 지하(백본)부터 옥상(헤드)까지 고차 관계 정보를 바로 쏴주는 직통 고속 엘리베이터(터널)&#x27;라면, ds-c3k2는 가벼운 모듈형 블록입니다. hyperace에서 추출한 고차 시각 상관관계 특징($h_3, h_4, h_5$)을 fullpad 터널을 통해 넥과 헤드 전반에 재분배해 정보 흐름을 강화합니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>FullPAD · C3AH · DS-C3k2 (YOLOv13 핵심 모듈)</h2>
+        <div class="en-sub">Full-Pipeline Aggregation-and-Distribution, C3AH &amp; DS-C3k2</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLOv13에서 제안한 구조들: 백본·넥·헤드 전 구간을 잇는 정보 터널(FullPAD), 적응형 하이퍼그래프 블록(C3AH), 그리고 깊이별 분리 합성곱 기반 초경량 블록(DS-C3k2).</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>FullPAD가 '건물 지하(백본)부터 옥상(헤드)까지 고차 관계 정보를 바로 쏴주는 직통 고속 엘리베이터(터널)'라면, DS-C3k2는 가벼운 모듈형 블록입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>HyperACE에서 추출한 고차 시각 상관관계 특징($H_3, H_4, H_5$)을 FullPAD 터널을 통해 넥과 헤드 전반에 재분배해 정보 흐름을 강화합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#hypergraph">#하이퍼그래프</a> <a class="rel-chip" href="#fpn-panet">#FPN &amp; PANet</a> <a class="rel-chip" href="#depthwise-conv">#깊이별 분리 합성곱</a></div>
+      </article>
+    
+      <article class="term-card" id="yoloe-open-vocab" data-cat="YOLO · 객체 탐지" data-search="오픈 보캐뷸러리 (open-vocabulary) · yoloe · prompt-free open-vocabulary object detection &amp; prompt-free inference yolo · 객체 탐지 미리 정해둔 80개 물체(사람, 차 등)만 찾는 게 아니라, 사용자가 적어주는 임의의 텍스트나 예시 이미지(프롬프트), 심지어 프롬프트 없이도 세상의 수많은 물체를 탐지하는 기술. 기존 yolo가 &#x27;지정된 80개 단어만 아는 시험&#x27;이라면, yoloe는 &#x27;사전(텍스트 인코더)을 연결해 처음 보는 물체 이름도 뜻으로 찾아내는 만능 탐지기&#x27;입니다. &lt;strong&gt;yolo26&lt;/strong&gt; 논문에서는 mobileclip2 텍스트 인코더와 의사 레이블(pseudo-label) 엔진을 결합한 &lt;strong&gt;yoloe-26&lt;/strong&gt;을 통해 텍스트/시각/프롬프트 없는(prompt-free) 오픈 보캐뷸러리 탐지를 구현했습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>오픈 보캐뷸러리 (Open-Vocabulary) · YOLOE · Prompt-Free</h2>
+        <div class="en-sub">Open-Vocabulary Object Detection &amp; Prompt-Free Inference</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 미리 정해둔 80개 물체(사람, 차 등)만 찾는 게 아니라, 사용자가 적어주는 임의의 텍스트나 예시 이미지(프롬프트), 심지어 프롬프트 없이도 세상의 수많은 물체를 탐지하는 기술.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>기존 YOLO가 '지정된 80개 단어만 아는 시험'이라면, YOLOE는 '사전(텍스트 인코더)을 연결해 처음 보는 물체 이름도 뜻으로 찾아내는 만능 탐지기'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p><strong>YOLO26</strong> 논문에서는 MobileCLIP2 텍스트 인코더와 의사 레이블(Pseudo-label) 엔진을 결합한 <strong>YOLOE-26</strong>을 통해 텍스트/시각/프롬프트 없는(Prompt-Free) 오픈 보캐뷸러리 탐지를 구현했습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#embedding-vectordb">#임베딩</a> <a class="rel-chip" href="#object-detection">#객체 탐지</a> <a class="rel-chip" href="#lvis-dota">#LVIS · DOTA 데이터셋</a></div>
+      </article>
+    
+      <article class="term-card" id="rle-proto" data-cat="YOLO · 객체 탐지" data-search="rle (포즈 불확실성 모델링) &amp; multi-scale proto (분할) residual log-likelihood estimation &amp; multi-scale proto module yolo · 객체 탐지 yolo26에서 포즈 추정(관절 위치)의 애매함까지 확률 분포로 학습하는 기법이 rle, 다양한 해상도의 마스크 기저를 섞어 정밀한 외곽선을 따는 분할 모듈이 multi-scale proto입니다. rle는 관절이 가려졌을 때 &#x27;여기가 확실/불확실&#x27; 정도까지 함께 배우는 감각이고, multi-scale proto는 여러 개의 기본 스텐실 판(프로토타입)을 조합해 세밀한 윤곽 마스크를 빠르게 찍어내는 기법입니다. yolo26은 기존 dfl과 달리 태스크별 특화 손실(분할 보조 시맨틱 손실, rle 포즈 손실, obb 각도 손실)을 결합해 멀티태스크 성능을 고르게 끌어올렸습니다.">
+        <div class="card-top">
+          <span class="cat-badge">YOLO · 객체 탐지</span>
+          <span class="lvl-badge lvl-hard">심화</span>
+        </div>
+        <h2>RLE (포즈 불확실성 모델링) &amp; Multi-Scale Proto (분할)</h2>
+        <div class="en-sub">Residual Log-Likelihood Estimation &amp; Multi-Scale Proto Module</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> YOLO26에서 포즈 추정(관절 위치)의 애매함까지 확률 분포로 학습하는 기법이 RLE, 다양한 해상도의 마스크 기저를 섞어 정밀한 외곽선을 따는 분할 모듈이 Multi-Scale Proto입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>RLE는 관절이 가려졌을 때 '여기가 확실/불확실' 정도까지 함께 배우는 감각이고, Multi-Scale Proto는 여러 개의 기본 스텐실 판(프로토타입)을 조합해 세밀한 윤곽 마스크를 빠르게 찍어내는 기법입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO26은 기존 DFL과 달리 태스크별 특화 손실(분할 보조 시맨틱 손실, RLE 포즈 손실, OBB 각도 손실)을 결합해 멀티태스크 성능을 고르게 끌어올렸습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#object-detection">#객체 탐지</a> <a class="rel-chip" href="#dfl">#DFL</a> <a class="rel-chip" href="#obb">#회전 바운딩 박스</a></div>
+      </article>
+    
+      <article class="term-card" id="coco-voc" data-cat="성능 지표 · 데이터셋 · 배포" data-search="pascal voc · ms coco · imagenet standard computer vision benchmark datasets 성능 지표 · 데이터셋 · 배포 객체 탐지 모델의 실력을 겨루는 대표 표준 시험 데이터셋. voc(20종)는 초기 기준, coco(80종)는 현대 표준 시험지, imagenet(1,000종+)은 대규모 분류/사전학습 데이터셋입니다. 컴퓨터 비전 분야의 &#x27;수능(coco)&#x27;, &#x27;모의고사(voc)&#x27;, &#x27;종합 백과사전(imagenet)&#x27;에 해당합니다. yolov1~v2는 주로 voc 2007/2012에서 평가되었고, yolov3부터 최신 yolo26까지는 &lt;code&gt;coco val2017&lt;/code&gt; 및 &lt;code&gt;test-dev 2017&lt;/code&gt; 점수가 표준 비교 척도입니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-easy">입문</span>
+        </div>
+        <h2>PASCAL VOC · MS COCO · ImageNet</h2>
+        <div class="en-sub">Standard Computer Vision Benchmark Datasets</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 객체 탐지 모델의 실력을 겨루는 대표 표준 시험 데이터셋. VOC(20종)는 초기 기준, COCO(80종)는 현대 표준 시험지, ImageNet(1,000종+)은 대규모 분류/사전학습 데이터셋입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>컴퓨터 비전 분야의 '수능(COCO)', '모의고사(VOC)', '종합 백과사전(ImageNet)'에 해당합니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv1~v2는 주로 VOC 2007/2012에서 평가되었고, YOLOv3부터 최신 YOLO26까지는 <code>COCO val2017</code> 및 <code>test-dev 2017</code> 점수가 표준 비교 척도입니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#map">#AP &amp; mAP</a> <a class="rel-chip" href="#lvis-dota">#LVIS · DOTA 데이터셋</a> <a class="rel-chip" href="#pretraining">#사전 학습</a></div>
+      </article>
+    
+      <article class="term-card" id="lvis-dota" data-cat="성능 지표 · 데이터셋 · 배포" data-search="lvis · dota 데이터셋 lvis &amp; dota benchmarks 성능 지표 · 데이터셋 · 배포 lvis는 희귀한 물체까지 1,200여 개 클래스를 다루는 롱테일(long-tail) 벤치마크, dota는 위성·항공 사진 속 기울어진 객체(obb)를 평가하는 대표 데이터셋입니다. coco가 &#x27;일상에서 자주 보는 80가지 사물 시험&#x27;이라면, lvis는 &#x27;도감 속 희귀 물체까지 총출동하는 심화 시험&#x27;, dota는 &#x27;드론·위성에서 내려다본 항공 촬영 시험&#x27;입니다. yolo26 논문에서 yoloe-26(오픈 보캐뷸러리) 평가는 lvis minival에서, 회전 박스(obb) 평가는 dota-v1.0에서 수행되었습니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>LVIS · DOTA 데이터셋</h2>
+        <div class="en-sub">LVIS &amp; DOTA Benchmarks</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> LVIS는 희귀한 물체까지 1,200여 개 클래스를 다루는 롱테일(Long-tail) 벤치마크, DOTA는 위성·항공 사진 속 기울어진 객체(OBB)를 평가하는 대표 데이터셋입니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>COCO가 '일상에서 자주 보는 80가지 사물 시험'이라면, LVIS는 '도감 속 희귀 물체까지 총출동하는 심화 시험', DOTA는 '드론·위성에서 내려다본 항공 촬영 시험'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLO26 논문에서 YOLOE-26(오픈 보캐뷸러리) 평가는 LVIS minival에서, 회전 박스(OBB) 평가는 DOTA-v1.0에서 수행되었습니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#coco-voc">#PASCAL VOC · MS COCO · ImageNet</a> <a class="rel-chip" href="#obb">#회전 바운딩 박스</a> <a class="rel-chip" href="#yoloe-open-vocab">#오픈 보캐뷸러리</a></div>
+      </article>
+    
+      <article class="term-card" id="inference-engines" data-cat="성능 지표 · 데이터셋 · 배포" data-search="tensorrt · onnx · openvino · tflite · coreml · ncnn deployment formats &amp; inference engines 성능 지표 · 데이터셋 · 배포 학습된 ai 모델을 실제 서버 gpu, 인텔 cpu, 스마트폰, 임베디드 보드에서 가장 빠르게 돌리기 위해 변환하는 최적화 엔진과 표준 포맷들. 한국어로 쓴 대본(pytorch 모델)을 각 나라 극장(nvidia gpu=tensorrt, 애플 기기=coreml, 모바일=tflite/ncnn, 범용=onnx, 인텔=openvino) 규격에 맞춰 가장 빠르게 상영되도록 번역·압축한 상영 파일입니다. 논문 표에 자주 나오는 &lt;code&gt;t4 tensorrt fp16&lt;/code&gt;은 nvidia t4 gpu 위에서 tensorrt 엔진으로 16비트 반정밀도 최적화를 켜고 잰 지연 시간을 뜻합니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>TensorRT · ONNX · OpenVINO · TFLite · CoreML · NCNN</h2>
+        <div class="en-sub">Deployment Formats &amp; Inference Engines</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 학습된 AI 모델을 실제 서버 GPU, 인텔 CPU, 스마트폰, 임베디드 보드에서 가장 빠르게 돌리기 위해 변환하는 최적화 엔진과 표준 포맷들.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>한국어로 쓴 대본(PyTorch 모델)을 각 나라 극장(NVIDIA GPU=TensorRT, 애플 기기=CoreML, 모바일=TFLite/NCNN, 범용=ONNX, 인텔=OpenVINO) 규격에 맞춰 가장 빠르게 상영되도록 번역·압축한 상영 파일입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>논문 표에 자주 나오는 <code>T4 TensorRT FP16</code>은 NVIDIA T4 GPU 위에서 TensorRT 엔진으로 16비트 반정밀도 최적화를 켜고 잰 지연 시간을 뜻합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#quantization">#양자화</a> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a> <a class="rel-chip" href="#nms">#비최대 억제</a></div>
+      </article>
+    
+      <article class="term-card" id="pareto-front" data-cat="성능 지표 · 데이터셋 · 배포" data-search="파레토 프론티어 (pareto front) pareto frontier / pareto optimality 성능 지표 · 데이터셋 · 배포 속도를 더 빠르게 하려면 정확도를 희생해야 하고, 정확도를 높이려면 속도를 희생해야 하는 한계선에서 &#x27;가장 앞선 최적의 균형 곡선&#x27;을 뜻합니다. 가성비 그래프에서 &#x27;같은 가격(지연 시간)이면 성능(map)이 제일 높고, 같은 성능이면 가격이 제일 싼&#x27; 최전선 모델들을 이은 선입니다. yolov10, v12, v13, yolo26 논문의 &lt;strong&gt;figure 1&lt;/strong&gt;에 거의 항상 등장하는 정확도–지연 시간 그래프에서 왼쪽 위(빠르고 정확함)로 선을 밀어 올렸다는 뜻으로 &#x27;파레토 프론티어를 전진시켰다&#x27;고 표현합니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>파레토 프론티어 (Pareto Front)</h2>
+        <div class="en-sub">Pareto Frontier / Pareto Optimality</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 속도를 더 빠르게 하려면 정확도를 희생해야 하고, 정확도를 높이려면 속도를 희생해야 하는 한계선에서 &#x27;가장 앞선 최적의 균형 곡선&#x27;을 뜻합니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>가성비 그래프에서 '같은 가격(지연 시간)이면 성능(mAP)이 제일 높고, 같은 성능이면 가격이 제일 싼' 최전선 모델들을 이은 선입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>YOLOv10, v12, v13, YOLO26 논문의 <strong>Figure 1</strong>에 거의 항상 등장하는 정확도–지연 시간 그래프에서 왼쪽 위(빠르고 정확함)로 선을 밀어 올렸다는 뜻으로 '파레토 프론티어를 전진시켰다'고 표현합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a> <a class="rel-chip" href="#map">#AP &amp; mAP</a> <a class="rel-chip" href="#flops-params">#FLOPs</a></div>
+      </article>
+    
+      <article class="term-card" id="throughput-latency" data-cat="성능 지표 · 데이터셋 · 배포" data-search="지연 시간 (latency) vs 처리량 (throughput) latency vs throughput 성능 지표 · 데이터셋 · 배포 지연 시간은 사진 1장이 들어가서 결과가 나올 때까지의 &#x27;대기 시간(ms)&#x27;, 처리량은 여러 장을 묶어(batch) 1초 동안 총 몇 장이나 처리하는지(fps)를 뜻합니다. 지연 시간이 &#x27;고속버스 1대가 서울에서 부산까지 가는 데 걸리는 시간&#x27;이라면, 처리량은 &#x27;한 시간에 부산에 도착하는 총 승객 수(대형 버스로 한 번에 많이 실어 나름)&#x27;입니다. 자율주행처럼 즉각 반응해야 할 땐 batch=1 latency가 중요하고, 저장된 cctv 영상 수천 개를 밤새 분석할 땐 batch=32 throughput이 중요합니다.">
+        <div class="card-top">
+          <span class="cat-badge">성능 지표 · 데이터셋 · 배포</span>
+          <span class="lvl-badge lvl-mid">중급</span>
+        </div>
+        <h2>지연 시간 (Latency) vs 처리량 (Throughput)</h2>
+        <div class="en-sub">Latency vs Throughput</div>
+        <div class="one-line"><strong>한 줄 요약:</strong> 지연 시간은 사진 1장이 들어가서 결과가 나올 때까지의 &#x27;대기 시간(ms)&#x27;, 처리량은 여러 장을 묶어(Batch) 1초 동안 총 몇 장이나 처리하는지(FPS)를 뜻합니다.</div>
+        <div class="analogy-box"><strong>💡 쉬운 비유</strong><p>지연 시간이 '고속버스 1대가 서울에서 부산까지 가는 데 걸리는 시간'이라면, 처리량은 '한 시간에 부산에 도착하는 총 승객 수(대형 버스로 한 번에 많이 실어 나름)'입니다.</p></div>
+        <div class="detail-box"><strong>🔍 핵심 원리 &amp; 실전 맥락</strong><p>자율주행처럼 즉각 반응해야 할 땐 Batch=1 Latency가 중요하고, 저장된 CCTV 영상 수천 개를 밤새 분석할 땐 Batch=32 Throughput이 중요합니다.</p></div>
+        <div class="rel-row"><span class="rel-label">관련 용어:</span> <a class="rel-chip" href="#fps-latency">#FPS &amp; 지연 시간</a> <a class="rel-chip" href="#epoch-batch-warmup">#에포크</a></div>
+      </article>
+    
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const root = document.documentElement;
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      document.getElementById('themeBtn').textContent = isDark ? '🌙 다크 모드' : '☀️ 라이트 모드';
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('themeBtn').textContent = '☀️ 라이트 모드';
+    }
+
+    let activeCat = '전체 보기';
+    const searchBox = document.getElementById('searchBox');
+    const cards = Array.from(document.querySelectorAll('.term-card'));
+    const statusLine = document.getElementById('statusLine');
+
+    function filterCards() {
+      const q = searchBox.value.trim().toLowerCase();
+      let shown = 0;
+      cards.forEach(card => {
+        const matchCat = activeCat === '전체 보기' || card.dataset.cat === activeCat;
+        const matchSearch = !q || card.dataset.search.includes(q);
+        const ok = matchCat && matchSearch;
+        card.classList.toggle('hidden', !ok);
+        if (ok) shown++;
+      });
+      statusLine.textContent = `총 ${shown}개 용어 표시 중 (전체 90개)`;
+    }
+
+    document.getElementById('tabBar').addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = btn.dataset.cat;
+      filterCards();
+    });
+
+    searchBox.addEventListener('input', filterCards);
+
+    // If user clicks a related chip while filtered out, reset filter so target shows
+    document.querySelectorAll('.rel-chip').forEach(a => {
+      a.addEventListener('click', () => {
+        activeCat = '전체 보기';
+        searchBox.value = '';
+        document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+        filterCards();
+      });
+    });
+
+    // Support ?q=term deep link from paper pages
+    const initQ = new URLSearchParams(window.location.search).get('q');
+    if (initQ) {
+      searchBox.value = initQ;
+      filterCards();
+    }
+  </script>
+</body>
+</html>

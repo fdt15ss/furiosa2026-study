@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>[논문 번역] Reflexion: 언어적 강화학습을 갖춘 언어 에이전트 (Reflexion)</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
@@ -122,15 +120,15 @@
         <div class="key-point-card">
           <div class="key-point-icon">🤖</div>
           <div>
-            <strong>1. 행동자 (Actor, $M_a$):</strong>
-            환경과 직접 상호작용하며 텍스트와 행동을 생성하는 LLM. CoT 또는 ReAct 스타일을 사용하여 궤적 $\tau_t$를 생성한다.
+            <strong>1. 행동자 (Actor, <span class="math-inline"><i>M</i><sub>a</sub></span>):</strong>
+            환경과 직접 상호작용하며 텍스트와 행동을 생성하는 LLM. CoT 또는 ReAct 스타일을 사용하여 궤적 <span class="math-inline"><i>τ</i><sub>t</sub></span>를 생성한다.
           </div>
         </div>
 
         <div class="key-point-card">
           <div class="key-point-icon">⚖️</div>
           <div>
-            <strong>2. 평가자 (Evaluator, $M_e$):</strong>
+            <strong>2. 평가자 (Evaluator, <span class="math-inline"><i>M</i><sub>e</sub></span>):</strong>
             Actor가 완수한 결과물 또는 궤적을 채점한다. 코딩 과제의 경우 유닛 테스트 통과 여부(컴파일러/테스트 스위트)가 될 수 있고, 추론 과제에서는 별도의 검증 프롬프트나 정답 일치 여부가 된다. 스칼라 점수 또는 성공/실패 이진 신호를 출력한다.
           </div>
         </div>
@@ -138,8 +136,8 @@
         <div class="key-point-card">
           <div class="key-point-icon">🪞</div>
           <div>
-            <strong>3. 자기반성 모델 (Self-Reflection Model, $M_{sr}$):</strong>
-            실패한 궤적 $\tau_t$와 Evaluator의 피드백을 입력받아, <em>"무엇이 잘못되었으며, 다음 시도에서는 어떻게 접근해야 하는가?"</em>에 대한 구체적이고 실행 가능한(actionable) 언어적 비판과 교훈 $sr_t$를 생성한다.
+            <strong>3. 자기반성 모델 (Self-Reflection Model, <span class="math-inline"><i>M</i><sub>sr</sub></span>):</strong>
+            실패한 궤적 <span class="math-inline"><i>τ</i><sub>t</sub></span>와 Evaluator의 피드백을 입력받아, <em>"무엇이 잘못되었으며, 다음 시도에서는 어떻게 접근해야 하는가?"</em>에 대한 구체적이고 실행 가능한(actionable) 언어적 비판과 교훈 <span class="math-inline"><i>sr</i><sub>t</sub></span>를 생성한다.
           </div>
         </div>
 
@@ -149,20 +147,20 @@
             <strong>4. 기억 장치 (Memory Buffer):</strong>
             <ul>
               <li><strong>단기 기억(Short-term):</strong> 현재 에피소드 내에서의 세부 상호작용 히스토리.</li>
-              <li><strong>장기 기억(Long-term):</strong> 이전 시도들에서 축적된 자기반성 텍스트 목록 $\{sr_1, sr_2, \dots\}$. 후속 시도 시 프롬프트에 주입되어 행동을 가이드한다.</li>
+              <li><strong>장기 기억(Long-term):</strong> 이전 시도들에서 축적된 자기반성 텍스트 목록 <span class="math-inline">{<i>sr</i><sub>1</sub>, <i>sr</i><sub>2</sub>, …}</span>. 후속 시도 시 프롬프트에 주입되어 행동을 가이드한다.</li>
             </ul>
           </div>
         </div>
 
         <h3 id="sec2-2">2.2 자기반성 강화 알고리즘</h3>
         <p>
-          알고리즘은 최대 $N$번의 시도(Trial) 동안 반복된다:
+          알고리즘은 최대 <span class="math-inline"><i>N</i></span>번의 시도(Trial) 동안 반복된다:
         </p>
         <ol>
-          <li>에이전트(Actor)는 메모리에 누적된 이전 반성 내용($\text{mem}$)을 참고하여 궤적 $\tau_t$를 생성한다.</li>
+          <li>에이전트(Actor)는 메모리에 누적된 이전 반성 내용(<span class="math-inline">mem</span>)을 참고하여 궤적 <span class="math-inline"><i>τ</i><sub>t</sub></span>를 생성한다.</li>
           <li>평가자(Evaluator)가 성패를 판정한다. 과제가 성공하면 즉시 종료하고 결과를 반환한다.</li>
-          <li>실패한 경우, 자기반성 모델이 현재의 실패 궤적을 분석하여 피드백 $sr_t$를 작성하고 이를 메모리에 추가한다.</li>
-          <li>다음 시도 $t+1$로 넘어가 새로운 전략으로 문제를 다시 푼다.</li>
+          <li>실패한 경우, 자기반성 모델이 현재의 실패 궤적을 분석하여 피드백 <span class="math-inline"><i>sr</i><sub>t</sub></span>를 작성하고 이를 메모리에 추가한다.</li>
+          <li>다음 시도 <span class="math-inline"><i>t</i> + 1</span>로 넘어가 새로운 전략으로 문제를 다시 푼다.</li>
         </ol>
       </section>
 

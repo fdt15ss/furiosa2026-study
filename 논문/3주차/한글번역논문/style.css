@@ -531,3 +531,45 @@ footer {
     padding: 2rem 1.5rem;
   }
 }
+
+/* Native Math Typography */
+.math-inline {
+  font-family: 'Newsreader', 'Cambria Math', 'Times New Roman', Georgia, serif;
+  font-size: 1.04em;
+  color: #0f172a;
+  padding: 0 0.08em;
+  white-space: nowrap;
+}
+
+.math-inline sub,
+.math-block sub {
+  font-size: 0.72em;
+  vertical-align: sub;
+  line-height: 0;
+  font-style: normal;
+  margin-left: 0.04em;
+}
+
+.math-inline sup,
+.math-block sup {
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  font-style: normal;
+}
+
+.math-cal {
+  font-family: 'Lucida Calligraphy', 'Apple Chancery', 'URW Chancery L', 'Newsreader', cursive, serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.math-block {
+  font-family: 'Newsreader', 'Cambria Math', 'Times New Roman', Georgia, serif;
+  font-size: 1.15rem;
+  text-align: center;
+  line-height: 2;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+}
+
