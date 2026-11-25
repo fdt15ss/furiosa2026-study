@@ -358,22 +358,22 @@
       <div class="summary-box">
   <strong>핵심 요약 (한눈에 보기)</strong>
   <p>
-    <strong>Ultralytics YOLO26</strong>은 기존 실시간 객체 탐지기들이 겪던 비최대 억제(NMS) 후처리 의존성, 분포 초점 손실(DFL)로 인한 헤드 파라미터 비대화 및 회귀 범위 제한, 긴 학습 스케줄, 그리고 소형 객체의 레이블 할당 누락 문제를 통합적으로 해결한 차세대 실시간 종단간(End-to-End) 비전 모델 패밀리이다.
+    <strong>Ultralytics YOLO26</strong>은 기존 실시간 객체 탐지기들이 겪던 비최대 억제(NMS) 후처리 의존성, 분포 초점 손실(DFL)로 인한 헤드 파라미터 비대화 및 회귀 범위 제한, 긴 학습 스케줄, 그리고 소형 객체의 레이블 할당 누락 문제를 통합적으로 해결한 차세대 실시간 종단간(End-to-End) 비전 모델 패밀리입니다.
   </p>
   <ul>
-    <li><strong>아키텍처 혁신:</strong> 일대다(One-to-Many) 및 일대일(One-to-One) 분기를 결합한 듀얼 헤드 구조로 네이티브 NMS-free 종단간 추론을 기본 지원하며, <strong>DFL을 완전히 제거</strong>하여 경량화된 회귀 헤드와 무제한 바운딩 박스 회귀 범위를 달성했다.</li>
-    <li><strong>학습 파이프라인 혁신:</strong> LLM 학습에서 검증된 하이브리드 옵티마이저 <strong>MuSGD</strong>(Muon + SGD), 추론 시 사용되는 일대일 헤드로 손실 가중치를 점진적으로 이동시키는 <strong>Progressive Loss</strong>, 그리고 소형 객체에 대한 양성 앵커 할당을 보장하는 <strong>STAL</strong>(Small-Target-Aware Label Assignment)을 유기적으로 결합했다.</li>
-    <li><strong>다중 태스크 및 오픈 보캐뷸러리 확장:</strong> 객체 탐지 외에도 인스턴스 분할(다중 스케일 프로토 경로 + 보조 시맨틱 분할 손실), 포즈 추정(RLE 기반 불확실성 모델링), 회전 바운딩 박스(OBB, 장변 각도 정의 + 정사각형 각도 손실)를 단일 파이프라인으로 지원하며, 오픈 보캐뷸러리 확장 모델인 <strong>YOLOE-26</strong>도 함께 제시한다.</li>
-    <li><strong>주요 벤치마크 성능:</strong> 5개 스케일(n/s/m/l/x) 기준 COCO val2017에서 <strong>40.9–57.5 mAP</strong>(T4 TensorRT FP16 <strong>1.7–11.8 ms</strong>; E2E 경로 기준 40.1–56.9 mAP)를 달성했고, YOLO11 대비 CPU ONNX 추론 속도를 최대 <strong>43%</strong> 가속화했다. 인스턴스 분할(마스크 AP 최대 +3.7), 포즈 추정(최대 +7.2 AP), DOTA-v1.0 OBB(최대 +3.4 mAP)에서도 일관된 향상을 보였으며, YOLOE-26x는 LVIS minival 텍스트 프롬프트 조건에서 <strong>40.6 AP</strong>를 기록했다.</li>
+    <li><strong>아키텍처 혁신:</strong> 일대다(One-to-Many) 및 일대일(One-to-One) 분기를 결합한 듀얼 헤드 구조로 네이티브 NMS-free 종단간 추론을 기본 지원하며, <strong>DFL을 완전히 제거</strong>하여 경량화된 회귀 헤드와 제한 없는 바운딩 박스 회귀 범위를 달성했습니다.</li>
+    <li><strong>학습 파이프라인 혁신:</strong> LLM 학습에서 차용한 하이브리드 옵티마이저 <strong>MuSGD</strong>(Muon + SGD), 추론 시 사용되는 일대일 헤드로 손실 가중치를 점진적으로 이동시키는 <strong>Progressive Loss</strong>, 그리고 소형 객체에 대한 양성 앵커 할당을 보장하는 <strong>STAL</strong>(Small-Target-Aware Label Assignment)을 유기적으로 결합했습니다.</li>
+    <li><strong>다중 태스크 및 오픈 보캐뷸러리 확장:</strong> 객체 탐지 외에도 인스턴스 분할(다중 스케일 프로토 경로 + 보조 시맨틱 분할 손실), 포즈 추정(RLE 기반 불확실성 모델링), 회전 바운딩 박스(OBB, 장변 각도 정의 + 정사각형 객체용 각도 손실)를 단일 파이프라인으로 지원하며, 오픈 보캐뷸러리 확장 모델인 <strong>YOLOE-26</strong>도 함께 제시합니다.</li>
+    <li><strong>주요 벤치마크 성능:</strong> 5개 스케일(n/s/m/l/x) 기준 COCO val2017에서 <strong>40.9–57.5 mAP</strong>(T4 TensorRT FP16 <strong>1.7–11.8 ms</strong>; E2E 경로 기준 40.1–56.9 mAP)를 달성했고, YOLO11 대비 CPU ONNX 추론 속도를 최대 <strong>43%</strong> 향상시켰습니다. 인스턴스 분할(마스크 AP 최대 +3.7), 포즈 추정(최대 +7.2 AP), DOTA-v1.0 OBB(최대 +3.4 mAP)에서도 일관된 향상을 보였으며, YOLOE-26x는 LVIS minival 텍스트 프롬프트 조건에서 <strong>40.6 AP</strong>를 기록했습니다.</li>
   </ul>
 </div>
 
 <h2>초록 (Abstract)</h2>
 <p>
-  실시간 비전 응용은 다양한 하드웨어 환경에서 정확하고 효율적이며 배포가 간편한 모델을 요구한다. YOLO 패밀리는 이러한 강점 덕분에 산업계에서 널리 채택되어 왔으나, 대부분의 YOLO 탐지기는 여전히 추론 시 비최대 억제(NMS, Non-Maximum Suppression)에 의존하고, 분포 초점 손실(DFL, Distribution Focal Loss)로 인해 무거운 탐지 헤드를 유지하며, 긴 학습 스케줄을 필요로 하고, 가장 작은 객체에 대해서는 양성 레이블 할당(positive label assignment)을 전혀 받지 못할 수 있다는 한계를 지닌다. 본 논문에서는 아키텍처와 학습 기법의 조화로운 개선을 통해 이러한 제약을 해결하는 통합 실시간 비전 모델 패밀리인 <strong>Ultralytics YOLO26</strong>을 제안한다.
+  실시간 비전 응용은 다양한 하드웨어 환경에서 정확하고 효율적이며 배포가 간편한 모델을 요구한다. YOLO 패밀리는 이러한 강점 덕분에 산업계에서 널리 채택되어 왔으나, 대부분의 YOLO 탐지기는 여전히 추론 시 비최대 억제(NMS, Non-Maximum Suppression)에 의존하고, 분포 초점 손실(DFL, Distribution Focal Loss)로 인해 무거운 탐지 헤드를 유지하며, 긴 학습 스케줄을 필요로 하고, 가장 작은 객체에는 양성 레이블을 전혀 할당하지 못할 수 있다는 한계를 지닌다. 본 논문에서는 아키텍처와 학습 기법의 조화로운 개선을 통해 이러한 제약을 해결하는 통합 실시간 비전 모델 패밀리인 <strong>Ultralytics YOLO26</strong>을 제안한다.
 </p>
 <p>
-  아키텍처 측면에서 YOLO26은 네이티브 NMS-free 종단간(end-to-end) 추론을 위한 듀얼 헤드(dual-head) 설계를 채택하고 DFL을 완전히 제거함으로써, 회귀 범위가 제한되지 않으면서도 더 가벼운 탐지 헤드를 구현한다. 학습 측면에서는 세 가지 기법이 결합되어 학습 비용을 줄이는 동시에 정확도를 높인다: 대규모 언어 모델(LLM) 학습에서 차용한 하이브리드 Muon–SGD 옵티마이저인 <strong>MuSGD</strong>, 학습이 진행됨에 따라 지도 학습의 비중을 추론용 헤드로 점진적으로 옮기는 <strong>Progressive Loss</strong>, 그리고 소형 객체에 대한 양성 앵커 커버리지를 보장하는 레이블 할당 전략인 <strong>STAL</strong>(Small-Target-Aware Label Assignment)이 그것이다.
+  아키텍처 측면에서 YOLO26은 네이티브 NMS-free 종단간(end-to-end) 추론을 위한 듀얼 헤드(dual-head) 설계를 채택하고 DFL을 완전히 제거함으로써, 회귀 범위가 제한되지 않으면서도 더 가벼운 탐지 헤드를 구현한다. 학습 측면에서는 대규모 언어 모델(LLM) 학습에서 차용한 하이브리드 Muon–SGD 옵티마이저인 <strong>MuSGD</strong>, 학습이 진행됨에 따라 학습 지도의 비중을 추론용 헤드로 점진적으로 옮기는 <strong>Progressive Loss</strong>, 그리고 소형 객체에 대한 양성 앵커 커버리지를 보장하는 레이블 할당 전략인 <strong>STAL</strong>(Small-Target-Aware Label Assignment) 등 세 가지 기법을 결합하여 학습 비용을 줄이는 동시에 정확도를 높인다.
 </p>
 <p>
   객체 탐지를 넘어 YOLO26은 인스턴스 분할(instance segmentation), 포즈 추정(pose estimation), 회전 객체 탐지(oriented detection)를 위한 태스크 특화 헤드 및 손실 함수를 도입하여 다양한 태스크와 모델 스케일 전반에서 일관된 성능 향상을 달성한다. 모델 패밀리는 다섯 가지 스케일(n/s/m/l/x)로 구성되며, 단일 파이프라인 내에서 탐지, 인스턴스 분할, 포즈 추정, 이미지 분류, 회전 객체 탐지를 지원한다. 또한 텍스트, 시각(visual), 그리고 프롬프트 없는(prompt-free) 추론을 지원하는 오픈 보캐뷸러리(open-vocabulary) 확장 모델인 <strong>YOLOE-26</strong>도 함께 제공한다. 전 스케일에 걸쳐 YOLO26은 COCO에서 1.7–11.8 ms의 T4 TensorRT 지연 시간으로 40.9–57.5 mAP를 달성하여 기존 실시간 탐지기들의 정확도–지연 시간 파레토 프론티어(Pareto front)를 끌어올렸으며, YOLOE-26x는 텍스트 프롬프트 환경의 LVIS minival 벤치마크에서 40.6 AP를 달성하였다. 코드와 모델은 <a href="https://github.com/ultralytics/ultralytics" target="_blank" rel="noopener">https://github.com/ultralytics/ultralytics</a>에서 공개되어 있다.
@@ -557,7 +557,7 @@
   <strong>일대일 헤드 (One-to-One Head, 기본값).</strong> 일대일 헤드는 NMS 없이 고정 크기의 예측 집합을 생성하며, 이미지당 최대 300개의 탐지 결과를 출력한다(배치 크기 $N$에 대해 형상 $(N, 300, 6)$). YOLOv10 [78]을 따라, 두 헤드는 Task-Aligned Learning(TAL) [14]에 기반한 일관된 이중 경로 레이블 할당(consistent dual-path label assignment)으로 학습된다. 두 헤드 모두 동일한 TAL 정식화를 공유하되 매칭 기수(cardinality)만 다르게 설정한다. 현재 구현에서 일대일 경로는 먼저 $\text{topk} = 7$로 TAL 후보 집합을 구성한 뒤 2차 필터인 $\text{topk2} = 1$을 적용하여, 각 정답 인스턴스당 고유한 종단간 할당을 생성함으로써 추론 시 직접 디코딩을 가능하게 한다.
 </p>
 <p>
-  <strong>일대다 헤드 (One-to-Many Head).</strong> 일대다 헤드는 표준 밀집 YOLO 스타일의 예측을 유지하며 학습 중 더 풍부한 양성 지도를 제공하기 위해 $\text{topk} = 10$으로 TAL을 사용한다. 출력 형상은 $(N, n_c + 4, 8400)$이며, 여기서 $n_c$는 클래스 개수이다. 이 헤드는 추론 시 NMS를 사용하며, 추가 후처리 오버헤드를 감수하는 대신 일반적으로 약간 더 높은 정확도를 달성한다.
+  <strong>일대다 헤드 (One-to-Many Head).</strong> 일대다 헤드는 표준 밀집 YOLO 스타일의 예측을 유지하며 학습 중 더 풍부한 양성 지도를 제공하기 위해 $\text{topk} = 10$으로 TAL을 사용한다. 출력 형상은 $(N, n_c + 4, 8400)$이며, 여기서 $n_c$는 클래스 개수이다. 이 헤드는 추론 시 NMS를 사용하며, 추가 후처리 오버헤드를 따르지만 일반적으로 약간 더 높은 정확도를 달성한다.
 </p>
 <p>
   종합하면, 듀얼 헤드 설계는 실용적인 정확도–지연 시간 조절 노브(knob)를 제공한다: 일대일 헤드는 단순성과 속도(NMS-free, 고정 출력)를 우선시하는 반면, 일대다 헤드는 NMS 오버헤드를 허용할 수 있는 환경에서 최고 정확도를 겨냥한다.
@@ -577,7 +577,7 @@ $$
   또한 DFL은 유한한 이산 지지 범위(discrete support range)를 부과한다. 스트라이드 $s$를 곱하기 전 $d \in [0, K-1]$이므로 변당 최대 거리는 $(K-1)s$ 픽셀로 제한된다(따라서 해당 특징 레벨에서 너비/높이는 약 $2(K-1)s$로 상한이 정해진다). $K=16$일 때 이는 약 $30s$(예: $s=32$에서 약 $960$ 픽셀)에 불과해 고해상도(예: 1280) 입력에서 큰 객체를 탐지할 때 제약이 될 수 있다. $K$를 늘리는 방식(예: D-FINE은 더 큰 빈 수를 사용 [55])은 이 제약을 완화하지만 헤드 비용을 한층 더 증가시킨다. 이에 YOLO26은 더 단순한 직접 회귀 헤드(<code>reg_max=1</code>)를 채택하고, 위치 추정 품질은 상호 보완적인 학습 목적 함수인 Progressive Loss(3.3.2절)와 STAL(3.3.3절)을 통해 회복한다. 이러한 설계 선택의 정량적·정성적 근거는 4.3.1절의 DFL 제거 절제 실험(ablation)에 제시되어 있다. 특히 그림 4는 640 해상도에서는 잘 드러나지 않는 실패 양상을 1280 해상도 학습 환경에서 명확히 보여주며, DFL이 없는 헤드가 큰 객체의 전체 영역을 훨씬 더 안정적으로 보존함을 입증한다.
 </p>
 <p>
-  마지막으로, DFL 제거는 모델 내보내기를 단순화하고 표준 연산자와 최소한의 디코딩 오버헤드를 선호하는 제약된 런타임 및 하드웨어 가속기와의 호환성을 향상시킨다. 전반적으로 이 선택은 보상 학습 개선 기법을 통해 강력한 탐지 성능을 유지하면서도 자원 제약적 배포를 위한 명확한 정확도–효율성 균형을 달성한다.
+  마지막으로, DFL 제거는 모델 내보내기를 단순화하고 표준 연산자와 최소한의 디코딩 오버헤드를 선호하는 제약된 런타임 및 하드웨어 가속기와의 호환성을 향상시킨다. 전반적으로 이 선택은 성능 손실을 보완하는 학습 개선 기법을 통해 강력한 탐지 성능을 유지하면서도 자원 제약적 배포를 위한 명확한 정확도–효율성 균형을 달성한다.
 </p>
 
 <h3>3.3. 학습 방법론 (Training Methodology)</h3>
@@ -642,7 +642,7 @@ $$
 M_{ij} = \begin{cases} 1, &amp; \text{if anchor center } a_j \text{ lies inside } \tilde{g}_i, \\ 0, &amp; \text{otherwise}. \end{cases} \tag{6}
 $$
 <p>
-  중요한 점은 STAL이 오직 후보 선택 마스크만 수정한다는 것이다. 원래의 박스 $g_i$는 task-aligned 점수 계산, 최종 타깃 할당, 그리고 박스 회귀에 그대로 보존되므로, 탐지기는 여전히 실제 객체 영역에 대해 최적화된다. 이러한 특성 덕분에 STAL은 의도적으로 보수적인 설계를 취한다: 일반 크기 객체의 위치 추정 타깃을 변형하거나 지도를 과도하게 부풀리지 않으면서도, 기존 할당 파이프라인에서 탈락할 수밖에 없었던 극소형 인스턴스들의 병리적인 제로-양성(zero-positive) 사례를 방지한다.
+  중요한 점은 STAL이 오직 후보 선택 마스크만 수정한다는 것이다. 원래의 박스 $g_i$는 task-aligned 점수 계산, 최종 타깃 할당, 그리고 박스 회귀에 그대로 보존되므로, 탐지기는 여전히 실제 객체 영역에 대해 최적화된다. 이러한 특성 덕분에 STAL은 의도적으로 보수적인 설계를 취한다: 일반 크기 객체의 위치 추정 타깃을 변형하거나 지도를 과도하게 부풀리지 않으면서도, 기존 할당 파이프라인에서 탈락할 수밖에 없었던 극소형 인스턴스의 치명적인 제로-양성(zero-positive) 할당 실패 사례를 방지한다.
 </p>
 
 <h3>3.4. 태스크 특화 확장 (Task-Specific Extensions)</h3>
@@ -707,13 +707,13 @@ $$
 \hat{\theta} = \bigl(\sigma(z) - 0.25\bigr)\pi, \tag{12}
 $$
 <p>
-  이는 예측값을 고정 구간으로 압축하고 구간 경계 부근에서 추가적인 압착 비선형성(squashing nonlinearity)을 유발한다. 대신 YOLO26은 각도를 직접 예측하여:
+  이는 예측값을 고정 구간으로 압축하고 구간 경계 부근에서 추가적인 포화 비선형성(squashing nonlinearity)을 유발한다. 대신 YOLO26은 각도를 직접 예측하여:
 </p>
 $$
 \hat{\theta} = z, \tag{13}
 $$
 <p>
-  불필요한 압착 비선형성을 제거한다.
+  불필요한 포화 비선형성을 제거한다.
 </p>
 <p>
   <strong>정사각형 객체를 위한 각도 손실 (Angle-Loss for Square Objects).</strong> 정사각형 또는 정사각형에 가까운 객체의 경우, YOLO11 모델에서 사용된 ProbIoU [45] 손실은 너비 $\approx$ 높이일 때 가우시안 표현이 회전에 거의 불변(rotation-invariant)해지므로 각도 변화에 둔감해지며, 결과적으로 각도 예측이 모호하고 불안정해진다. 이 문제를 해결하기 위해 YOLO26에서는 정사각형 객체를 겨냥한 전용 각도 손실을 설계하였다. 먼저 회전 박스 정식화에서 사용되는 각도 지도를 정리하자. 회전 직사각형은 $180^\circ$ 회전에 대해 불변이므로 $(x, y, w, h, \theta)$와 $(x, y, w, h, \theta + \pi)$는 동일한 기하를 나타낸다. 따라서 각도 잔차는 실수선 전체가 아니라 모듈로 $\pi$ 상에서 측정되어야 한다:
@@ -728,7 +728,7 @@ $$
 \mathcal{L}_{\text{angle}} = \frac{1}{S} \sum_{i \in \mathcal{F}} q_i\,\omega_i \sin^2\!\left(2\tilde{\Delta}\theta_i\right), \qquad S = \max\!\left(\sum_{i \in \mathcal{F}} q_i,\, 1\right), \qquad \omega_i = \exp\!\left(\frac{-\log_2(w_i^* / h_i^*)}{\lambda^2}\right), \tag{15}
 $$
 <p>
-  여기서 $\mathcal{F}$는 전경 할당 집합, $q_i$는 TAL이 생성한 할당 가중치, $S$는 이에 대응하는 정규화 인자, $\omega_i$는 타깃 박스 치수 $(w_i^*, h_i^*)$로부터 계산된 종횡비 인식 인자(aspect-ratio-aware factor), 그리고 $\lambda$는 하이퍼파라미터이다. $2\tilde{\Delta}\theta_i$를 사용하는 이중 각도 벌점(double-angle penalty)은 $90^\circ$ 차이나는 회전이 기하학적으로 모호해지는 정사각형 및 준정사각형 박스에 대한 보조 지도로 작동한다. 길쭉한 박스는 더 작은 $\omega_i$를 받으므로 주로 회전 IoU 손실에 의해 제약된다.
+  여기서 $\mathcal{F}$는 전경 할당 집합, $q_i$는 TAL이 생성한 할당 가중치, $S$는 이에 대응하는 정규화 인자, $\omega_i$는 타깃 박스 치수 $(w_i^*, h_i^*)$로부터 계산된 종횡비 인식 인자(aspect-ratio-aware factor), 그리고 $\lambda$는 하이퍼파라미터이다. $2\tilde{\Delta}\theta_i$를 사용하는 이중 각도 페널티(double-angle penalty)는 $90^\circ$ 차이나는 회전이 기하학적으로 모호해지는 정사각형 및 준정사각형 박스에 대한 보조 지도로 작동한다. 길쭉한 박스는 더 작은 $\omega_i$를 받으므로 주로 회전 IoU 손실에 의해 제약된다.
 </p>
 
 <h3>3.5. 모델 변형 및 배포 (Model Variants and Deployment)</h3>
@@ -764,7 +764,7 @@ $$
 S_l = \exp(\tau) \cdot \bigl(\operatorname{BN}(Z_l) \otimes W\bigr) + b, \tag{17}
 $$
 <p>
-  여기서 $S_l \in \mathbb{R}^{B \times K \times H \times W}$는 표준 YOLO 탐지기의 분류 로짓에 해당하는 오픈 보캐뷸러리 등가물이며, 이후 시그모이드 함수를 통과해 최종 클래스별 신뢰도 점수를 생성한다. $\operatorname{BN}(\cdot)$은 분류 임베딩에 배치 정규화를 적용하고, $\otimes$는 공간 위치 전반에 걸친 채널 범주의 내적을 나타내며, $\tau$와 $b$는 각각 $-1$과 $-10$으로 초기화되는 학습 가능한 스칼라이다. 박스 분기와 분류 분기는 공유 공간 인덱스로 정렬되어 있으므로 레벨 $l$의 각 위치는 쌍을 이룬 박스 예측과 클래스 점수 벡터를 생성한다. YOLOE는 텍스트 프롬프트 단계(TP), 시각 프롬프트 단계(VP), 프롬프트 없음 단계(PF)의 3단계로 학습된다. TP 단계가 공유 초기화 단계 역할을 하며, VP와 PF 모델은 각각 TP 체크포인트로부터 독립적으로 미세조정된다.
+  여기서 $S_l \in \mathbb{R}^{B \times K \times H \times W}$는 표준 YOLO 탐지기의 분류 로짓에 해당하는 오픈 보캐뷸러리 대응 요소이며, 이후 시그모이드 함수를 통과해 최종 클래스별 신뢰도 점수를 생성한다. $\operatorname{BN}(\cdot)$은 분류 임베딩에 배치 정규화를 적용하고, $\otimes$는 공간 위치 전반에 걸친 채널 범주의 내적을 나타내며, $\tau$와 $b$는 각각 $-1$과 $-10$으로 초기화되는 학습 가능한 스칼라이다. 박스 분기와 분류 분기는 공유 공간 인덱스로 정렬되어 있으므로 레벨 $l$의 각 위치는 쌍을 이룬 박스 예측과 클래스 점수 벡터를 생성한다. YOLOE는 텍스트 프롬프트 단계(TP), 시각 프롬프트 단계(VP), 프롬프트 없음 단계(PF)의 3단계로 학습된다. TP 단계가 공유 초기화 단계 역할을 하며, VP와 PF 모델은 각각 TP 체크포인트로부터 독립적으로 미세조정된다.
 </p>
 <p>
   <strong>YOLOE-26</strong>은 YOLO26 탐지기 패밀리 위에 YOLOE [79]의 오픈 보캐뷸러리 정식화를 구현하면서 동일한 세 가지 추론 모드를 유지하고 네 가지 수정 사항을 도입한다:
@@ -871,7 +871,7 @@ $$
 
 <h4>4.3.2. MuSGD</h4>
 <p>
-  COCO에서 YOLO26을 처음부터 학습할 때 MuSGD와 표준 SGD를 비교하였다. 표 4에서 볼 수 있듯 MuSGD는 더 짧은 학습 스케줄로도 더 높은 최종 정확도에 도달하여, 학습 에포크를 600에서 500으로 줄이면서(16.7% 감소) mAP를 +0.4 향상시킨다. 이 결과는 MuSGD가 주요 탐지 환경에서 실용적인 최적화 개선임을 입증한다.
+  COCO에서 YOLO26을 처음부터 학습할 때 MuSGD와 표준 SGD를 비교하였다. 표 4에서 볼 수 있듯 MuSGD는 더 짧은 학습 스케줄로도 더 높은 최종 정확도에 도달하여, 학습 에포크를 600에서 500으로 줄이면서도(16.7% 감소) mAP를 +0.4 향상시킨다. 이 결과는 MuSGD가 주요 탐지 환경에서 실용적인 최적화 개선임을 입증한다.
 </p>
 
 <div class="table-wrap">
@@ -892,7 +892,7 @@ $$
 </div>
 
 <p>
-  탐지 영역을 넘어 MuSGD의 유효성을 추가 검증하기 위해, 백본 아키텍처와 학습 레시피를 고정하고 옵티마이저만 달리하는 통제된 ImageNet 분류 비교 실험도 수행하였다. 상세 결과는 부록 S1절 및 표 S1에 제시되어 있으며, 거기서도 동일한 경향이 나타나 MuSGD의 이점이 탐지 외 태스크로도 전이됨을 확인하였다.
+  탐지 영역을 넘어 MuSGD의 유효성을 추가 검증하기 위해, 백본 아키텍처와 학습 레시피를 고정하고 옵티마이저만 달리하는 통제된 ImageNet 분류 비교 실험도 수행하였다. 상세 결과는 부록 S1절 및 표 S1에 제시되어 있으며, 해당 실험에서도 동일한 경향이 나타나 MuSGD의 이점이 탐지 외 태스크로도 전이됨을 확인하였다.
 </p>
 
 <h4>4.3.3. Progressive Loss</h4>
@@ -1101,7 +1101,7 @@ $$
 
 <figure class="paper-fig">
   <img src="images/YOLO26_Ultralytics-official_2606.03748v1/fig_6.png" alt="그림 6" />
-  <figcaption><strong>그림 6.</strong> 정사각형 회전 객체 탐지에 대한 YOLO26x-obb와 YOLO11x-obb 모델 간의 정성적 비교. 초록색 박스는 정답(ground truth)이며, 빨간색 박스는 예측 결과를 나타낸다. YOLO26은 정사각형 객체에서 YOLO11 대비 월등히 우수한 각도 예측 성능을 보여준다.</figcaption>
+  <figcaption><strong>그림 6.</strong> 정사각형 회전 객체 탐지에 대한 YOLO26x-obb와 YOLO11x-obb 모델 간의 정성적 비교. 초록색 박스는 정답(ground truth)이며, 빨간색 박스는 예측 결과를 나타낸다. YOLO26은 정사각형 객체에서 YOLO11 대비 한층 우수한 각도 예측 성능을 보여준다.</figcaption>
 </figure>
 
 <h3>4.6. YOLOE-26 결과 (YOLOE-26 Results)</h3>
@@ -1113,7 +1113,7 @@ $$
 
 <div class="table-wrap">
   <table>
-    <caption>표 12. LVIS minival 분할에서의 YOLOE-26s-TP 절제 실험. YOLOE-11s-TP 기준선에서 출발하여 3.6절의 YOLOE-26 수정 사항을 순차적으로 적용하고, 종단간(E2E) 및 비종단간(non-E2E) 평가 프로토콜 하에서 AP($\text{mAP}_{50:95}$)를 보고한다.</caption>
+    <caption>표 12. LVIS minival 데이터 분할(split)에서의 YOLOE-26s-TP 절제 실험. YOLOE-11s-TP 기준선에서 출발하여 3.6절의 YOLOE-26 수정 사항을 순차적으로 적용하고, 종단간(E2E) 및 비종단간(non-E2E) 평가 프로토콜 하에서 AP($\text{mAP}_{50:95}$)를 보고한다.</caption>
     <thead>
       <tr>
         <th>백본 (Backbone)</th>
@@ -1198,10 +1198,10 @@ $$
 
 <h3>S3. 학습 레시피 (Training Recipes)</h3>
 <p>
-  <strong>손실 설정 필드에 대한 참고 사항:</strong> 공개된 Ultralytics 학습 설정에서 <code>dfl</code> 필드는 바운딩 박스 회귀 손실 가중치(gain)를 제어한다. YOLO11 및 이전 버전에서는 이 값이 분포 초점 손실(DFL)을 관장하지만, YOLO26에서는 DFL이 제거되고 L1 손실 기반의 직접 회귀가 사용된다. 하위 호환성을 위해 <code>dfl</code> 필드는 그대로 유지되며 이제는 L1 회귀 손실 가중치를 스케일링하는 역할을 한다. 따라서 아래 표들에 표시된 0이 아닌 <code>dfl</code> 값은 DFL 모듈이 활성화되었음을 의미하지 않는다.
+  <strong>손실 설정 필드에 대한 참고 사항:</strong> 공개된 Ultralytics 학습 설정에서 <code>dfl</code> 필드는 바운딩 박스 회귀 손실 가중치(gain)를 제어한다. YOLO11 및 이전 버전에서는 이 값이 분포 초점 손실(DFL)을 제어하지만, YOLO26에서는 DFL이 제거되고 L1 손실 기반의 직접 회귀가 사용된다. 하위 호환성을 위해 <code>dfl</code> 필드는 그대로 유지되며 이제는 L1 회귀 손실 가중치를 스케일링하는 역할을 한다. 따라서 아래 표들에 표시된 0이 아닌 <code>dfl</code> 값은 DFL 모듈이 활성화되었음을 의미하지 않는다.
 </p>
 <p>
-  <strong>Objects365-v1 사전학습:</strong> 표 S2–S4는 공개된 Objects365-v1 사전학습 체크포인트에 저장된 <code>train_args</code>에서 직접 전사한 설정이다(가독성을 위해 대부분의 부동소수점 값은 소수점 둘째 자리에서 반올림하였으며, <code>lr0</code>와 <code>weight_decay</code>는 원래 정밀도를 유지함). 사전학습 단계는 $640 \times 640$ 해상도, 배치 크기 128로 150 에포크 동안 진행된다.
+  <strong>Objects365-v1 사전학습:</strong> 표 S2–S4는 공개된 Objects365-v1 사전학습 체크포인트에 저장된 <code>train_args</code>에서 그대로 옮겨 적은 설정이다(가독성을 위해 대부분의 부동소수점 값은 소수점 둘째 자리에서 반올림하였으며, <code>lr0</code>와 <code>weight_decay</code>는 원래 정밀도를 유지함). 사전학습 단계는 $640 \times 640$ 해상도, 배치 크기 128로 150 에포크 동안 진행된다.
 </p>
 
 <div class="table-wrap">
@@ -1337,7 +1337,7 @@ $$
 
 <h3>S4. 최신 실시간 탐지기와의 비교</h3>
 <p>
-  표 S8은 COCO val2017에서 최신 실시간 탐지기들과 s/m/l/x 스케일별로 묶어 비교한 전체 결과를 제공한다. 이는 본문 4.4절에서 YOLO26의 위치를 규명하는 데 사용된 스케일별 세부 지표이다.
+  표 S8은 COCO val2017에서 최신 실시간 탐지기들과 s/m/l/x 스케일별로 묶어 비교한 전체 결과를 제공한다. 이는 본문 4.4절에서 YOLO26의 위치를 확인하는 데 사용된 스케일별 세부 지표이다.
 </p>
 
 <div class="table-wrap">
@@ -1610,7 +1610,7 @@ $$
 
 <div class="table-wrap">
   <table>
-    <caption>표 S14. LVIS minival에서의 프롬프트 없는(Prompt-free) 탐지. AP는 Fixed $\text{AP}_{50\text{–}95}$이며 아래첨자 $r, c, f$는 각각 rare/common/frequent 분할을 뜻한다. YOLOE-26은 <code>E2E / Non-E2E</code> 형식으로 보고하며, GenerateU-T/L은 Swin-T/L 백본을 사용한다.</caption>
+    <caption>표 S14. LVIS minival에서의 프롬프트 없는(Prompt-free) 탐지. AP는 Fixed $\text{AP}_{50\text{–}95}$이며 아래첨자 $r, c, f$는 각각 rare/common/frequent 데이터 분할(split)을 뜻한다. YOLOE-26은 <code>E2E / Non-E2E</code> 형식으로 보고하며, GenerateU-T/L은 Swin-T/L 백본을 사용하고 YOLOE-26은 Objects365-v1 [63], GQA [23], Flickr30k [56]에서 학습되었다.</caption>
     <thead>
       <tr>
         <th>모델 (Model)</th>

@@ -358,13 +358,13 @@
       <div class="summary-box">
   <strong>핵심 요약 (한눈에 보기)</strong>
   <p>
-    <strong>YOLOv7</strong>은 추론 비용(inference cost)을 증가시키지 않으면서 학습 과정을 최적화하여 객체 탐지 정확도를 대폭 높이는 <strong>학습 가능한 Bag-of-Freebies(Trainable bag-of-freebies)</strong> 기법과 효율적인 네트워크 아키텍처(E-ELAN) 및 복합 모델 스케일링(Compound Scaling) 전략을 제안한 실시간 객체 탐지 모델입니다. 사전 학습 가중치나 외부 데이터셋 없이 MS COCO 데이터셋만으로 처음부터(from scratch) 학습하여, 5 FPS ~ 160 FPS 구간의 모든 기존 객체 탐지기를 속도와 정확도 면에서 능가했습니다.
+    <strong>YOLOv7</strong>은 추론 비용(inference cost)을 증가시키지 않으면서 학습 과정을 최적화하여 객체 탐지 정확도를 대폭 높이는 <strong>학습 가능한 Bag-of-Freebies(Trainable bag-of-freebies)</strong> 기법과 효율적인 네트워크 아키텍처(E-ELAN) 및 복합 모델 스케일링(Compound Scaling) 전략을 제안한 실시간 객체 탐지 모델입니다. 사전 학습 가중치나 외부 데이터셋 없이 MS COCO 데이터셋만으로 처음부터(from scratch) 학습했음에도, 5 FPS ~ 160 FPS 구간의 모든 기존 객체 탐지기를 속도와 정확도 면에서 능가했습니다.
   </p>
   <ul>
     <li><strong>아키텍처 혁신 (E-ELAN &amp; 복합 스케일링):</strong> 기존 ELAN의 최단·최장 그래디언트 경로를 훼손하지 않고 그룹 합성곱으로 카디널리티(cardinality)를 확장·셔플·병합하는 <strong>E-ELAN</strong>과, 연결(concatenation) 기반 모델에서 깊이 스케일링 시 전이 계층(transition layer)의 너비를 함께 조절하는 <strong>복합 모델 스케일링(Compound Model Scaling)</strong>을 제안했습니다.</li>
     <li><strong>계획된 재매개변수화 합성곱 (Planned RepConvN):</strong> 잔차(residual) 또는 연결(concatenation) 구조에서는 RepConv의 항등 연결(identity connection)이 그래디언트 다양성을 저해함을 규명하고, 항등 연결을 제거한 <code>RepConvN</code>을 그래디언트 흐름 경로에 맞춰 배치했습니다.</li>
     <li><strong>Coarse-to-Fine 리드 헤드 유도 레이블 할당 (Lead Head Guided Label Assigner):</strong> 심층 지도 학습(deep supervision)에서 최종 출력을 담당하는 리드 헤드(lead head)의 예측을 기준으로 정밀(fine) 레이블과 재현율(recall) 중심의 거친(coarse) 레이블을 생성해 보조 헤드(auxiliary head)와 리드 헤드를 함께 최적화합니다.</li>
-    <li><strong>주요 벤치마크 성과 (MS COCO):</strong> 30 FPS 이상의 실시간 탐지기 중 최고 정확도인 <strong>56.8% AP</strong>(YOLOv7-E6E, 36 FPS V100)를 달성했으며, 기본형 YOLOv7은 <strong>51.4% AP / 161 FPS</strong>(V100)를 기록해 동급 최신 모델 대비 파라미터 약 40%, 연산량 약 50%를 절감했습니다.</li>
+    <li><strong>주요 벤치마크 성과 (MS COCO):</strong> 30 FPS 이상의 실시간 탐지기 중 최고 정확도인 <strong>56.8% AP</strong>(YOLOv7-E6E, 36 FPS V100)를 달성했으며, 기본형 YOLOv7은 <strong>51.4% AP / 161 FPS</strong>(V100)를 기록했습니다. 아울러 동급 기존 실시간 탐지기 대비 파라미터 수를 약 40%, 연산량을 약 50% 절감하면서도 더 빠른 추론 속도와 높은 정확도를 달성했습니다.</li>
   </ul>
 </div>
 
@@ -558,7 +558,7 @@
 </div>
 
 <p>
-  결과에서 볼 수 있듯 YOLOv4와 비교할 때 YOLOv7은 파라미터 수가 75% 적고 연산량이 36% 적으면서도 AP는 1.5% 더 높다. 최신 모델인 YOLOR-CSP와 비교하면 YOLOv7은 파라미터가 43% 적고 연산량이 15% 적으면서 AP가 0.4% 더 높다. 경량(tiny) 모델의 성능에서는 YOLOv4-tiny-3l과 비교했을 때 YOLOv7-tiny가 파라미터 수를 39%, 연산량을 49% 줄이면서도 동일한 AP를 유지하였다. 클라우드 GPU용 모델에서도 본 모델은 파라미터 수를 19%, 연산량을 33% 줄이면서 여전히 더 높은 AP를 달성하였다.
+  결과에서 볼 수 있듯 YOLOv4와 비교할 때 YOLOv7은 파라미터 수가 75% 적고 연산량이 36% 적으면서도 AP는 1.5% 더 높다. 최신 모델인 YOLOR-CSP와 비교하면 YOLOv7은 파라미터가 43% 적고 연산량이 15% 적으면서도 AP가 0.4% 더 높다. 경량(tiny) 모델의 성능에서는 YOLOv4-tiny-3l과 비교했을 때 YOLOv7-tiny가 파라미터 수를 39%, 연산량을 49% 줄이면서도 동일한 AP를 유지하였다. 클라우드 GPU용 모델에서도 본 모델은 파라미터 수를 19%, 연산량을 33% 줄이면서도 여전히 더 높은 AP를 달성하였다.
 </p>
 
 <h3>5.3. 최신 모델과의 비교 (Comparison with state-of-the-arts)</h3>
@@ -660,10 +660,10 @@
 
 <h4>5.4.2. 제안된 계획된 재매개변수화 모델 (Proposed planned re-parameterized model)</h4>
 <p>
-  제안한 계획된 재매개변수화 모델(planned re-parameterized model)의 일반성을 검증하기 위해 연결 기반 모델(concatenation-based model)과 잔차 기반 모델(residual-based model) 각각에 적용하여 검증하였다. 검증 대상으로 선택한 연결 기반 모델과 잔차 기반 모델은 각각 3-stacked ELAN과 CSPDarknet이다.
+  제안한 계획된 재매개변수화 모델(planned re-parameterized model)의 일반성을 검증하기 위해 연결 기반 모델(concatenation-based model)인 3-stacked ELAN과 잔차 기반 모델(residual-based model)인 CSPDarknet 각각에 적용해 실험하였다.
 </p>
 <p>
-  연결 기반 모델 실험에서는 3-stacked ELAN의 서로 다른 위치에 있는 $3 \times 3$ 합성곱 계층을 RepConv로 대체하였으며, 세부 구성은 그림 6과 같다. 표 4에 제시된 결과에서 볼 수 있듯이, 더 높은 AP 값들은 모두 우리가 제안한 계획된 재매개변수화 모델에서 나타났다.
+  연결 기반 모델 실험에서는 3-stacked ELAN의 서로 다른 위치에 있는 $3 \times 3$ 합성곱 계층을 RepConv로 대체하였으며, 세부 구성은 그림 6과 같다. 표 4에 제시된 결과에서 볼 수 있듯이, 더 높은 AP 값들은 모두 본 연구가 제안한 계획된 재매개변수화 모델에서 나타났다.
 </p>
 
 <figure class="paper-fig">
@@ -687,11 +687,11 @@
     </thead>
     <tbody>
       <tr><td>base (3-S ELAN)</td><td>52.26%</td><td>70.41%</td><td>56.77%</td><td>35.81%</td><td>57.00%</td><td>67.59%</td></tr>
-      <tr><td>Figure 6 (a)</td><td>52.18%</td><td>70.34%</td><td>56.90%</td><td>35.71%</td><td>56.83%</td><td>67.51%</td></tr>
-      <tr><td>Figure 6 (b)</td><td>52.30%</td><td>70.30%</td><td>56.92%</td><td>35.76%</td><td>56.95%</td><td>67.74%</td></tr>
-      <tr><td><strong>Figure 6 (c)</strong></td><td><strong>52.33%</strong></td><td><strong>70.56%</strong></td><td>56.91%</td><td><strong>35.90%</strong></td><td><strong>57.06%</strong></td><td>67.50%</td></tr>
-      <tr><td>Figure 6 (d)</td><td>52.17%</td><td>70.32%</td><td>56.82%</td><td>35.33%</td><td><strong>57.06%</strong></td><td><strong>68.09%</strong></td></tr>
-      <tr><td>Figure 6 (e)</td><td>52.23%</td><td>70.20%</td><td>56.81%</td><td>35.34%</td><td>56.97%</td><td>66.88%</td></tr>
+      <tr><td>그림 6(a)</td><td>52.18%</td><td>70.34%</td><td>56.90%</td><td>35.71%</td><td>56.83%</td><td>67.51%</td></tr>
+      <tr><td>그림 6(b)</td><td>52.30%</td><td>70.30%</td><td>56.92%</td><td>35.76%</td><td>56.95%</td><td>67.74%</td></tr>
+      <tr><td><strong>그림 6(c)</strong></td><td><strong>52.33%</strong></td><td><strong>70.56%</strong></td><td>56.91%</td><td><strong>35.90%</strong></td><td><strong>57.06%</strong></td><td>67.50%</td></tr>
+      <tr><td>그림 6(d)</td><td>52.17%</td><td>70.32%</td><td>56.82%</td><td>35.33%</td><td><strong>57.06%</strong></td><td><strong>68.09%</strong></td></tr>
+      <tr><td>그림 6(e)</td><td>52.23%</td><td>70.20%</td><td>56.81%</td><td>35.34%</td><td>56.97%</td><td>66.88%</td></tr>
     </tbody>
   </table>
 </div>
@@ -732,7 +732,7 @@
 
 <h4>5.4.3. 보조 헤드를 위한 제안된 보조 손실 (Proposed assistant loss for auxiliary head)</h4>
 <p>
-  보조 헤드용 보조 손실(assistant loss) 실험에서는 리드 헤드와 보조 헤드에 대한 일반적인 독립 레이블 할당(independent label assignment) 방식과 본 논문에서 제안한 두 가지 리드 헤드 유도 레이블 할당(lead guided label assignment) 방식을 비교하였다. 모든 비교 결과는 표 6에 제시되어 있다. 표 6의 결과에서 볼 수 있듯이, 보조 손실을 추가한 모든 모델이 전반적인 성능을 크게 향상시켰다. 게다가 제안된 리드 헤드 유도 레이블 할당 전략은 $AP$, $AP_{50}$, $AP_{75}$ 모든 지표에서 일반적인 독립 레이블 할당 전략보다 우수한 성능을 보였다. 특히 우리가 제안한 보조 헤드용 거친 레이블과 리드 헤드용 정밀 레이블(coarse-to-fine lead guided) 할당 전략은 모든 경우에서 최고 성능을 달성하였다. 그림 8에는 서로 다른 기법들이 보조 헤드와 리드 헤드에서 예측한 객체성 맵(objectness map)이 나타나 있다. 그림 8로부터 보조 헤드가 리드 헤드 유도 소프트 레이블을 학습하면 일관된 타깃으로부터 리드 헤드가 잔차 정보(residual information)를 추출하는 데 실제로 도움이 됨을 확인할 수 있다.
+  보조 헤드용 보조 손실(assistant loss) 실험에서는 리드 헤드와 보조 헤드에 대한 일반적인 독립 레이블 할당(independent label assignment) 방식과 본 논문에서 제안한 두 가지 리드 헤드 유도 레이블 할당(lead guided label assignment) 방식을 비교하였다. 모든 비교 결과는 표 6에 제시되어 있다. 표 6에서 보듯 보조 손실을 추가한 모든 모델이 전반적인 성능을 크게 향상시켰다. 게다가 제안된 리드 헤드 유도 레이블 할당 전략은 $AP$, $AP_{50}$, $AP_{75}$ 모든 지표에서 일반적인 독립 레이블 할당 전략보다 우수한 성능을 보였다. 특히 보조 헤드용 거친 레이블과 리드 헤드용 정밀 레이블을 결합한(coarse-to-fine lead guided) 할당 전략은 모든 경우에서 최고 성능을 달성하였다. 그림 8에는 서로 다른 기법들이 보조 헤드와 리드 헤드에서 예측한 객체성 맵(objectness map)이 나타나 있다. 그림 8을 통해 보조 헤드가 리드 헤드 유도 소프트 레이블을 학습하면, 일관된 타깃을 바탕으로 리드 헤드가 잔차 정보(residual information)를 추출하는 데 실제로 도움이 됨을 확인할 수 있다.
 </p>
 
 <figure class="paper-fig">
@@ -763,7 +763,7 @@
 </div>
 
 <p>
-  표 7에서는 제안된 Coarse-to-Fine 리드 헤드 유도 레이블 할당 기법이 보조 헤드의 디코더에 미치는 영향을 추가로 분석하였다. 즉, 상한 제약(upper bound constraint) 도입 여부에 따른 결과를 비교하였다. 표의 수치로 판단할 때, 객체 중심으로부터의 거리에 의해 객체성(objectness)의 상한을 제한하는 방식이 더 우수한 성능을 달성함을 알 수 있다.
+  표 7에서는 제안된 Coarse-to-Fine 리드 헤드 유도 레이블 할당 기법이 보조 헤드의 디코더에 미치는 영향을 추가로 분석하였다. 즉, 상한 제약(upper bound constraint) 도입 여부에 따른 결과를 비교하였다. 표의 수치에서 확인할 수 있듯, 객체 중심으로부터의 거리에 따라 객체성(objectness)의 상한을 제한하는 방식이 더 우수한 성능을 달성한다.
 </p>
 
 <div class="table-wrap">
@@ -788,7 +788,7 @@
 </div>
 
 <p>
-  제안된 YOLOv7은 여러 피라미드(multiple pyramids)를 사용하여 객체 탐지 결과를 공동으로 예측하므로, 학습을 위해 중간 계층의 피라미드에 보조 헤드를 직접 연결할 수 있다. 이러한 유형의 학습은 다음 단계 피라미드 예측에서 손실될 수 있는 정보를 보완해 준다. 이러한 이유로 우리는 제안된 E-ELAN 아키텍처에 <strong>부분 보조 헤드(partial auxiliary head)</strong>를 설계하였다. 우리의 접근 방식은 카디널리티 병합(merging cardinality) 직전의 특징 맵 세트 중 하나 뒤에 보조 헤드를 연결하는 것이며, 이 연결 방식은 새로 생성된 특징 맵 세트의 가중치가 보조 손실에 의해 직접 업데이트되지 않도록 한다. 이러한 설계는 리드 헤드의 각 피라미드가 여전히 다양한 크기의 객체로부터 정보를 얻을 수 있게 해준다. 표 8은 두 가지 방식, 즉 coarse-to-fine lead guided 방식과 partial coarse-to-fine lead guided 방식을 사용했을 때 얻은 결과를 보여준다. 분명히 partial coarse-to-fine lead guided 방식이 더 우수한 보조 효과를 나타낸다.
+  제안된 YOLOv7은 여러 피라미드(multiple pyramids)를 사용하여 객체 탐지 결과를 공동으로 예측하므로, 학습 시 중간 계층의 피라미드에 보조 헤드를 직접 연결할 수 있다. 이러한 학습 방식은 다음 단계 피라미드 예측에서 손실될 수 있는 정보를 보완해 준다. 이에 따라 제안된 E-ELAN 아키텍처에 <strong>부분 보조 헤드(partial auxiliary head)</strong>를 설계하였다. 핵심 방식은 카디널리티 병합(merging cardinality) 직전의 특징 맵 세트 중 하나 뒤에 보조 헤드를 연결하여, 새로 생성된 특징 맵 세트의 가중치가 보조 손실로 직접 업데이트되지 않도록 하는 것이다. 이러한 설계는 리드 헤드의 각 피라미드가 여전히 다양한 크기의 객체로부터 정보를 얻을 수 있게 해준다. 표 8은 coarse-to-fine lead guided 방식과 partial coarse-to-fine lead guided 방식의 비교 결과를 보여주며, partial coarse-to-fine lead guided 방식이 더 우수한 보조 효과를 나타냄을 명확히 확인할 수 있다.
 </p>
 
 <div class="table-wrap">

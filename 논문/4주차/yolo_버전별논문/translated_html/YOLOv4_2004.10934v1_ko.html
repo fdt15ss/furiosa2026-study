@@ -362,8 +362,8 @@
   </p>
   <ul>
     <li><strong>핵심 문제 의식:</strong> 기존의 최고 성능 신경망은 실시간 동작이 불가능하며 대규모 미니배치(mini-batch) 학습을 위해 다수의 GPU가 필요했습니다. 본 논문은 이론적 연산량(BFLOP) 수치에만 매달리지 않고 실제 병렬 연산에 최적화된 고속·고정확도 탐지기를 제안합니다.</li>
-    <li><strong>주요 아키텍처 및 기법:</strong> <strong>CSPDarknet53</strong> 백본(backbone), <strong>SPP</strong>(Spatial Pyramid Pooling) 및 수정된 <strong>PANet</strong>(Path Aggregation Network) 넥(neck), <strong>YOLOv3</strong> 헤드(head)로 구성됩니다. 여기에 <strong>Bag of Freebies (BoF)</strong>(Mosaic 데이터 증강, Self-Adversarial Training(SAT), CmBN, CIoU 손실, DropBlock, 클래스 레이블 스무딩, 그리드 민감도 제거 등)와 <strong>Bag of Specials (BoS)</strong>(Mish 활성화 함수, 수정된 SAM, DIoU-NMS 등)를 체계적으로 검증·결합했습니다.</li>
-    <li><strong>주요 벤치마크 성능 (MS COCO test-dev 2017):</strong> Tesla V100 환경에서 실시간 속도인 <strong>약 65 FPS</strong>(표 10 기준 608×608 입력 시 62 FPS, 512×512 입력 시 83 FPS)로 <strong>43.5% AP (65.7% AP<sub>50</sub>)</strong>를 달성했습니다. 이는 동등한 정확도의 EfficientDet 대비 2배 빠른 속도이며, 기존 YOLOv3 대비 AP는 10%(실제 33.0%→43.5%), FPS는 12% 향상된 결과입니다.</li>
+    <li><strong>주요 아키텍처 및 기법:</strong> <strong>CSPDarknet53</strong> 백본(backbone), <strong>SPP</strong>(Spatial Pyramid Pooling) 및 수정된 <strong>PANet</strong>(Path Aggregation Network) 넥(neck), <strong>YOLOv3</strong> 헤드(head)로 구성됩니다. 여기에 <strong>Bag of Freebies(BoF)</strong>(Mosaic 데이터 증강, 자기 적대적 학습(SAT), CmBN, CIoU 손실, DropBlock, 클래스 레이블 스무딩, 그리드 민감도 제거 등)와 <strong>Bag of Specials(BoS)</strong>(Mish 활성화 함수, 수정된 SAM, DIoU-NMS 등)를 체계적으로 검증·결합했습니다.</li>
+    <li><strong>주요 벤치마크 성능 (MS COCO test-dev 2017):</strong> Tesla V100 환경에서 실시간 속도인 <strong>약 65 FPS</strong>(표 10 기준 608×608 입력 시 62 FPS, 512×512 입력 시 83 FPS)로 <strong>43.5% AP (65.7% AP<sub>50</sub>)</strong>를 달성했습니다. 이는 동등한 정확도의 EfficientDet 대비 2배 빠른 속도이며, 기존 YOLOv3 대비 AP는 10%(33.0%→43.5% 기준 약 10%p), FPS는 12% 향상된 결과입니다.</li>
   </ul>
 </div>
 
@@ -372,7 +372,7 @@
   합성곱 신경망(CNN, Convolutional Neural Network)의 정확도를 향상시킨다고 알려진 수많은 기법(feature)들이 존재한다. 이러한 기법들의 조합을 대규모 데이터셋에서 실질적으로 검증하고, 그 결과에 대한 이론적 근거를 제시하는 작업이 필요하다. 일부 기법은 특정 모델이나 특정 문제에서만 동작하거나 소규모 데이터셋에서만 효과를 보이는 반면, 배치 정규화(BN, Batch Normalization)나 잔차 연결(residual connection)과 같은 일부 기법은 대부분의 모델, 과제(task), 데이터셋에 보편적으로 적용 가능하다. 본 연구에서는 가중 잔차 연결(WRC, Weighted-Residual-Connections), 교차 단계 부분 연결(CSP, Cross-Stage-Partial-connections), 교차 미니배치 정규화(CmBN, Cross mini-Batch Normalization), 자기 적대적 학습(SAT, Self-Adversarial-Training), 그리고 Mish 활성화 함수(Mish-activation) 등이 이러한 보편적 기법에 해당한다고 가정한다.
 </p>
 <p>
-  우리는 WRC, CSP, CmBN, SAT, Mish 활성화 함수, Mosaic 데이터 증강(Mosaic data augmentation), DropBlock 정규화(DropBlock regularization), 그리고 CIoU 손실(CIoU loss) 등 새로운 기법들을 사용하고 이 중 일부를 결합하여, MS COCO 데이터셋에서 Tesla V100 기준 실시간 속도인 약 65 FPS($\sim 65\text{ FPS}$)로 <strong>43.5% AP (65.7% AP<sub>50</sub>)</strong>라는 최고 수준(state-of-the-art)의 성능을 달성하였다. 소스 코드는 <a href="https://github.com/AlexeyAB/darknet">https://github.com/AlexeyAB/darknet</a>에 공개되어 있다.
+  본 연구에서는 WRC, CSP, CmBN, SAT, Mish 활성화 함수, Mosaic 데이터 증강(Mosaic data augmentation), DropBlock 규제(DropBlock regularization), 그리고 CIoU 손실(CIoU loss) 등 새로운 기법들을 사용하고 이 중 일부를 결합하여, MS COCO 데이터셋에서 Tesla V100 기준 실시간 속도인 약 65 FPS로 <strong>43.5% AP (65.7% AP<sub>50</sub>)</strong>라는 최고 수준(state-of-the-art)의 성능을 달성하였다. 소스 코드는 <a href="https://github.com/AlexeyAB/darknet">https://github.com/AlexeyAB/darknet</a>에 공개되어 있다.
 </p>
 
 <h2>1. 서론 (Introduction)</h2>
@@ -386,7 +386,7 @@
 </figure>
 
 <p>
-  본 연구의 주된 목표는 이론적 연산량 지표(BFLOP)를 낮추는 데 그치지 않고, 실제 상용 시스템(production systems)에서 객체 탐지기의 동작 속도를 빠르게 만들고 병렬 연산(parallel computations)에 최적화하는 것이다. 우리는 설계된 객체 탐지기가 누구나 쉽게 학습하고 사용할 수 있기를 바란다. 예를 들어, 일반 GPU를 사용하는 사람이라면 누구나 그림 1에 나타난 YOLOv4의 결과처럼 실시간으로 고품질의 설득력 있는 객체 탐지 결과를 얻을 수 있다. 본 연구의 기여는 다음과 같이 요약된다.
+  본 연구의 주된 목표는 이론적 연산량 지표(BFLOP)를 낮추는 것보다, 실제 상용 시스템(production systems)에서 객체 탐지기의 동작 속도를 빠르게 만들고 병렬 연산(parallel computations)에 최적화하는 것이다. 또한 설계한 객체 탐지기를 누구나 쉽게 학습하고 활용할 수 있도록 하는 데 목표를 두었다. 예를 들어, 일반 GPU를 사용하는 사람이라면 누구나 그림 1에 나타난 YOLOv4의 결과처럼 실시간으로 고품질의 설득력 있는 객체 탐지 결과를 얻을 수 있다. 본 연구의 기여는 다음과 같이 요약된다.
 </p>
 <ol>
   <li>효율적이고 강력한 객체 탐지 모델을 개발하였다. 이를 통해 누구나 1080 Ti 또는 2080 Ti GPU를 사용하여 매우 빠르고 정확한 객체 탐지기를 학습할 수 있다.</li>
@@ -449,7 +449,7 @@
   일반적으로 기존의 객체 탐지기는 오프라인(offline)으로 학습된다. 따라서 연구자들은 이 장점을 활용하여, 추론 비용(inference cost)을 증가시키지 않으면서 객체 탐지기의 정확도를 높일 수 있는 더 나은 학습 방법들을 개발하고자 한다. 이처럼 학습 전략만 변경하거나 학습 비용만을 증가시키는 기법들을 우리는 <strong>“Bag of Freebies”</strong>라고 부른다. 객체 탐지 방법에서 자주 채택되며 Bag of Freebies의 정의에 부합하는 대표적인 기법은 <strong>데이터 증강(data augmentation)</strong>이다. 데이터 증강의 목적은 입력 이미지의 변동성을 높여, 설계된 객체 탐지 모델이 다양한 환경에서 얻은 이미지에 대해 더 높은 강건성(robustness)을 갖도록 하는 것이다. 예를 들어, 광도 왜곡(photometric distortion)과 기하학적 왜곡(geometric distortion)은 흔히 사용되는 두 가지 데이터 증강 기법으로 객체 탐지 과제에 분명한 이점을 제공한다. 광도 왜곡을 다룰 때는 이미지의 밝기(brightness), 대비(contrast), 색조(hue), 채도(saturation), 노이즈(noise)를 조정한다. 기하학적 왜곡에서는 무작위 크기 조절(random scaling), 자르기(cropping), 뒤집기(flipping), 회전(rotating) 등을 추가한다.
 </p>
 <p>
-  위에서 언급한 데이터 증강 기법들은 모두 픽셀 단위(pixel-wise)의 조정이며, 조정된 영역 내의 모든 원본 픽셀 정보는 유지된다. 또한 데이터 증강을 연구하는 일부 연구자들은 객체 가림(object occlusion) 문제를 시뮬레이션하는 데 중점을 두었으며, 이미지 분류와 객체 탐지에서 좋은 결과를 거두었다. 예를 들어, Random Erase [100]와 CutOut [11]은 이미지에서 사각형 영역을 무작위로 선택하여 무작위 값이나 0의 보완 값으로 채운다. Hide-and-Seek [69]와 GridMask [6]는 이미지에서 여러 사각형 영역을 무작위 또는 균등하게 선택하여 모두 0으로 대체한다. 유사한 개념을 특징 맵(feature map)에 적용한 기법으로는 DropOut [71], DropConnect [80], DropBlock [16]이 있다. 또한 여러 이미지를 함께 사용하여 데이터 증강을 수행하는 방법들도 제안되었다. 예를 들어, MixUp [92]은 두 이미지를 서로 다른 계수 비율로 곱하고 중첩한 뒤, 이 중첩 비율에 맞추어 레이블(label)을 조정한다. CutMix [91]는 잘라낸 이미지를 다른 이미지의 사각형 영역 위에 덮어씌우고, 혼합 영역의 크기에 따라 레이블을 조정한다. 앞서 언급한 방법들 외에도, 스타일 전이 GAN(style transfer GAN) [15] 역시 데이터 증강에 사용되며, 이는 CNN이 학습하는 텍스처 편향(texture bias)을 효과적으로 줄여준다.
+  위에서 언급한 데이터 증강 기법들은 모두 픽셀 단위(pixel-wise)의 조정이며, 조정된 영역 내의 모든 원본 픽셀 정보는 유지된다. 또한 데이터 증강을 연구하는 일부 연구자들은 객체 가림(object occlusion) 문제를 시뮬레이션하는 데 중점을 두었으며, 이미지 분류와 객체 탐지에서 좋은 결과를 거두었다. 예를 들어, Random Erase [100]와 CutOut [11]은 이미지에서 사각형 영역을 무작위로 선택하여 무작위 값이나 0으로 채운다. Hide-and-Seek [69]와 GridMask [6]는 이미지에서 여러 사각형 영역을 무작위 또는 균등하게 선택하여 모두 0으로 대체한다. 유사한 개념을 특징 맵(feature map)에 적용한 기법으로는 DropOut [71], DropConnect [80], DropBlock [16]이 있다. 또한 여러 이미지를 함께 사용하여 데이터 증강을 수행하는 방법들도 제안되었다. 예를 들어, MixUp [92]은 두 이미지를 서로 다른 계수 비율로 곱하고 중첩한 뒤, 이 중첩 비율에 맞추어 레이블(label)을 조정한다. CutMix [91]는 잘라낸 이미지를 다른 이미지의 사각형 영역 위에 덮어씌우고, 혼합 영역의 크기에 따라 레이블을 조정한다. 앞서 언급한 방법들 외에도, 스타일 전이 GAN(style transfer GAN) [15] 역시 데이터 증강에 사용되며, 이는 CNN이 학습하는 텍스처 편향(texture bias)을 효과적으로 줄여준다.
 </p>
 <p>
   앞서 제안된 다양한 접근법과 달리, 또 다른 Bag of Freebies 기법들은 데이터셋 내 의미론적 분포(semantic distribution)에 편향(bias)이 있을 수 있는 문제를 해결하는 데 전념한다. 의미론적 분포 편향 문제를 다룰 때 매우 중요한 이슈는 서로 다른 클래스 간의 데이터 불균형(data imbalance) 문제이며, 2단계 객체 탐지기에서는 주로 Hard Negative Example Mining [72]이나 Online Hard Example Mining(OHEM) [67]으로 이 문제를 해결한다. 그러나 이러한 예제 마이닝 기법은 밀집 예측(dense prediction) 아키텍처에 속하는 1단계 객체 탐지기에는 적용하기 어렵다. 이에 Lin 등 [45]은 다양한 클래스 간에 존재하는 데이터 불균형 문제를 해결하기 위해 Focal Loss를 제안하였다. 또 다른 매우 중요한 문제는 레이블링 시 흔히 사용되는 원-핫 하드 표현(one-hot hard representation)으로는 서로 다른 범주 간의 연관 정도를 표현하기 어렵다는 점이다. [73]에서 제안된 레이블 스무딩(label smoothing)은 학습 시 하드 레이블(hard label)을 소프트 레이블(soft label)로 변환하여 모델을 더욱 강건하게 만든다. 더 나은 소프트 레이블을 얻기 위해, Islam 등 [33]은 지식 증류(knowledge distillation) 개념을 도입하여 레이블 정제 네트워크(label refinement network)를 설계하였다.
@@ -458,7 +458,7 @@
   마지막 Bag of Freebies는 경계 상자(BBox, Bounding Box) 회귀의 목적 함수(objective function)이다. 전통적인 객체 탐지기는 보통 평균 제곱 오차(MSE, Mean Square Error)를 사용하여 BBox의 중심점 좌표와 높이·너비, 즉 $\{x_{\text{center}}, y_{\text{center}}, w, h\}$ 또는 좌상단 점과 우하단 점, 즉 $\{x_{\text{top left}}, y_{\text{top left}}, x_{\text{bottom right}}, y_{\text{bottom right}}\}$에 대해 직접 회귀를 수행한다. 앵커 기반(anchor-based) 방법의 경우, 이에 대응하는 오프셋(offset)인 $\{x_{\text{center offset}}, y_{\text{center offset}}, w_{\text{offset}}, h_{\text{offset}}\}$ 또는 $\{x_{\text{top left offset}}, y_{\text{top left offset}}, x_{\text{bottom right offset}}, y_{\text{bottom right offset}}\}$을 추정한다. 그러나 BBox의 각 점의 좌표 값을 직접 추정하는 것은 이 점들을 독립 변수로 취급하는 것이며, 실제로는 객체 자체의 온전한 형태(integrity)를 고려하지 못한다.
 </p>
 <p>
-  이 문제를 더 잘 처리하기 위해 최근 일부 연구자들은 예측된 BBox 영역과 정답(ground truth) BBox 영역의 중첩 범위를 고려하는 <strong>IoU 손실(IoU loss)</strong> [90]을 제안하였다. IoU 손실 계산 과정은 정답과의 IoU를 계산함으로써 BBox의 네 좌표 점을 연동하고, 생성된 결과를 하나의 통합된 코드로 연결한다. IoU는 크기 불변(scale invariant) 표현이므로, 전통적인 방식에서 $\{x, y, w, h\}$의 $l_1$ 또는 $l_2$ 손실을 계산할 때 크기에 따라 손실이 커지는 문제를 해결할 수 있다. 최근 연구자들은 IoU 손실을 지속적으로 개선하고 있다. 예를 들어, <strong>GIoU 손실</strong> [65]은 중첩 영역뿐만 아니라 객체의 형태와 방향성까지 포함한다. 이들은 예측된 BBox와 정답 BBox를 동시에 포괄할 수 있는 최소 면적의 BBox를 찾아, 이를 기존 IoU 손실의 분모를 대체하는 분모로 사용할 것을 제안하였다. <strong>DIoU 손실</strong> [99]은 여기에 객체 중심 간 거리를 추가로 고려하며, <strong>CIoU 손실</strong> [99]은 중첩 면적, 중심점 간 거리, 그리고 종횡비(aspect ratio)를 동시에 고려한다. CIoU는 BBox 회귀 문제에서 더 나은 수렴 속도와 정확도를 달성할 수 있다.
+  이 문제를 더 잘 처리하기 위해 최근 일부 연구자들은 예측된 BBox 영역과 정답(ground truth) BBox 영역의 중첩 범위를 고려하는 <strong>IoU 손실(IoU loss)</strong> [90]을 제안하였다. IoU 손실 계산 과정은 정답과의 IoU를 계산함으로써 BBox의 네 좌표 점을 연동하고, 생성된 결과를 하나의 통합된 식으로 묶어 처리한다. IoU는 크기 불변(scale invariant) 표현이므로, 전통적인 방식에서 $\{x, y, w, h\}$의 $l_1$ 또는 $l_2$ 손실을 계산할 때 크기에 따라 손실이 커지는 문제를 해결할 수 있다. 최근 연구자들은 IoU 손실을 지속적으로 개선하고 있다. 예를 들어, <strong>GIoU 손실</strong> [65]은 중첩 영역뿐만 아니라 객체의 형태와 방향성까지 포함한다. 해당 연구에서는 예측된 BBox와 정답 BBox를 동시에 포괄할 수 있는 최소 면적의 BBox를 찾아, 이를 기존 IoU 손실의 분모를 대체하는 분모로 사용할 것을 제안하였다. <strong>DIoU 손실</strong> [99]은 여기에 객체 중심 간 거리를 추가로 고려하며, <strong>CIoU 손실</strong> [99]은 중첩 면적, 중심점 간 거리, 그리고 종횡비(aspect ratio)를 동시에 고려한다. CIoU는 BBox 회귀 문제에서 더 나은 수렴 속도와 정확도를 달성할 수 있다.
 </p>
 
 <h3>2.3. Bag of Specials (BoS)</h3>
@@ -478,7 +478,7 @@
   딥러닝 연구에서 일부 연구자들은 좋은 활성화 함수(activation function)를 찾는 데 집중해 왔다. 좋은 활성화 함수는 기울기(gradient)가 더 효율적으로 전파되도록 하면서도 추가 연산 비용을 크게 발생시키지 않는다. 2010년 Nair와 Hinton [56]은 기존의 tanh 및 sigmoid 활성화 함수에서 빈번히 발생하던 기울기 소실(gradient vanish) 문제를 실질적으로 해결하기 위해 ReLU를 제안하였다. 이후 역시 기울기 소실 문제를 해결하기 위한 LReLU [54], PReLU [24], ReLU6 [28], SELU(Scaled Exponential Linear Unit) [35], Swish [59], hard-Swish [27], Mish [55] 등이 제안되었다. LReLU와 PReLU의 주된 목적은 출력이 0보다 작을 때 ReLU의 기울기가 0이 되는 문제를 해결하는 것이다. ReLU6와 hard-Swish는 양자화 네트워크(quantization network)를 위해 특별히 설계되었다. 신경망의 자기 정규화(self-normalizing) 목적을 충족하기 위해 SELU 활성화 함수가 제안되었다. 주목할 점은 Swish와 Mish가 모두 연속 미분 가능한(continuously differentiable) 활성화 함수라는 것이다.
 </p>
 <p>
-  딥러닝 기반 객체 탐지에서 흔히 사용되는 후처리 기법은 <strong>비최대 억제(NMS, Non-Maximum Suppression)</strong>로, 동일한 객체를 부정확하게 예측한 BBox들을 걸러내고 더 높은 응답을 보이는 후보 BBox만 남기는 데 사용된다. NMS를 개선하려는 방식은 목적 함수를 최적화하는 방식과 맥을 같이한다. 원래 제안된 NMS 방식은 맥락 정보(context information)를 고려하지 않았기 때문에, Girshick 등 [19]은 R-CNN에서 분류 신뢰도 점수(classification confidence score)를 참조 기준으로 추가하고, 신뢰도 점수가 높은 순서에서 낮은 순서로 탐욕적(greedy) NMS를 수행하였다. Soft-NMS [1]는 객체가 가려질 때 탐욕적 NMS에서 IoU 점수로 인해 신뢰도 점수가 저하되는 문제를 고려한다. DIoU-NMS [99] 개발자들의 사고방식은 Soft-NMS를 기반으로 BBox 선별 과정에 중심점 거리 정보를 추가하는 것이다. 앞서 언급한 후처리 기법 중 어느 것도 추출된 이미지 특징을 직접 참조하지 않으므로, 이후의 앵커 프리(anchor-free) 방식 발전에서는 후처리가 더 이상 필요하지 않게 된 점도 주목할 만하다.
+  딥러닝 기반 객체 탐지에서 흔히 사용되는 후처리 기법은 <strong>비최대 억제(NMS, Non-Maximum Suppression)</strong>로, 동일한 객체를 부정확하게 예측한 BBox들을 걸러내고 더 높은 응답을 보이는 후보 BBox만 남기는 데 사용된다. NMS를 개선하려는 방식은 목적 함수를 최적화하는 방식과 맥을 같이한다. 원래 제안된 NMS 방식은 맥락 정보(context information)를 고려하지 않았기 때문에, Girshick 등 [19]은 R-CNN에서 분류 신뢰도 점수(classification confidence score)를 참조 기준으로 추가하고, 신뢰도 점수가 높은 순서에서 낮은 순서로 탐욕적(greedy) NMS를 수행하였다. Soft-NMS [1]는 객체가 가려질 때 탐욕적 NMS에서 IoU 점수로 인해 신뢰도 점수가 저하되는 문제를 고려한다. DIoU-NMS [99]는 Soft-NMS를 기반으로 BBox 선별 과정에 중심점 거리 정보를 추가하는 접근을 취한다. 앞서 언급한 후처리 기법 중 어느 것도 추출된 이미지 특징을 직접 참조하지 않으므로, 이후의 앵커 프리(anchor-free) 방식 발전에서는 후처리가 더 이상 필요하지 않게 된 점도 주목할 만하다.
 </p>
 
 <h2>3. 방법론 (Methodology)</h2>
@@ -589,7 +589,7 @@
   <li><strong>스킵 연결(Skip-connections):</strong> Residual connections, Weighted residual connections, Multi-input weighted residual connections, 또는 Cross stage partial connections (CSP)</li>
 </ul>
 <p>
-  학습용 활성화 함수의 경우, PReLU와 SELU는 학습이 더 까다롭고 ReLU6는 양자화 네트워크 전용으로 설계되었으므로 위 활성화 함수들을 후보 목록에서 제외하였다. 정규화 방법에서는 DropBlock을 발표한 연구자들이 다른 방법들과 상세히 비교하여 압도적으로 우수한 성능을 입증하였으므로, 망설임 없이 <strong>DropBlock</strong>을 정규화 기법으로 선택하였다. 정규화(normalization) 기법 선택에 있어서는 단일 GPU만을 사용하는 학습 전략에 초점을 맞추고 있으므로 SyncBN은 고려하지 않았다.
+  학습용 활성화 함수의 경우, PReLU와 SELU는 학습이 더 까다롭고 ReLU6는 양자화 네트워크 전용으로 설계되었으므로 후보 목록에서 제외하였다. 규제(regularization) 방법에서는 DropBlock을 발표한 연구자들이 다른 방법들과 상세히 비교하여 압도적으로 우수한 성능을 입증하였으므로, 망설임 없이 <strong>DropBlock</strong>을 선택하였다. 정규화(normalization) 기법 선택에서는 단일 GPU만을 사용하는 학습 전략에 초점을 맞추고 있으므로 SyncBN은 고려하지 않았다.
 </p>
 
 <h3>3.3. 추가 개선 사항 (Additional improvements)</h3>
@@ -599,7 +599,7 @@
 <ul>
   <li>새로운 데이터 증강 기법인 <strong>Mosaic</strong>과 <strong>자기 적대적 학습(SAT, Self-Adversarial Training)</strong>을 도입하였다.</li>
   <li>유전 알고리즘(genetic algorithms)을 적용하여 최적의 하이퍼파라미터를 선택하였다.</li>
-  <li>기존의 일부 기법들을 수정하여 효율적인 학습과 탐지에 적합하도록 만들었다 — <strong>수정된 SAM(modified SAM)</strong>, <strong>수정된 PAN(modified PAN)</strong>, 그리고 <strong>교차 미니배치 정규화(CmBN, Cross mini-Batch Normalization)</strong>.</li>
+  <li>기존의 일부 기법들을 수정하여 효율적인 학습과 탐지에 적합하도록 개선하였다(<strong>수정된 SAM</strong>, <strong>수정된 PAN</strong>, 그리고 <strong>교차 미니배치 정규화(CmBN, Cross mini-Batch Normalization)</strong>).</li>
 </ul>
 
 <figure class="paper-fig">
@@ -608,10 +608,10 @@
 </figure>
 
 <p>
-  <strong>Mosaic</strong>은 4개의 학습 이미지를 혼합하는 새로운 데이터 증강 기법이다. 따라서 2개의 입력 이미지만 혼합하는 CutMix와 달리 4개의 서로 다른 맥락(context)이 혼합된다. 이를 통해 일반적인 맥락을 벗어난 위치에서도 객체를 탐지할 수 있게 된다. 또한 배치 정규화가 각 계층에서 4개의 서로 다른 이미지로부터 활성화 통계를 계산하게 되므로, 큰 미니배치 크기에 대한 필요성을 크게 줄여준다.
+  <strong>Mosaic</strong>은 4개의 학습 이미지를 혼합하는 새로운 데이터 증강 기법이다. 따라서 2개의 입력 이미지만 혼합하는 CutMix와 달리 4개의 서로 다른 맥락(context)이 혼합된다. 이를 통해 일반적인 맥락을 벗어난 상황에서도 객체를 탐지할 수 있게 된다. 또한 배치 정규화가 각 계층에서 4개의 서로 다른 이미지로부터 활성화 통계를 계산하게 되므로, 큰 미니배치 크기에 대한 필요성을 크게 줄여준다.
 </p>
 <p>
-  <strong>자기 적대적 학습(SAT)</strong> 역시 2단계의 순전파·역전파(forward-backward) 과정으로 동작하는 새로운 데이터 증강 기법이다. 첫 번째 단계에서 신경망은 네트워크 가중치 대신 원본 이미지를 변형한다. 이 방식으로 신경망은 스스로에게 적대적 공격(adversarial attack)을 가하여, 이미지 내에 목표 객체가 존재하지 않는 것처럼 착각하게 만들도록 원본 이미지를 변형한다. 두 번째 단계에서는 신경망이 이렇게 변형된 이미지에서 일반적인 방식으로 객체를 탐지하도록 학습된다.
+  <strong>자기 적대적 학습(SAT)</strong> 역시 2단계의 순전파·역전파(forward-backward) 과정으로 동작하는 새로운 데이터 증강 기법이다. 첫 번째 단계에서 신경망은 가중치 대신 원본 입력 이미지를 변경한다. 이 방식으로 신경망은 스스로에게 적대적 공격(adversarial attack)을 가하여, 이미지 내에 목표 객체가 존재하지 않는 것처럼 착각하게 만들도록 이미지를 변형한다. 두 번째 단계에서는 신경망이 이렇게 변형된 이미지에서 일반적인 방식으로 객체를 탐지하도록 학습된다.
 </p>
 
 <figure class="paper-fig">
@@ -662,10 +662,10 @@
 
 <h3>4.1. 실험 설정 (Experimental setup)</h3>
 <p>
-  ImageNet 이미지 분류 실험의 기본 하이퍼파라미터는 다음과 같다: 학습 스텝(training steps)은 8,000,000; 배치 크기(batch size)와 미니배치 크기(mini-batch size)는 각각 128과 32; 다항 감소(polynomial decay) 학습률 스케줄링 전략을 사용하며 초기 학습률(initial learning rate)은 0.1; 웜업 스텝(warm-up steps)은 1000; 모멘텀(momentum)과 가중치 감쇠(weight decay)는 각각 0.9와 0.005로 설정하였다. 모든 BoS 실험은 기본 설정과 동일한 하이퍼파라미터를 사용하였으며, BoF 실험에서는 학습 스텝을 50% 추가하였다. BoF 실험에서는 MixUp, CutMix, Mosaic, 블러링(Bluring) 데이터 증강, 그리고 레이블 스무딩(label smoothing) 정규화 기법을 검증하였다. BoS 실험에서는 LReLU, Swish, Mish 활성화 함수의 효과를 비교하였다. 모든 실험은 단일 1080 Ti 또는 2080 Ti GPU로 학습되었다.
+  ImageNet 이미지 분류 실험의 기본 하이퍼파라미터는 다음과 같다. 학습 스텝(training steps)은 8,000,000, 배치 크기(batch size)와 미니배치 크기(mini-batch size)는 각각 128과 32, 다항 감소(polynomial decay) 학습률 스케줄링 전략을 사용하며 초기 학습률(initial learning rate)은 0.1, 웜업 스텝(warm-up steps)은 1000, 모멘텀(momentum)과 가중치 감쇠(weight decay)는 각각 0.9와 0.005로 설정하였다. 모든 BoS 실험은 기본 설정과 동일한 하이퍼파라미터를 사용하였으며, BoF 실험에서는 학습 스텝을 50% 추가하였다. BoF 실험에서는 MixUp, CutMix, Mosaic, 블러링(Bluring) 데이터 증강, 그리고 레이블 스무딩(label smoothing) 정규화 기법을 검증하였다. BoS 실험에서는 LReLU, Swish, Mish 활성화 함수의 효과를 비교하였다. 모든 실험은 단일 1080 Ti 또는 2080 Ti GPU에서 학습을 진행하였다.
 </p>
 <p>
-  MS COCO 객체 탐지 실험의 기본 하이퍼파라미터는 다음과 같다: 학습 스텝은 500,500; 단계적 감소(step decay) 학습률 스케줄링 전략을 채택하여 초기 학습률 0.01에서 400,000 스텝과 450,000 스텝 시점에 각각 0.1배씩 감소시켰다; 모멘텀과 가중치 감쇠는 각각 0.9와 0.0005로 설정하였다. 모든 아키텍처는 단일 GPU를 사용하여 배치 크기 64로 다중 스케일(multi-scale) 학습을 수행하며, 미니배치 크기는 아키텍처와 GPU 메모리 한계에 따라 8 또는 4로 설정하였다. 하이퍼파라미터 탐색에 유전 알고리즘을 사용한 실험을 제외하면, 다른 모든 실험은 기본 설정을 사용하였다. 유전 알고리즘 실험에서는 YOLOv3-SPP에 GIoU 손실을 적용하여 min-val 5k 세트에 대해 300 에포크(epoch) 동안 탐색을 수행하였다. 유전 알고리즘 실험에서는 탐색된 학습률 0.00261, 모멘텀 0.949, 정답 할당을 위한 IoU 임계값(IoU threshold for assigning ground truth) 0.213, 그리고 손실 정규화 계수(loss normalizer) 0.07을 채택하였다. 우리는 그리드 민감도 제거, Mosaic 데이터 증강, IoU 임계값, 유전 알고리즘, 클래스 레이블 스무딩, 교차 미니배치 정규화(CmBN), 자기 적대적 학습(SAT), 코사인 어닐링 스케줄러, 동적 미니배치 크기(dynamic mini-batch size), DropBlock, 최적화된 앵커(Optimized Anchors), 다양한 종류의 IoU 손실 등 수많은 BoF 기법들을 검증하였다. 또한 Mish, SPP, SAM, RFB, BiFPN, Gaussian YOLO [8] 등 다양한 BoS 기법에 대한 실험도 수행하였다. 모든 실험에서 단 하나의 GPU만을 사용하여 학습하였으므로, 다중 GPU에 최적화된 SyncBN 같은 기법은 사용하지 않았다.
+  MS COCO 객체 탐지 실험의 기본 하이퍼파라미터는 다음과 같다. 학습 스텝은 500,500이며, 단계적 감소(step decay) 학습률 스케줄링 전략을 채택하여 초기 학습률 0.01에서 400,000 스텝과 450,000 스텝 시점에 각각 0.1배씩 감소시켰다. 모멘텀과 가중치 감쇠는 각각 0.9와 0.0005로 설정하였다. 모든 아키텍처는 단일 GPU를 사용하여 배치 크기 64로 다중 스케일(multi-scale) 학습을 수행하며, 미니배치 크기는 아키텍처와 GPU 메모리 한계에 따라 8 또는 4로 설정하였다. 하이퍼파라미터 탐색에 유전 알고리즘을 사용한 실험을 제외하면, 다른 모든 실험은 기본 설정을 사용하였다. 유전 알고리즘 실험에서는 YOLOv3-SPP에 GIoU 손실을 적용하여 min-val 5k 세트에 대해 300 에포크(epoch) 동안 탐색을 수행하였다. 유전 알고리즘 실험에서는 탐색된 학습률 0.00261, 모멘텀 0.949, 정답 할당을 위한 IoU 임계값(IoU threshold for assigning ground truth) 0.213, 그리고 손실 정규화 계수(loss normalizer) 0.07을 채택하였다. 그리드 민감도 제거, Mosaic 데이터 증강, IoU 임계값, 유전 알고리즘, 클래스 레이블 스무딩, 교차 미니배치 정규화(CmBN), 자기 적대적 학습(SAT), 코사인 어닐링 스케줄러, 동적 미니배치 크기(dynamic mini-batch size), DropBlock, 최적화된 앵커(Optimized Anchors), 다양한 종류의 IoU 손실 등 수많은 BoF 기법들을 검증하였다. 또한 Mish, SPP, SAM, RFB, BiFPN, Gaussian YOLO [8] 등 다양한 BoS 기법에 대한 실험도 수행하였다. 모든 실험에서 단 하나의 GPU만을 사용하여 학습하였으므로, 다중 GPU에 최적화된 SyncBN 같은 기법은 사용하지 않았다.
 </p>
 
 <h3>4.2. 분류기 학습에 대한 다양한 기법의 영향 (Influence of different features on Classifier training)</h3>
@@ -748,7 +748,7 @@
   <li><strong>GA (유전 알고리즘, Genetic algorithms):</strong> 네트워크 학습 전체 기간 중 처음 10% 기간 동안 최적의 하이퍼파라미터를 선택하기 위해 유전 알고리즘을 사용한다.</li>
   <li><strong>LS (클래스 레이블 스무딩, Class label smoothing):</strong> 시그모이드 활성화에 대해 클래스 레이블 스무딩을 사용한다.</li>
   <li><strong>CBN (CmBN):</strong> 단일 미니배치 내부에서만 통계를 수집하는 대신, 전체 배치(batch) 내부에서 통계를 수집하기 위해 교차 미니배치 정규화(CmBN)를 사용한다.</li>
-  <li><strong>CA (코사인 어닐링 스케줄러, Cosine annealing scheduler):</strong> 사인파(sinusoid) 형태의 학습 스케줄 동안 학습률을 변화시킨다.</li>
+  <li><strong>CA (코사인 어닐링 스케줄러, Cosine annealing scheduler):</strong> 코사인(사인파) 형태의 학습 스케줄에 따라 학습률을 변화시킨다.</li>
   <li><strong>DM (동적 미니배치 크기, Dynamic mini-batch size):</strong> 무작위 학습 크기(Random training shapes)를 사용하여 작은 해상도 학습 시 미니배치 크기를 자동으로 증가시킨다.</li>
   <li><strong>OA (최적화된 앵커, Optimized Anchors):</strong> $512 \times 512$ 네트워크 해상도 학습을 위해 최적화된 앵커를 사용한다.</li>
   <li><strong>GIoU, CIoU, DIoU, MSE:</strong> 경계 상자 회귀를 위해 서로 다른 손실 알고리즘을 사용한다.</li>
@@ -759,7 +759,7 @@
 
 <div class="table-wrap">
   <table>
-    <caption>표 4. Bag-of-Freebies 절제 연구 (CSPResNeXt50-PANet-SPP, 512×512).</caption>
+    <caption>표 4. Bag-of-Freebies 어블레이션 연구 (CSPResNeXt50-PANet-SPP, 512×512).</caption>
     <thead>
       <tr>
         <th>S</th>
@@ -801,7 +801,7 @@
 
 <div class="table-wrap">
   <table>
-    <caption>표 5. Bag-of-Specials 절제 연구 (크기 512×512).</caption>
+    <caption>표 5. Bag-of-Specials 어블레이션 연구 (크기 512×512).</caption>
     <thead>
       <tr>
         <th>모델 (Model)</th>
@@ -890,10 +890,10 @@
 </figure>
 
 <p>
-  다른 최신 객체 탐지기들과의 결과 비교는 그림 8에 나타나 있다. 우리의 YOLOv4는 파레토 최적 곡선(Pareto optimality curve) 위에 위치하며, 속도와 정확도 양면에서 가장 빠르고 가장 정확한 탐지기들보다 우수하다.
+  다른 최신 객체 탐지기들과의 결과 비교는 그림 8에 나타나 있다. YOLOv4는 파레토 최적 곡선(Pareto optimality curve) 위에 위치하며, 속도와 정확도 양면에서 가장 빠르고 가장 정확한 탐지기들보다 우수하다.
 </p>
 <p>
-  서로 다른 기법들이 추론 시간 검증에 서로 다른 아키텍처의 GPU를 사용하기 때문에, 우리는 흔히 채택되는 Maxwell, Pascal, Volta 아키텍처의 GPU에서 YOLOv4를 실행하여 다른 최신 기법들과 비교하였다. 표 8은 GTX Titan X(Maxwell) 또는 Tesla M40과 같은 Maxwell GPU를 사용한 프레임 속도(FPS) 비교 결과를 나열한다. 표 9는 Titan X(Pascal), Titan Xp, GTX 1080 Ti, 또는 Tesla P100과 같은 Pascal GPU를 사용한 FPS 비교 결과를 나열한다. 표 10은 Titan Volta 또는 Tesla V100과 같은 Volta GPU를 사용한 FPS 비교 결과를 제시한다. (실시간 기준인 FPS 30 이상 모델은 굵게 표시하였다.)
+  서로 다른 기법들이 추론 시간 검증에 서로 다른 아키텍처의 GPU를 사용하기 때문에, 본 연구에서는 널리 쓰이는 Maxwell, Pascal, Volta 아키텍처 GPU에서 YOLOv4를 실행해 다른 최신 기법들과 비교하였다. 표 8은 GTX Titan X(Maxwell) 또는 Tesla M40과 같은 Maxwell GPU에서의 프레임 속도(FPS) 비교 결과를, 표 9는 Titan X(Pascal), Titan Xp, GTX 1080 Ti, 또는 Tesla P100과 같은 Pascal GPU에서의 비교 결과를 보여준다. 표 10은 Titan Volta 또는 Tesla V100과 같은 Volta GPU를 사용한 FPS 비교 결과를 제시한다. (실시간 기준인 FPS 30 이상 모델은 굵게 표시하였다.)
 </p>
 
 <div class="table-wrap">
@@ -1124,7 +1124,7 @@
 
 <h2>6. 결론 (Conclusions)</h2>
 <p>
-  우리는 기존의 모든 대안 탐지기들보다 더 빠르고(FPS) 더 정확한(MS COCO $\text{AP}_{50\dots95}$ 및 $\text{AP}_{50}$) 최신 객체 탐지기를 제안한다. 본 논문에서 설명한 탐지기는 8–16 GB VRAM을 갖춘 일반 GPU에서 학습하고 사용할 수 있어 폭넓은 활용이 가능하다. 1단계 앵커 기반(one-stage anchor-based) 탐지기의 원래 개념이 여전히 유효함이 입증되었다. 우리는 수많은 기법들을 검증하였으며, 분류기와 탐지기 모두의 정확도를 향상시키는 기법들을 선별하여 적용하였다. 이러한 기법들은 향후 연구 및 개발을 위한 모범 사례(best-practice)로 활용될 수 있을 것이다.
+  본 논문에서는 기존의 모든 대안 탐지기들보다 더 빠르고(FPS) 더 정확한(MS COCO $\text{AP}_{50\dots95}$ 및 $\text{AP}_{50}$) 최신 객체 탐지기를 제안하였다. 제안된 탐지기는 8–16 GB VRAM을 갖춘 일반 GPU에서 학습하고 사용할 수 있어 폭넓은 활용이 가능하다. 이를 통해 1단계 앵커 기반(one-stage anchor-based) 탐지기의 원래 개념이 여전히 유효함을 입증하였다. 또한 수많은 기법들을 검증해 분류기와 탐지기 모두의 정확도를 향상시키는 기법들을 선별·적용하였으며, 이러한 기법들은 향후 연구 및 개발을 위한 모범 사례(best practice)로 활용될 수 있을 것이다.
 </p>
 
 <h2>7. 감사의 글 (Acknowledgements)</h2>
